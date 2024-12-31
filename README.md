@@ -1,55 +1,51 @@
+# Astigmatism Wheel Interactions
+
 https://madalin-fr.github.io/AstigmatismWheelInteraction/
 
-Main Controls & Features
+A dynamic web application visualizing an astigmatism wheel with interactive controls. This project allows users to manipulate various parameters of the visual display, including line thickness, color, opacity, and animation.
 
-    Show/Hide Controls: A button to toggle the visibility of the control panel.
+## Features
 
-    Draggable Control Panel: The entire control panel can be dragged and repositioned on the screen.
+*   **Interactive Controls:**  A draggable control panel allows for adjusting:
+    *   Line thickness and color
+    *   Number of radiating lines
+    *   Background and text colors
+    *   Horizontal and vertical offsets
+    *   Arc offset
+    *   Line length
+    *   Rotation speed
+    *   Opacity
+*   **Autopilot Modes:** Two autopilot modes with different behaviors for an animated display.
+*   **Dark Mode:** Toggle between a light and dark user interface.
+*   **Local Storage Persistence:**  Settings are saved in your browser's local storage.
+*   **Responsive Canvas:** The canvas resizes to fill the browser window.
+*  **Arrow-key Rotation:** Use the a/d keys to rotate the wheel, i/k for vertical shift, and j/l for horizontal shift.
+*  **M-key Toggle**: Use the m key to switch between single or many line modes.
 
-    Dark Mode Toggle: A button (represented by a sun icon in the image) that toggles a dark/light theme for the control panel.
+## How to Use
 
-Visual Customization
+1.  **Open `index.html`:** Simply open the `index.html` file in your web browser.
+2.  **Adjust Controls:** Use the draggable control panel to adjust settings.
+    *   Click 'Show Controls' to open or close the settings.
+    *   Drag the top of the controls to move the container.
+3.  **Autopilot:** Start either autopilot mode for animated shifts and rotation.
+4.  **Dark Mode:** Toggle the dark mode switch at the top of the controls panel.
+5.  **Key Commands**: Try using the arrow keys to manipulate the image as described above.
 
-    Opacity: A slider to adjust the overall transparency of the control panel.
+## Technical Details
 
-    Line Thickness: A slider to control the thickness of the lines being drawn by the visualization.
+*   **HTML5 Canvas:** The main visual element is rendered using HTML5 `<canvas>`.
+*   **JavaScript:** The core logic, interaction, and animation are handled with JavaScript.
+*   **InteractJS:**  Used for the drag and drop controls.
+*   **Font Awesome:** Icons are used to enhance the UI.
+*   **Local Storage:** Settings are saved to the local storage and persisted across sessions.
+*   **Responsive:** The canvas and layout are responsive to different browser sizes.
 
-    Radiating Line Count: A slider to control the number of lines radiating from the center in the visualization.
+## License
 
-    Line Color: A color picker to choose the color of the primary lines in the visualization.
+This project is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
 
-    Special Line Color: A color picker to select a special color for some lines in the visualization.
+[http://creativecommons.org/licenses/by-nc-sa/4.0/](http://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-    Circle Outline Color: A color picker to select the color of the outline of a circle.
-
-    Background Color: A color picker to change the background color of the visualization.
-
-    Text Color: A color picker to change the color of the text used in the visualization.
-
-Shape Manipulation
-
-    Horizontal Offset: A slider to move the visual elements horizontally across the canvas.
-
-    Vertical Offset: A slider to move the visual elements vertically across the canvas.
-
-    Arc Offset: A slider to adjust the radius of a circle in the visualization.
-
-    Line Length: A slider to change the length of the lines being drawn.
-
-Animation
-
-    Rotation Velocity: A slider to control the speed at which the visualization rotates.
-
-    Autopilot Speed: A slider to change the speed of the autopilot function.
-
-    Autopilot Controls (Two Buttons):
-
-        "Start Autopilot 1": Initiates an automated movement sequence for the visual elements, which are continuous in the given image.
-
-        "Stop Autopilot 2": Stops the automated movement sequence for the visual elements.
-
-Rotation Mode Selection
-
-    Rotate Clockwise Checkbox: A checkbox to enable clockwise rotation of the visualization.
-
-    Rotate Counter-Clockwise Checkbox: A checkbox to enable counter-clockwise rotation of the visualization.
+© 2023 Jeremy Bornstein. All Rights Reserved.
+© 2024 Frîncu Mădălin-Gabriel. All Rights Reserved.
