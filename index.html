@@ -7,8 +7,6 @@
     <meta name="copyright" content="© 2023 Jeremy Bornstein. All Rights Reserved.">
     <meta name="license" content="http://creativecommons.org/licenses/by-nc-sa/4.0/">
     <style>
-      
-
       html,
       body {
         margin: 0;
@@ -53,16 +51,16 @@
       }
 
       #drag-handle {
-          background-color: rgba(255, 255, 255, 0.8);
-          padding: 8px;
-          border-radius: 4px;
-          border: 1px solid #666;
-          transition: all 0.3s ease;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #666;
+        transition: all 0.3s ease;
       }
 
       #drag-handle.dark-mode {
-          background-color: rgba(30, 30, 30, 0.9);
-          border-color: #999;
+        background-color: rgba(30, 30, 30, 0.9);
+        border-color: #999;
       }
 
       #controls-container {
@@ -72,38 +70,37 @@
       }
 
       #controls-container.reverse {
-          flex-direction: row-reverse;
+        flex-direction: row-reverse;
       }
 
-
       #flip-position {
-          background: none;
-          border: none;
-          font-size: 1.4rem;
-          cursor: pointer;
-          padding: 0;
-          color: #333;
-          transition: color 0.3s ease;
+        background: none;
+        border: none;
+        font-size: 1.4rem;
+        cursor: pointer;
+        padding: 0;
+        color: #333;
+        transition: color 0.3s ease;
       }
 
       #flip-position.dark-mode {
-          color: white;
+        color: white;
       }
 
       #toggle-menu {
-      padding: 1px 25px;
-      border-radius: 4px;
-      cursor: pointer;
-      border: 1px solid #666;
-      background-color: rgba(255, 255, 255, 0.8);
-      color: black;
-      transition: all 0.3s ease;
+        padding: 1px 25px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: 1px solid #666;
+        background-color: rgba(255, 255, 255, 0.8);
+        color: black;
+        transition: all 0.3s ease;
       }
 
       #toggle-menu.dark-mode {
-          background-color: rgba(30, 30, 30, 0.9);
-          color: white;
-          border-color: #999;
+        background-color: rgba(30, 30, 30, 0.9);
+        color: white;
+        border-color: #999;
       }
 
       /* Styling for the icon */
@@ -112,7 +109,7 @@
       }
 
       #drag-handle.dark-mode i {
-          color: white;
+        color: white;
       }
 
       #controls {
@@ -133,21 +130,23 @@
         color: black;
       }
 
-        #toggle-autopilot-1, #toggle-autopilot-2 {
-      padding: 2px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      border: 1px solid #666;
-      background-color: rgba(255, 255, 255, 0.8);
-      color: black;
-      transition: all 0.3s ease;
-      margin-bottom: 5px;
+      #toggle-autopilot-1,
+      #toggle-autopilot-2 {
+        padding: 2px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: 1px solid #666;
+        background-color: rgba(255, 255, 255, 0.8);
+        color: black;
+        transition: all 0.3s ease;
+        margin-bottom: 5px;
       }
 
-      #toggle-autopilot-1.dark-mode, #toggle-autopilot-2.dark-mode {
-          background-color: rgba(30, 30, 30, 0.9);
-          color: white;
-          border-color: #999;
+      #toggle-autopilot-1.dark-mode,
+      #toggle-autopilot-2.dark-mode {
+        background-color: rgba(30, 30, 30, 0.9);
+        color: white;
+        border-color: #999;
       }
 
       #controls.dark-mode {
@@ -277,7 +276,6 @@
       </div>
     </div>
     <script>
-      
       function standardize_color(str) {
         var ctx = document.createElement('canvas').getContext('2d');
         ctx.fillStyle = str;
@@ -285,42 +283,35 @@
       }
 
       function setBackgroundColor(color) {
-            try {
-                // Attempt to standardize the color string first
-              const standardizedColor = standardize_color(color);
-                document.body.style.backgroundColor = standardizedColor;
-            } catch (error) {
-                console.error("Error setting background color:", error, "Using default orange.");
-                document.body.style.backgroundColor = "orange"; // Fallback
-            }
+        try {
+          // Attempt to standardize the color string first
+          const standardizedColor = standardize_color(color);
+          document.body.style.backgroundColor = standardizedColor;
+        } catch (error) {
+          console.error("Error setting background color:", error, "Using default orange.");
+          document.body.style.backgroundColor = "orange"; // Fallback
         }
-
-            // Modify the initialization section
+      }
+      // Modify the initialization section
       function initializeBackgroundColor() {
         const savedBgColor = getLocalStorageValue('bgColor');
         if (savedBgColor) {
-          bgColor = savedBgColor;  // Apply saved color to variable
-           setBackgroundColor(bgColor);
-           document.getElementById('bg-color').value = bgColor; // Update the color picker
-         } else {
-          bgColor = 'orange';// Set default color
-           setBackgroundColor(bgColor);
-         }
+          bgColor = savedBgColor; // Apply saved color to variable
+          setBackgroundColor(bgColor);
+          document.getElementById('bg-color').value = bgColor; // Update the color picker
+        } else {
+          bgColor = 'orange'; // Set default color
+          setBackgroundColor(bgColor);
+        }
       }
-
-      
-
-       // Call this immediately after your localStorage initialization
-       document.addEventListener('DOMContentLoaded', function() {
+      // Call this immediately after your localStorage initialization
+      document.addEventListener('DOMContentLoaded', function() {
         initializeBackgroundColor();
       });
-
       // Add a window load event listener as a backup
       window.addEventListener('load', function() {
         initializeBackgroundColor();
       });
-
-
       interact('.draggable').draggable({
         // Restrict dragging within the window
         modifiers: [
@@ -351,10 +342,12 @@
         target.setAttribute('data-x', x);
         target.setAttribute('data-y', y);
         // Save the new position to localStorage
-        setLocalStorageValue('controlsPosition', JSON.stringify({ x: x, y: y }));
+        setLocalStorageValue('controlsPosition', JSON.stringify({
+          x: x,
+          y: y
+        }));
       }
-
-       // --- Local Storage Functions ---
+      // --- Local Storage Functions ---
       function getLocalStorageValue(k) {
         try {
           return localStorage.getItem(k);
@@ -372,20 +365,17 @@
       }
 
       function initializeLocalStorage(key, defaultValue) {
-          if (getLocalStorageValue(key) === null) {
-            setLocalStorageValue(key, defaultValue);
-          }
+        if (getLocalStorageValue(key) === null) {
+          setLocalStorageValue(key, defaultValue);
+        }
       }
-
       // --- Utility Functions ---
       function angleName(num) {
         if (num >= 90 && num < 270) return (num - 90).toFixed(0) + "°";
         if (num >= 270 && num < 360) return (num - 270).toFixed(0) + "°";
         if (num >= 0 && num < 90) return (num + 90).toFixed(0) + "°";
       }
-
-
-        // --- Initialization and Setup ---
+      // --- Initialization and Setup ---
       let canvas = document.getElementById("canvas");
       let context = canvas.getContext("2d");
       let canvasHeight = window.innerHeight;
@@ -393,109 +383,99 @@
       let radius = Math.min(canvasWidth, canvasHeight) / 4;
       canvas.width = canvasWidth;
       canvas.height = canvasHeight;
-      
-
-       // Initialize localStorage values with defaults if they don't exist
-        const defaultSettings = {
-            'mode': 'many',
-            'color': standardize_color('MediumSlateBlue'),
-            'color2': standardize_color('blue'),
-            'color3': standardize_color('blue'),
-            'bgColor': standardize_color('orange'),
-            'textColor': standardize_color('purple'),
-            'startAngle': '0',
-            'horizontalOffset': '0',
-            'verticalOffset': '0',
-            'arcOffset': '0',
-            'rotationVelocity': '1',
-            'lineLength': '1.0',
-            'isDarkMode': 'false',
-            'lineThickness': '4',
-            'radiatingLineCount': '3',
-            'autopilotSpeed': '10',
-            'rotateClockwise': 'true',
-            'rotateCounterclockwise': 'false',
-            'opacity': '1.0',
-             'controlsPosition': JSON.stringify({x: 0, y: 0})
-        };
-
-
-        for (const key in defaultSettings) {
-            initializeLocalStorage(key, defaultSettings[key]);
-        }
-
+      // Initialize localStorage values with defaults if they don't exist
+      const defaultSettings = {
+        'mode': 'many',
+        'color': standardize_color('MediumSlateBlue'),
+        'color2': standardize_color('blue'),
+        'color3': standardize_color('blue'),
+        'bgColor': standardize_color('orange'),
+        'textColor': standardize_color('purple'),
+        'startAngle': '0',
+        'horizontalOffset': '0',
+        'verticalOffset': '0',
+        'arcOffset': '0',
+        'rotationVelocity': '1',
+        'lineLength': '1.0',
+        'isDarkMode': 'false',
+        'lineThickness': '4',
+        'radiatingLineCount': '3',
+        'autopilotSpeed': '10',
+        'rotateClockwise': 'true',
+        'rotateCounterclockwise': 'false',
+        'opacity': '1.0',
+        'controlsPosition': JSON.stringify({
+          x: 0,
+          y: 0
+        })
+      };
+      for (const key in defaultSettings) {
+        initializeLocalStorage(key, defaultSettings[key]);
+      }
       // Retrieve values from localStorage
-        let mode = getLocalStorageValue("mode");
-        let color = getLocalStorageValue("color");
-        let color2 = getLocalStorageValue("color2");
-        let color3 = getLocalStorageValue("color3");
-        let bgColor = getLocalStorageValue("bgColor");
-        let textColor = getLocalStorageValue("textColor");
-        let horizontalOffset = parseInt(getLocalStorageValue('horizontalOffset'));
-        let verticalOffset = parseInt(getLocalStorageValue('verticalOffset'));
-        let arcOffset = parseInt(getLocalStorageValue('arcOffset'));
-        let rotationVelocity = parseInt(getLocalStorageValue('rotationVelocity'));
-        let lineLength = parseFloat(getLocalStorageValue('lineLength'));
-        let isDarkMode = getLocalStorageValue('isDarkMode') === 'true';
-        let isReversed = getLocalStorageValue('controlsReversed') === 'true';
-        let lineThickness = parseInt(getLocalStorageValue('lineThickness'));
-        let radiatingLineCount = parseInt(getLocalStorageValue('radiatingLineCount'));
-        let startAngle = parseInt(getLocalStorageValue('startAngle'));
-        let autopilotSpeed = parseInt(getLocalStorageValue('autopilotSpeed'));
-        let rotateClockwise = getLocalStorageValue('rotateClockwise') === 'true';
-        let rotateCounterclockwise = getLocalStorageValue('rotateCounterclockwise') === 'true';
-        let opacity = parseFloat(getLocalStorageValue('opacity'));
-
+      let mode = getLocalStorageValue("mode");
+      let color = getLocalStorageValue("color");
+      let color2 = getLocalStorageValue("color2");
+      let color3 = getLocalStorageValue("color3");
+      let bgColor = getLocalStorageValue("bgColor");
+      let textColor = getLocalStorageValue("textColor");
+      let horizontalOffset = parseInt(getLocalStorageValue('horizontalOffset'));
+      let verticalOffset = parseInt(getLocalStorageValue('verticalOffset'));
+      let arcOffset = parseInt(getLocalStorageValue('arcOffset'));
+      let rotationVelocity = parseInt(getLocalStorageValue('rotationVelocity'));
+      let lineLength = parseFloat(getLocalStorageValue('lineLength'));
+      let isDarkMode = getLocalStorageValue('isDarkMode') === 'true';
+      let isReversed = getLocalStorageValue('controlsReversed') === 'true';
+      let lineThickness = parseInt(getLocalStorageValue('lineThickness'));
+      let radiatingLineCount = parseInt(getLocalStorageValue('radiatingLineCount'));
+      let startAngle = parseInt(getLocalStorageValue('startAngle'));
+      let autopilotSpeed = parseInt(getLocalStorageValue('autopilotSpeed'));
+      let rotateClockwise = getLocalStorageValue('rotateClockwise') === 'true';
+      let rotateCounterclockwise = getLocalStorageValue('rotateCounterclockwise') === 'true';
+      let opacity = parseFloat(getLocalStorageValue('opacity'));
       // Apply retrieved values to the elements
-        document.getElementById('line-color').value = color;
-        document.getElementById('special-line-color').value = color2;
-        document.getElementById('circle-outline-color').value = color3;
-        // document.getElementById('bg-color').value = bgColor; // Moved to initializeBackgroundColor
-        document.getElementById('text-color').value = textColor;
-        document.getElementById('line-thickness').value = lineThickness;
-        document.getElementById('radiating-line-count').value = radiatingLineCount;
-        document.getElementById('horizontal-offset').value = horizontalOffset;
-        document.getElementById('vertical-offset').value = verticalOffset;
-        document.getElementById('arc-offset').value = arcOffset;
-        document.getElementById('line-length').value = lineLength;
-        document.getElementById('rotation-velocity').value = rotationVelocity;
-        document.getElementById('autopilot-speed').value = autopilotSpeed;
-        document.getElementById('rotate-clockwise').checked = rotateClockwise;
-        document.getElementById('rotate-counterclockwise').checked = rotateCounterclockwise;
-        document.getElementById('opacity-slider').value = opacity;
-      
-        
-
+      document.getElementById('line-color').value = color;
+      document.getElementById('special-line-color').value = color2;
+      document.getElementById('circle-outline-color').value = color3;
+      // document.getElementById('bg-color').value = bgColor; // Moved to initializeBackgroundColor
+      document.getElementById('text-color').value = textColor;
+      document.getElementById('line-thickness').value = lineThickness;
+      document.getElementById('radiating-line-count').value = radiatingLineCount;
+      document.getElementById('horizontal-offset').value = horizontalOffset;
+      document.getElementById('vertical-offset').value = verticalOffset;
+      document.getElementById('arc-offset').value = arcOffset;
+      document.getElementById('line-length').value = lineLength;
+      document.getElementById('rotation-velocity').value = rotationVelocity;
+      document.getElementById('autopilot-speed').value = autopilotSpeed;
+      document.getElementById('rotate-clockwise').checked = rotateClockwise;
+      document.getElementById('rotate-counterclockwise').checked = rotateCounterclockwise;
+      document.getElementById('opacity-slider').value = opacity;
       // --- Controls and Event Listeners ---
       // Get the control and toggle button elements
-        const controls = document.getElementById('controls');
-        const toggleMenuButton = document.getElementById('toggle-menu');
-        const flipPositionButton = document.getElementById('flip-position');
-        const controlsContainer = document.getElementById('controls-container');
-      
-         // Retrieve and apply the saved position of the controls container
-        const savedPosition = JSON.parse(getLocalStorageValue('controlsPosition'));
-            if (savedPosition) {
-              controlsContainer.style.transform = `translate(${savedPosition.x}px, ${savedPosition.y}px)`;
-              controlsContainer.setAttribute('data-x', savedPosition.x);
-              controlsContainer.setAttribute('data-y', savedPosition.y);
-            }
-        // Apply initial position state
-        if (isReversed) {
-            controlsContainer.classList.add('reverse');
-        }
-
+      const controls = document.getElementById('controls');
+      const toggleMenuButton = document.getElementById('toggle-menu');
+      const flipPositionButton = document.getElementById('flip-position');
+      const controlsContainer = document.getElementById('controls-container');
+      // Retrieve and apply the saved position of the controls container
+      const savedPosition = JSON.parse(getLocalStorageValue('controlsPosition'));
+      if (savedPosition) {
+        controlsContainer.style.transform = `translate(${savedPosition.x}px, ${savedPosition.y}px)`;
+        controlsContainer.setAttribute('data-x', savedPosition.x);
+        controlsContainer.setAttribute('data-y', savedPosition.y);
+      }
+      // Apply initial position state
+      if (isReversed) {
+        controlsContainer.classList.add('reverse');
+      }
       toggleMenuButton.addEventListener('click', () => {
         controls.style.display = controls.style.display === 'block' ? 'none' : 'block';
       });
-
       flipPositionButton.addEventListener('click', () => {
-          isReversed = !isReversed;
-          setLocalStorageValue('controlsReversed', isReversed);
-          controlsContainer.classList.toggle('reverse');
+        isReversed = !isReversed;
+        setLocalStorageValue('controlsReversed', isReversed);
+        controlsContainer.classList.toggle('reverse');
       });
-
-        // Set initial slider min/max values based on canvas size
+      // Set initial slider min/max values based on canvas size
       const horizontalOffsetSlider = document.getElementById('horizontal-offset');
       const verticalOffsetSlider = document.getElementById('vertical-offset');
 
@@ -509,77 +489,63 @@
         horizontalOffsetSlider.value = horizontalOffset;
         verticalOffsetSlider.value = verticalOffset;
       }
-
       setSliderLimits();
-
       // Event listeners for input changes
       document.getElementById('horizontal-offset').addEventListener('input', function() {
         horizontalOffset = parseInt(this.value);
         setLocalStorageValue('horizontalOffset', horizontalOffset);
         draw();
       });
-
       document.getElementById('vertical-offset').addEventListener('input', function() {
         verticalOffset = parseInt(this.value);
         setLocalStorageValue('verticalOffset', verticalOffset);
         draw();
       });
-
       document.getElementById('arc-offset').addEventListener('input', function() {
         arcOffset = parseInt(this.value);
         setLocalStorageValue('arcOffset', arcOffset);
         draw();
       });
-
       document.getElementById('line-length').addEventListener('input', function() {
         lineLength = parseFloat(this.value);
         setLocalStorageValue('lineLength', lineLength);
         draw();
       });
-
       document.getElementById('rotation-velocity').addEventListener('input', function() {
         rotationVelocity = parseInt(this.value);
         setLocalStorageValue('rotationVelocity', rotationVelocity);
         draw();
       });
-
       document.getElementById('line-thickness').addEventListener('input', function() {
         lineThickness = this.value;
         setLocalStorageValue('lineThickness', lineThickness);
         draw();
       });
-
       document.getElementById('radiating-line-count').addEventListener('input', function() {
         radiatingLineCount = this.value;
         setLocalStorageValue('radiatingLineCount', radiatingLineCount);
         draw();
       });
-
       document.getElementById('line-color').addEventListener('input', function() {
         color = this.value;
         setLocalStorageValue('color', color);
         draw();
       });
-
       document.getElementById('special-line-color').addEventListener('input', function() {
         color2 = this.value;
         setLocalStorageValue('color2', color2);
         draw();
       });
-
       document.getElementById('bg-color').addEventListener('input', function() {
-          bgColor = this.value;
+        bgColor = this.value;
         setLocalStorageValue('bgColor', bgColor);
         setBackgroundColor(bgColor);
-          
       });
-
       document.getElementById('text-color').addEventListener('input', function() {
         textColor = this.value;
         setLocalStorageValue('textColor', textColor);
         draw();
       });
-
       document.getElementById('circle-outline-color').addEventListener('input', function() {
         color3 = this.value;
         setLocalStorageValue('color3', color3);
@@ -590,32 +556,24 @@
         setLocalStorageValue('opacity', opacity);
         controls.style.opacity = opacity;
       });
-
-      
-
-        // --- Resize and Key Event Handling ---
-        window.addEventListener("resize", function() {
-            canvasWidth = window.innerWidth;
-            canvasHeight = window.innerHeight;
-            canvas.width = canvasWidth;
-            canvas.height = canvasHeight;
-            setSliderLimits();
-            draw();
-        });
-
-
+      // --- Resize and Key Event Handling ---
+      window.addEventListener("resize", function() {
+        canvasWidth = window.innerWidth;
+        canvasHeight = window.innerHeight;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        setSliderLimits();
+        draw();
+      });
       let pressedKeys = {};
       window.addEventListener("keydown", function(event) {
         pressedKeys[event.key] = true;
         updateKeys(pressedKeys);
       });
-
       window.addEventListener("keyup", function(event) {
         delete pressedKeys[event.key];
         updateKeys(pressedKeys);
       });
-
-      
 
       function updateKeys(keys) {
         let offsetStep = 10;
@@ -673,130 +631,115 @@
         }
         if (hasChanged && !shouldAnimate) draw();
       }
-
       // --- Drawing Functions ---
-        function drawManyLines() {
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.strokeStyle = color3;
-            context.beginPath();
-            context.setLineDash([14, 14]);
-            context.arc(canvas.width / 2 + horizontalOffset, canvas.height / 2 + verticalOffset, radius * 1.7 + arcOffset, 0, 2 * Math.PI);
-            context.lineWidth = 4;
-            context.stroke();
-            context.setLineDash([]);
-            context.font = "12px Verdana";
-            context.textAlign = "center";
-
-            let lineStartDistance = radius * 0.0;
-            let lineEndDistance = radius * lineLength;
-            let textDistance = radius * 1.5;
-
-            for (let i = 0; i < 360; i += (360 / radiatingLineCount)) {
-              let angle = (i + startAngle) % 360;
-              let startX = (canvas.width / 2 + horizontalOffset) + lineStartDistance * Math.cos(angle * Math.PI / 180);
-              let startY = (canvas.height / 2 + verticalOffset) + lineStartDistance * Math.sin(angle * Math.PI / 180);
-              let endX = (canvas.width / 2 + horizontalOffset) + lineEndDistance * Math.cos(angle * Math.PI / 180);
-              let endY = (canvas.height / 2 + verticalOffset) + lineEndDistance * Math.sin(angle * Math.PI / 180);
-              let x3 = (canvas.width / 2 + horizontalOffset) + textDistance * Math.cos(angle * Math.PI / 180);
-              let y3 = (canvas.height / 2 + verticalOffset) + textDistance * Math.sin(angle * Math.PI / 180);
-
-              context.lineWidth = lineThickness;
-              context.strokeStyle = (i <= 10 || (i >= 180 && i <= 180)) ? color2 : color;
-              context.beginPath();
-              context.moveTo(startX, startY);
-              context.lineTo(endX, endY);
-              context.stroke();
-
-              context.fillStyle = textColor;
-              context.fillText(angleName(angle), x3, y3);
+      function drawManyLines() {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.strokeStyle = color3;
+        context.beginPath();
+        context.setLineDash([14, 14]);
+        context.arc(canvas.width / 2 + horizontalOffset, canvas.height / 2 + verticalOffset, radius * 1.7 + arcOffset, 0, 2 * Math.PI);
+        context.lineWidth = 4;
+        context.stroke();
+        context.setLineDash([]);
+        context.font = "12px Verdana";
+        context.textAlign = "center";
+        let lineStartDistance = radius * 0.0;
+        let lineEndDistance = radius * lineLength;
+        let textDistance = radius * 1.5;
+        for (let i = 0; i < 360; i += (360 / radiatingLineCount)) {
+          let angle = (i + startAngle) % 360;
+          let startX = (canvas.width / 2 + horizontalOffset) + lineStartDistance * Math.cos(angle * Math.PI / 180);
+          let startY = (canvas.height / 2 + verticalOffset) + lineStartDistance * Math.sin(angle * Math.PI / 180);
+          let endX = (canvas.width / 2 + horizontalOffset) + lineEndDistance * Math.cos(angle * Math.PI / 180);
+          let endY = (canvas.height / 2 + verticalOffset) + lineEndDistance * Math.sin(angle * Math.PI / 180);
+          let x3 = (canvas.width / 2 + horizontalOffset) + textDistance * Math.cos(angle * Math.PI / 180);
+          let y3 = (canvas.height / 2 + verticalOffset) + textDistance * Math.sin(angle * Math.PI / 180);
+          context.lineWidth = lineThickness;
+          context.strokeStyle = (i <= 10 || (i >= 180 && i <= 180)) ? color2 : color;
+          context.beginPath();
+          context.moveTo(startX, startY);
+          context.lineTo(endX, endY);
+          context.stroke();
+          context.fillStyle = textColor;
+          context.fillText(angleName(angle), x3, y3);
         }
       }
 
       function drawSingleLine() {
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.strokeStyle = color3;
-            context.beginPath();
-            context.setLineDash([14, 14]);
-            context.arc(canvas.width / 2 + horizontalOffset, canvas.height / 2 + verticalOffset, radius * 1.7 + arcOffset, 0, 2 * Math.PI);
-            context.lineWidth = 4;
-            context.stroke();
-            context.setLineDash([]);
-            context.font = "12px Verdana";
-            context.textAlign = "center";
-
-            let angle = startAngle % 360;
-            let lineStartDistance = radius * 0.0;
-            let lineEndDistance = radius * lineLength;
-            let textDistance = radius * 1.5;
-
-            let startX = (canvas.width / 2 + horizontalOffset) + lineStartDistance * Math.cos(angle * Math.PI / 180);
-            let startY = (canvas.height / 2 + verticalOffset) + lineStartDistance * Math.sin(angle * Math.PI / 180);
-            let endX = (canvas.width / 2 + horizontalOffset) + lineEndDistance * Math.cos(angle * Math.PI / 180);
-            let endY = (canvas.height / 2 + verticalOffset) + lineEndDistance * Math.sin(angle * Math.PI / 180);
-            let x3 = (canvas.width / 2 + horizontalOffset) + textDistance * Math.cos(angle * Math.PI / 180);
-            let y3 = (canvas.height / 2 + verticalOffset) + textDistance * Math.sin(angle * Math.PI / 180);
-
-            context.lineWidth = lineThickness;
-            context.strokeStyle = color;
-            context.beginPath();
-            context.moveTo(startX, startY);
-            context.lineTo(endX, endY);
-            context.stroke();
-
-            context.fillStyle = textColor;
-            context.fillText(angleName(angle), x3, y3);
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.strokeStyle = color3;
+        context.beginPath();
+        context.setLineDash([14, 14]);
+        context.arc(canvas.width / 2 + horizontalOffset, canvas.height / 2 + verticalOffset, radius * 1.7 + arcOffset, 0, 2 * Math.PI);
+        context.lineWidth = 4;
+        context.stroke();
+        context.setLineDash([]);
+        context.font = "12px Verdana";
+        context.textAlign = "center";
+        let angle = startAngle % 360;
+        let lineStartDistance = radius * 0.0;
+        let lineEndDistance = radius * lineLength;
+        let textDistance = radius * 1.5;
+        let startX = (canvas.width / 2 + horizontalOffset) + lineStartDistance * Math.cos(angle * Math.PI / 180);
+        let startY = (canvas.height / 2 + verticalOffset) + lineStartDistance * Math.sin(angle * Math.PI / 180);
+        let endX = (canvas.width / 2 + horizontalOffset) + lineEndDistance * Math.cos(angle * Math.PI / 180);
+        let endY = (canvas.height / 2 + verticalOffset) + lineEndDistance * Math.sin(angle * Math.PI / 180);
+        let x3 = (canvas.width / 2 + horizontalOffset) + textDistance * Math.cos(angle * Math.PI / 180);
+        let y3 = (canvas.height / 2 + verticalOffset) + textDistance * Math.sin(angle * Math.PI / 180);
+        context.lineWidth = lineThickness;
+        context.strokeStyle = color;
+        context.beginPath();
+        context.moveTo(startX, startY);
+        context.lineTo(endX, endY);
+        context.stroke();
+        context.fillStyle = textColor;
+        context.fillText(angleName(angle), x3, y3);
       }
 
-
-        function draw() {
-            if (mode === "many") {
-                drawManyLines();
-            } else {
-                drawSingleLine();
-            }
+      function draw() {
+        if (mode === "many") {
+          drawManyLines();
+        } else {
+          drawSingleLine();
         }
-        draw() // Initial draw on page load
-
+      }
+      draw() // Initial draw on page load
       // --- Dark Mode Toggle ---
       const toggleDarkModeButton = document.getElementById('toggle-dark-mode');
       const controlsElement = document.getElementById('controls');
       let darkModeIcon = document.querySelector('#toggle-dark-mode i');
 
       function setMode(mode) {
-          const dragHandle = document.getElementById('drag-handle');
-          const flipButton = document.getElementById('flip-position');
-          const autopilot1Button = document.getElementById('toggle-autopilot-1');
-          const autopilot2Button = document.getElementById('toggle-autopilot-2');
-          
-          if (mode) {
-              controlsElement.classList.add('dark-mode');
-              toggleMenuButton.classList.add('dark-mode');
-              dragHandle.classList.add('dark-mode');
-              flipButton.classList.add('dark-mode');
-              autopilot1Button.classList.add('dark-mode');
-              autopilot2Button.classList.add('dark-mode');
-              darkModeIcon.classList.remove('fa-sun');
-              darkModeIcon.classList.add('fa-moon');
-          } else {
-              controlsElement.classList.remove('dark-mode');
-              toggleMenuButton.classList.remove('dark-mode');
-              dragHandle.classList.remove('dark-mode');
-              flipButton.classList.remove('dark-mode');
-              autopilot1Button.classList.remove('dark-mode');
-              autopilot2Button.classList.remove('dark-mode');
-              darkModeIcon.classList.remove('fa-moon');
-              darkModeIcon.classList.add('fa-sun');
-          }
+        const dragHandle = document.getElementById('drag-handle');
+        const flipButton = document.getElementById('flip-position');
+        const autopilot1Button = document.getElementById('toggle-autopilot-1');
+        const autopilot2Button = document.getElementById('toggle-autopilot-2');
+        if (mode) {
+          controlsElement.classList.add('dark-mode');
+          toggleMenuButton.classList.add('dark-mode');
+          dragHandle.classList.add('dark-mode');
+          flipButton.classList.add('dark-mode');
+          autopilot1Button.classList.add('dark-mode');
+          autopilot2Button.classList.add('dark-mode');
+          darkModeIcon.classList.remove('fa-sun');
+          darkModeIcon.classList.add('fa-moon');
+        } else {
+          controlsElement.classList.remove('dark-mode');
+          toggleMenuButton.classList.remove('dark-mode');
+          dragHandle.classList.remove('dark-mode');
+          flipButton.classList.remove('dark-mode');
+          autopilot1Button.classList.remove('dark-mode');
+          autopilot2Button.classList.remove('dark-mode');
+          darkModeIcon.classList.remove('fa-moon');
+          darkModeIcon.classList.add('fa-sun');
+        }
       }
-
       setMode(isDarkMode);
-
       toggleDarkModeButton.addEventListener('click', () => {
         isDarkMode = !isDarkMode;
         setLocalStorageValue('isDarkMode', isDarkMode);
         setMode(isDarkMode);
       });
-
       // --- Autopilot and Animation Logic ---
       let animationFrameId;
       let shouldAnimate = false;
@@ -810,29 +753,25 @@
       let autopilotRotationInterval;
       let autopilotCenterShiftTimeout;
       let rotationDirection = 1;
-
       // Ensure consistent state on initialization
       if (rotateCounterclockwise) {
-          rotateClockwise = false;
-          rotationDirection = -1;
+        rotateClockwise = false;
+        rotationDirection = -1;
       } else {
-          rotateClockwise = true;
-          rotateCounterclockwise = false;
-          rotationDirection = 1;
+        rotateClockwise = true;
+        rotateCounterclockwise = false;
+        rotationDirection = 1;
       }
-
 
       function animate() {
         if (!shouldAnimate) return;
         draw();
         animationFrameId = requestAnimationFrame(animate);
       }
-
       // --- Autopilot 1 Event Listeners and Functions ---
       const toggleAutopilot1Button = document.getElementById("toggle-autopilot-1");
       const rotateClockwiseToggle = document.getElementById('rotate-clockwise');
       const rotateCounterClockwiseToggle = document.getElementById('rotate-counterclockwise');
-
       toggleAutopilot1Button.addEventListener('click', () => {
         if (!autopilot1Active) {
           startAutopilot1();
@@ -840,46 +779,46 @@
           stopAutopilot1();
         }
       });
-
       rotateClockwiseToggle.addEventListener('change', () => {
-          if (rotateClockwiseToggle.checked) {
-              rotationDirection = 1;
-              rotateCounterClockwiseToggle.checked = false;
-              setLocalStorageValue('rotateClockwise', true);
-              setLocalStorageValue('rotateCounterclockwise', false);
-          } else if (!rotateCounterClockwiseToggle.checked) {
-              // Don't allow both to be unchecked
-              rotateClockwiseToggle.checked = true;
-              setLocalStorageValue('rotateClockwise', true);
-          }
+        if (rotateClockwiseToggle.checked) {
+          rotationDirection = 1;
+          rotateCounterClockwiseToggle.checked = false;
+          setLocalStorageValue('rotateClockwise', true);
+          setLocalStorageValue('rotateCounterclockwise', false);
+        } else if (!rotateCounterClockwiseToggle.checked) {
+          // Don't allow both to be unchecked
+          rotateClockwiseToggle.checked = true;
+          setLocalStorageValue('rotateClockwise', true);
+        }
       });
-
-      
       rotateCounterClockwiseToggle.addEventListener('change', () => {
-          if (rotateCounterClockwiseToggle.checked) {
-              rotationDirection = -1;
-              rotateClockwiseToggle.checked = false;
-              setLocalStorageValue('rotateClockwise', false);
-              setLocalStorageValue('rotateCounterclockwise', true);
-          } else if (!rotateClockwiseToggle.checked) {
-              // Don't allow both to be unchecked
-              rotateCounterClockwiseToggle.checked = true;
-              setLocalStorageValue('rotateCounterclockwise', true);
-          }
+        if (rotateCounterClockwiseToggle.checked) {
+          rotationDirection = -1;
+          rotateClockwiseToggle.checked = false;
+          setLocalStorageValue('rotateClockwise', false);
+          setLocalStorageValue('rotateCounterclockwise', true);
+        } else if (!rotateClockwiseToggle.checked) {
+          // Don't allow both to be unchecked
+          rotateCounterClockwiseToggle.checked = true;
+          setLocalStorageValue('rotateCounterclockwise', true);
+        }
       });
-
-
       document.getElementById('autopilot-speed').addEventListener('input', function() {
         autopilotSpeed = parseInt(this.value);
         setLocalStorageValue('autopilotSpeed', autopilotSpeed);
       });
 
       function startAutopilot1() {
+        // Stop autopilot 2 if it's running
+        if (autopilot2Active) {
+          stopAutopilot2();
+        }
         autopilot1Active = true;
-        autopilot2Active = false;
         toggleAutopilot1Button.innerText = 'Stop Autopilot 1';
         toggleAutopilot2Button.innerText = 'Start Autopilot 2';
+        // Clear any existing intervals and timeouts
         clearInterval(autopilotRotationInterval);
+        clearTimeout(autopilotCenterShiftTimeout);
         autopilotRotationInterval = setInterval(() => {
           let currentKeys = {};
           currentKeys[rotationDirection === 1 ? "d" : "a"] = true;
@@ -904,10 +843,8 @@
         }
         isTransitioning = false;
       }
-
-        // --- Autopilot 2 Event Listeners and Functions ---
+      // --- Autopilot 2 Event Listeners and Functions ---
       const toggleAutopilot2Button = document.getElementById("toggle-autopilot-2");
-
       toggleAutopilot2Button.addEventListener('click', () => {
         if (!autopilot2Active) {
           startAutopilot2();
@@ -916,13 +853,17 @@
         }
       });
 
-   
       function startAutopilot2() {
+        // Stop autopilot 1 if it's running
+        if (autopilot1Active) {
+          stopAutopilot1();
+        }
         autopilot2Active = true;
-        autopilot1Active = false;
         toggleAutopilot2Button.innerText = 'Stop Autopilot 2';
         toggleAutopilot1Button.innerText = 'Start Autopilot 1';
+        // Clear any existing intervals and timeouts
         clearInterval(autopilotRotationInterval);
+        clearTimeout(autopilotCenterShiftTimeout);
         autopilotRotationInterval = setInterval(() => {
           let currentKeys = {};
           currentKeys[rotationDirection === 1 ? "d" : "a"] = true;
@@ -947,7 +888,6 @@
         }
         isTransitioning = false;
       }
-
       // Transition functions (updated for continuous transition)
       function transitionCenter() {
         if (isTransitioning) return;
@@ -961,8 +901,8 @@
           if (!isTransitioning) return;
           const elapsedTime = currentTime - startTime;
           const progress = Math.min(elapsedTime / duration, 1);
-          horizontalOffset = startHorizontalOffset + (targetHorizontalOffset - startHorizontalOffset) ;
-          verticalOffset = startVerticalOffset + (targetVerticalOffset - startVerticalOffset) ;
+          horizontalOffset = startHorizontalOffset + (targetHorizontalOffset - startHorizontalOffset);
+          verticalOffset = startVerticalOffset + (targetVerticalOffset - startVerticalOffset);
           document.getElementById('horizontal-offset').value = horizontalOffset;
           document.getElementById('vertical-offset').value = verticalOffset;
           draw();
