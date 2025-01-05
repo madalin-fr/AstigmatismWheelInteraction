@@ -133,6 +133,23 @@
         color: black;
       }
 
+        #toggle-autopilot-1, #toggle-autopilot-2 {
+      padding: 2px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #666;
+      background-color: rgba(255, 255, 255, 0.8);
+      color: black;
+      transition: all 0.3s ease;
+      margin-bottom: 5px;
+      }
+
+      #toggle-autopilot-1.dark-mode, #toggle-autopilot-2.dark-mode {
+          background-color: rgba(30, 30, 30, 0.9);
+          color: white;
+          border-color: #999;
+      }
+
       #controls.dark-mode {
         background-color: rgba(30, 30, 30, 0.9);
         /* Dark background */
@@ -748,11 +765,16 @@
       function setMode(mode) {
           const dragHandle = document.getElementById('drag-handle');
           const flipButton = document.getElementById('flip-position');
+          const autopilot1Button = document.getElementById('toggle-autopilot-1');
+          const autopilot2Button = document.getElementById('toggle-autopilot-2');
+          
           if (mode) {
               controlsElement.classList.add('dark-mode');
               toggleMenuButton.classList.add('dark-mode');
               dragHandle.classList.add('dark-mode');
               flipButton.classList.add('dark-mode');
+              autopilot1Button.classList.add('dark-mode');
+              autopilot2Button.classList.add('dark-mode');
               darkModeIcon.classList.remove('fa-sun');
               darkModeIcon.classList.add('fa-moon');
           } else {
@@ -760,6 +782,8 @@
               toggleMenuButton.classList.remove('dark-mode');
               dragHandle.classList.remove('dark-mode');
               flipButton.classList.remove('dark-mode');
+              autopilot1Button.classList.remove('dark-mode');
+              autopilot2Button.classList.remove('dark-mode');
               darkModeIcon.classList.remove('fa-moon');
               darkModeIcon.classList.add('fa-sun');
           }
