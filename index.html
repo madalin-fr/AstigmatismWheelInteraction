@@ -787,6 +787,17 @@
       let autopilotCenterShiftTimeout;
       let rotationDirection = 1;
 
+      // Ensure consistent state on initialization
+      if (rotateCounterclockwise) {
+          rotateClockwise = false;
+          rotationDirection = -1;
+      } else {
+          rotateClockwise = true;
+          rotateCounterclockwise = false;
+          rotationDirection = 1;
+      }
+
+
       function animate() {
         if (!shouldAnimate) return;
         draw();
@@ -806,25 +817,30 @@
         }
       });
 
-     rotateClockwiseToggle.addEventListener('change', () => {
-          setLocalStorageValue('rotateClockwise', rotateClockwiseToggle.checked);
-          if (!rotateClockwiseToggle.checked && !rotateCounterClockwiseToggle.checked) {
-            rotateClockwiseToggle.checked = true; // Force it back to checked
-          } else if (rotateClockwiseToggle.checked) {
-            rotationDirection = 1;
-            rotateCounterClockwiseToggle.checked = false;
-            setLocalStorageValue('rotateCounterclockwise', false);
+      rotateClockwiseToggle.addEventListener('change', () => {
+          if (rotateClockwiseToggle.checked) {
+              rotationDirection = 1;
+              rotateCounterClockwiseToggle.checked = false;
+              setLocalStorageValue('rotateClockwise', true);
+              setLocalStorageValue('rotateCounterclockwise', false);
+          } else if (!rotateCounterClockwiseToggle.checked) {
+              // Don't allow both to be unchecked
+              rotateClockwiseToggle.checked = true;
+              setLocalStorageValue('rotateClockwise', true);
           }
       });
+
       
       rotateCounterClockwiseToggle.addEventListener('change', () => {
-          setLocalStorageValue('rotateCounterclockwise', rotateCounterClockwiseToggle.checked);
-          if (!rotateCounterClockwiseToggle.checked && !rotateClockwiseToggle.checked) {
-            rotateCounterClockwiseToggle.checked = true; // Force it back to checked
-          } else if (rotateCounterClockwiseToggle.checked) {
-            rotationDirection = -1;
-            rotateClockwiseToggle.checked = false;
-            setLocalStorageValue('rotateClockwise', false);
+          if (rotateCounterClockwiseToggle.checked) {
+              rotationDirection = -1;
+              rotateClockwiseToggle.checked = false;
+              setLocalStorageValue('rotateClockwise', false);
+              setLocalStorageValue('rotateCounterclockwise', true);
+          } else if (!rotateClockwiseToggle.checked) {
+              // Don't allow both to be unchecked
+              rotateCounterClockwiseToggle.checked = true;
+              setLocalStorageValue('rotateCounterclockwise', true);
           }
       });
 
