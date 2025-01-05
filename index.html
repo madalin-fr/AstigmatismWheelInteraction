@@ -7,6 +7,8 @@
     <meta name="copyright" content="© 2023 Jeremy Bornstein. All Rights Reserved.">
     <meta name="license" content="http://creativecommons.org/licenses/by-nc-sa/4.0/">
     <style>
+      
+
       html,
       body {
         margin: 0;
@@ -50,17 +52,17 @@
         /* Ensure it's above other elements */
       }
 
-      /* Styling for the handle */
       #drag-handle {
-        cursor: move;
-        /* Make the cursor indicate that it's draggable */
-        display: flex;
-        /* Use flexbox for easy alignment */
-        align-items: center;
-        /* Center the icon vertically */
-        justify-content: center;
-        /* Center the icon horizontally */
-        margin-right: 10px;
+          background-color: rgba(255, 255, 255, 0.8);
+          padding: 8px;
+          border-radius: 4px;
+          border: 1px solid #666;
+          transition: all 0.3s ease;
+      }
+
+      #drag-handle.dark-mode {
+          background-color: rgba(30, 30, 30, 0.9);
+          border-color: #999;
       }
 
       #controls-container {
@@ -68,12 +70,29 @@
         align-items: center;
       }
 
+      #toggle-menu {
+      padding: 1px 25px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #666;
+      background-color: rgba(255, 255, 255, 0.8);
+      color: black;
+      transition: all 0.3s ease;
+      }
+
+      #toggle-menu.dark-mode {
+          background-color: rgba(30, 30, 30, 0.9);
+          color: white;
+          border-color: #999;
+      }
+
       /* Styling for the icon */
       #drag-handle i {
-        font-size: 24px;
-        /* Adjust icon size as needed */
-        color: #666;
-        /* Adjust icon color as needed */
+        transition: color 0.3s ease;
+      }
+
+      #drag-handle.dark-mode i {
+          color: white;
       }
 
       #controls {
@@ -692,15 +711,20 @@
       let darkModeIcon = document.querySelector('#toggle-dark-mode i');
 
       function setMode(mode) {
-        if (mode) {
-          controlsElement.classList.add('dark-mode');
-          darkModeIcon.classList.remove('fa-sun');
-          darkModeIcon.classList.add('fa-moon');
-        } else {
-          controlsElement.classList.remove('dark-mode');
-          darkModeIcon.classList.remove('fa-moon');
-          darkModeIcon.classList.add('fa-sun');
-        }
+          const dragHandle = document.getElementById('drag-handle');
+          if (mode) {
+              controlsElement.classList.add('dark-mode');
+              toggleMenuButton.classList.add('dark-mode');
+              dragHandle.classList.add('dark-mode');
+              darkModeIcon.classList.remove('fa-sun');
+              darkModeIcon.classList.add('fa-moon');
+          } else {
+              controlsElement.classList.remove('dark-mode');
+              toggleMenuButton.classList.remove('dark-mode');
+              dragHandle.classList.remove('dark-mode');
+              darkModeIcon.classList.remove('fa-moon');
+              darkModeIcon.classList.add('fa-sun');
+          }
       }
 
       setMode(isDarkMode);
