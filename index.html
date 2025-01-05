@@ -68,6 +68,26 @@
       #controls-container {
         display: flex;
         align-items: center;
+        gap: 10px;
+      }
+
+      #controls-container.reverse {
+          flex-direction: row-reverse;
+      }
+
+
+      #flip-position {
+          background: none;
+          border: none;
+          font-size: 1.4rem;
+          cursor: pointer;
+          padding: 0;
+          color: #333;
+          transition: color 0.3s ease;
+      }
+
+      #flip-position.dark-mode {
+          color: white;
       }
 
       #toggle-menu {
@@ -181,6 +201,9 @@
           <h3>Adjust Settings</h3>
           <button id="toggle-dark-mode">
             <i class="fas fa-sun"></i>
+          </button>
+          <button id="flip-position">
+            <i class="fas fa-exchange-alt"></i>
           </button>
         </div>
         <label for="opacity-slider">Opacity:</label>
@@ -397,6 +420,7 @@
         let rotationVelocity = parseInt(getLocalStorageValue('rotationVelocity'));
         let lineLength = parseFloat(getLocalStorageValue('lineLength'));
         let isDarkMode = getLocalStorageValue('isDarkMode') === 'true';
+        let isReversed = getLocalStorageValue('controlsReversed') === 'true';
         let lineThickness = parseInt(getLocalStorageValue('lineThickness'));
         let radiatingLineCount = parseInt(getLocalStorageValue('radiatingLineCount'));
         let startAngle = parseInt(getLocalStorageValue('startAngle'));
@@ -429,6 +453,7 @@
       // Get the control and toggle button elements
         const controls = document.getElementById('controls');
         const toggleMenuButton = document.getElementById('toggle-menu');
+        const flipPositionButton = document.getElementById('flip-position');
         const controlsContainer = document.getElementById('controls-container');
       
          // Retrieve and apply the saved position of the controls container
@@ -438,9 +463,19 @@
               controlsContainer.setAttribute('data-x', savedPosition.x);
               controlsContainer.setAttribute('data-y', savedPosition.y);
             }
+        // Apply initial position state
+        if (isReversed) {
+            controlsContainer.classList.add('reverse');
+        }
 
       toggleMenuButton.addEventListener('click', () => {
         controls.style.display = controls.style.display === 'block' ? 'none' : 'block';
+      });
+
+      flipPositionButton.addEventListener('click', () => {
+          isReversed = !isReversed;
+          setLocalStorageValue('controlsReversed', isReversed);
+          controlsContainer.classList.toggle('reverse');
       });
 
         // Set initial slider min/max values based on canvas size
@@ -712,16 +747,19 @@
 
       function setMode(mode) {
           const dragHandle = document.getElementById('drag-handle');
+          const flipButton = document.getElementById('flip-position');
           if (mode) {
               controlsElement.classList.add('dark-mode');
               toggleMenuButton.classList.add('dark-mode');
               dragHandle.classList.add('dark-mode');
+              flipButton.classList.add('dark-mode');
               darkModeIcon.classList.remove('fa-sun');
               darkModeIcon.classList.add('fa-moon');
           } else {
               controlsElement.classList.remove('dark-mode');
               toggleMenuButton.classList.remove('dark-mode');
               dragHandle.classList.remove('dark-mode');
+              flipButton.classList.remove('dark-mode');
               darkModeIcon.classList.remove('fa-moon');
               darkModeIcon.classList.add('fa-sun');
           }
