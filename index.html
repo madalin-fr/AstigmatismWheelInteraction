@@ -234,13 +234,6 @@
       <label for="opacity-slider">Opacity:</label>
       <input type="range" id="opacity-slider" min="0.1" max="1.0" step="0.1" value="1.0">
       <br>
-      <label for="line-thickness">Line Thickness:</label>
-      <input type="range" id="line-thickness" min="1" max="40" value="4">
-      <br>
-      <div id="pendulum-size-container" style="display: none;">
-        <label for="pendulum-thickness">Pendulum Thickness:</label>
-        <input type="range" id="pendulum-thickness" min="1" max="500" value="20">
-      </div>
       <div id="radiating-line-count-container">
         <label for="radiating-line-count">Radiating Line Count:</label>
         <input type="range" id="radiating-line-count" min="2" max="72" value="3">
@@ -256,12 +249,7 @@
       <label for="bg-color">Background Color:</label>
       <input type="color" id="bg-color" value="#ff0000">
       <br>
-      <label for="text-size">Text Size:</label>
-      <input type="range" id="text-size" min="8" max="24" value="12">
-      <br>
-      <label for="text-distance">Text Distance:</label>
-      <input type="range" id="text-distance" min="1.0" max="5.0" step="0.1" value="1.5">
-      <br>
+  
       <label for="text-color">Text Color:</label>
       <input type="color" id="text-color" value="#800080">
       <br>
@@ -276,6 +264,19 @@
       <br>
       <label for="arc-offset">Arc Offset:</label>
       <input type="range" id="arc-offset" min="-200" max="1200" value="0">
+      <br>
+      <label for="text-size">Text Size:</label>
+      <input type="range" id="text-size" min="8" max="24" value="12">
+      <br>
+      <label for="text-distance">Text Distance:</label>
+      <input type="range" id="text-distance" min="1.0" max="5.0" step="0.1" value="1.5">
+      <br>
+      <div id="pendulum-size-container" style="display: none;">
+        <label for="pendulum-thickness">Pendulum Thickness:</label>
+        <input type="range" id="pendulum-thickness" min="1" max="500" value="20">
+      </div>
+      <label for="line-thickness">Line Thickness:</label>
+      <input type="range" id="line-thickness" min="1" max="40" value="4">
       <br>
       <label for="line-length">Line Length:</label>
       <input type="range" id="line-length" min="0.1" max="4.0" step="0.1" value="1.0">
@@ -409,7 +410,7 @@
     canvas.height = canvasHeight;
 
     // Initialize pendulum variables
-    let pendulumAngle = 0;
+    let pendulumAngle = parseFloat(getLocalStorageValue('pendulumAngle')) || 0;
     let pendulumRadius = 20; // Size of the rotating circle
 
     // Initialize localStorage values with defaults if they don't exist
@@ -664,24 +665,26 @@
   let hasChanged = false;
 
   if (keys["a"]) {
-    if (mode === "pendulum") {
-      pendulumAngle = (pendulumAngle - rotationVelocity + 360) % 360; // Adjust pendulum angle
-    } else {
-      startAngle = (startAngle - rotationVelocity + 360) % 360; // Adjust start angle for other modes
-      setLocalStorageValue('startAngle', startAngle);
-    }
-    hasChanged = true;
-  }
+        if (mode === "pendulum") {
+          pendulumAngle = (pendulumAngle - rotationVelocity + 360) % 360; // Adjust pendulum angle
+          setLocalStorageValue('pendulumAngle', pendulumAngle);
+        } else {
+          startAngle = (startAngle - rotationVelocity + 360) % 360; // Adjust start angle for other modes
+          setLocalStorageValue('startAngle', startAngle);
+        }
+        hasChanged = true;
+      }
 
-  if (keys["d"]) {
-    if (mode === "pendulum") {
-      pendulumAngle = (pendulumAngle + rotationVelocity) % 360; // Adjust pendulum angle
-    } else {
-      startAngle = (startAngle + rotationVelocity) % 360; // Adjust start angle for other modes
-      setLocalStorageValue('startAngle', startAngle);
-    }
-    hasChanged = true;
-  }
+      if (keys["d"]) {
+        if (mode === "pendulum") {
+          pendulumAngle = (pendulumAngle + rotationVelocity) % 360; // Adjust pendulum angle
+          setLocalStorageValue('pendulumAngle', pendulumAngle);
+        } else {
+          startAngle = (startAngle + rotationVelocity) % 360; // Adjust start angle for other modes
+          setLocalStorageValue('startAngle', startAngle);
+        }
+        hasChanged = true;
+      }
 
   if (keys["m"]) {
     mode = mode === "many" ? "single" : mode === "single" ? "pendulum" : "many"; // Toggle modes
