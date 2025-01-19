@@ -1,1107 +1,1177 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Astigmatism Wheel Interactions</title>
-    <meta charset="utf-8">
-    <meta name="author" content="Jeremy Bornstein">
-    <meta name="copyright" content="© 2023 Jeremy Bornstein. All Rights Reserved.">
-    <meta name="license" content="http://creativecommons.org/licenses/by-nc-sa/4.0/">
-    <style>
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-      }
 
-      div#title {
-        position: absolute;
-        top: 1rem;
-        left: 2rem;
-        text-align: left;
-      }
+<head>
+  <title>Astigmatism Wheel Interactions</title>
+  <meta charset="utf-8">
+  <meta name="author" content="Jeremy Bornstein">
+  <meta name="copyright" content="© 2023 Jeremy Bornstein. All Rights Reserved.">
+  <meta name="license" content="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+    }
 
-      canvas {
-        position: absolute;
-        margin: auto;
-      }
+    div#title {
+      position: absolute;
+      top: 1rem;
+      left: 2rem;
+      text-align: left;
+    }
 
-      div#info {
-        position: absolute;
-        bottom: 1rem;
-        left: 1rem;
-        font-size: 1.5rem;
-      }
+    canvas {
+      position: absolute;
+      margin: auto;
+    }
 
-      p#license {
-        position: absolute;
-        bottom: 1rem;
-        right: 1rem;
-        line-height: 2rem;
-      }
+    div#info {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      font-size: 1.5rem;
+    }
 
-      /* Styling for the new controls container */
-      #controls-container {
-        position: absolute;
-        top: 1rem;
-        left: 1rem;
-        z-index: 10;
-        /* Ensure it's above other elements */
-      }
+    p#license {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      line-height: 2rem;
+    }
 
-      #drag-handle {
-        background-color: rgba(255, 255, 255, 0.8);
-        padding: 8px;
-        border-radius: 4px;
-        border: 1px solid #666;
-        transition: all 0.3s ease;
-      }
+    /* Styling for the new controls container */
+    #controls-container {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      z-index: 10;
+      /* Ensure it's above other elements */
+    }
 
-      #drag-handle.dark-mode {
-        background-color: rgba(30, 30, 30, 0.9);
-        border-color: #999;
-      }
+    #drag-handle {
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #666;
+      transition: all 0.3s ease;
+    }
 
-      #controls-container {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
+    #drag-handle.dark-mode {
+      background-color: rgba(30, 30, 30, 0.9);
+      border-color: #999;
+    }
 
-      #controls-container.reverse {
-        flex-direction: row-reverse;
-      }
+    #controls-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-      #flip-position {
-        background: none;
-        border: none;
-        font-size: 1.4rem;
-        cursor: pointer;
-        padding: 0;
-        color: #333;
-        transition: color 0.3s ease;
-      }
+    #controls-container.reverse {
+      flex-direction: row-reverse;
+    }
 
-      #flip-position.dark-mode {
-        color: white;
-      }
+    #flip-position {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      padding: 0;
+      color: #333;
+      transition: color 0.3s ease;
+    }
 
-      #toggle-menu {
-        padding: 1px 25px;
-        border-radius: 4px;
-        cursor: pointer;
-        border: 1px solid #666;
-        background-color: rgba(255, 255, 255, 0.8);
-        color: black;
-        transition: all 0.3s ease;
-      }
+    #flip-position.dark-mode {
+      color: white;
+    }
 
-      #toggle-menu.dark-mode {
-        background-color: rgba(30, 30, 30, 0.9);
-        color: white;
-        border-color: #999;
-      }
+    #toggle-menu {
+      padding: 1px 25px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #666;
+      background-color: rgba(255, 255, 255, 0.8);
+      color: black;
+      transition: all 0.3s ease;
+    }
 
-      /* Styling for the icon */
-      #drag-handle i {
-        transition: color 0.3s ease;
-      }
+    #toggle-menu.dark-mode {
+      background-color: rgba(30, 30, 30, 0.9);
+      color: white;
+      border-color: #999;
+    }
 
-      #drag-handle.dark-mode i {
-        color: white;
-      }
+    /* Styling for the icon */
+    #drag-handle i {
+      transition: color 0.3s ease;
+    }
 
-      #controls {
-        display: none;
-        position: absolute;
-        top: 35px;
-        /* Adjust as needed */
-        left: 0;
-        background-color: rgba(255, 255, 255, 0.8);
-/* Semi-transparent white */
-padding: 1rem;
-border-radius: 8px;
-max-height: calc(100vh - 4rem);
-overflow-y: auto;
-width: 200px;
-opacity: 1;
-transition: background-color 0.3s ease, opacity 0.3s ease;
-color: black;
-}
+    #drag-handle.dark-mode i {
+      color: white;
+    }
 
-#toggle-autopilot-1,
-  #toggle-autopilot-2 {
-    padding: 2px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    border: 1px solid #666;
-    background-color: rgba(255, 255, 255, 0.8);
-    color: black;
-    transition: all 0.3s ease;
-    margin-bottom: 5px;
-  }
+    #controls {
+      display: none;
+      position: absolute;
+      top: 35px;
+      /* Adjust as needed */
+      left: 0;
+      background-color: rgba(255, 255, 255, 0.8);
+      /* Semi-transparent white */
+      padding: 1rem;
+      border-radius: 8px;
+      max-height: calc(100vh - 4rem);
+      overflow-y: auto;
+      width: 200px;
+      opacity: 1;
+      transition: background-color 0.3s ease, opacity 0.3s ease;
+      color: black;
+    }
 
-  #toggle-autopilot-1.dark-mode,
-  #toggle-autopilot-2.dark-mode {
-    background-color: rgba(30, 30, 30, 0.9);
-    color: white;
-    border-color: #999;
-  }
+    #toggle-autopilot-1,
+    #toggle-autopilot-2 {
+      padding: 2px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #666;
+      background-color: rgba(255, 255, 255, 0.8);
+      color: black;
+      transition: all 0.3s ease;
+      margin-bottom: 5px;
+    }
 
-  #controls.dark-mode {
-    background-color: rgba(30, 30, 30, 0.9);
-    /* Dark background */
-    color: white;
-  }
+    #toggle-autopilot-1.dark-mode,
+    #toggle-autopilot-2.dark-mode {
+      background-color: rgba(30, 30, 30, 0.9);
+      color: white;
+      border-color: #999;
+    }
 
-  #controls.dark-mode input[type='color'] {
-    background-color: white;
-  }
+    #controls.dark-mode {
+      background-color: rgba(30, 30, 30, 0.9);
+      /* Dark background */
+      color: white;
+    }
 
-  #controls.dark-mode input[type='range'] {
-    background-color: white;
-  }
+    #controls.dark-mode input[type='color'] {
+      background-color: white;
+    }
 
-  #controls h3 {
-    margin-right: 10px;
-  }
+    #controls.dark-mode input[type='range'] {
+      background-color: white;
+    }
 
-  #controls #toggle-dark-mode {
-    background: none;
-    border: none;
-    font-size: 1.4rem;
-    padding: 0px;
-    cursor: pointer;
-    margin: 0px;
-    position: relative;
-  }
+    #controls h3 {
+      margin-right: 10px;
+    }
 
-  #controls #toggle-dark-mode i {
-    color: #333;
-    transition: all 0.3s ease-in-out;
-  }
+    #controls #toggle-dark-mode {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      padding: 0px;
+      cursor: pointer;
+      margin: 0px;
+      position: relative;
+    }
 
-  #controls #toggle-dark-mode i.fa-sun {
-    color: #FFD700;
-    /* Golden yellow for sun */
-    text-shadow: 0 0 2px #fff;
-    /* Add a slight white shadow/halo */
-  }
+    #controls #toggle-dark-mode i {
+      color: #333;
+      transition: all 0.3s ease-in-out;
+    }
 
-  #controls.dark-mode #toggle-dark-mode i.fa-moon {
-    color: #FFFF80;
-  }
+    #controls #toggle-dark-mode i.fa-sun {
+      color: #FFD700;
+      /* Golden yellow for sun */
+      text-shadow: 0 0 2px #fff;
+      /* Add a slight white shadow/halo */
+    }
 
-  #controls.dark-mode #toggle-dark-mode i.fa-sun {
-    color: #FFFF80;
-  }
+    #controls.dark-mode #toggle-dark-mode i.fa-moon {
+      color: #FFFF80;
+    }
 
-  #controls #opacity-slider {
-    width: calc(100% - 2rem);
-  }
-</style>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    #controls.dark-mode #toggle-dark-mode i.fa-sun {
+      color: #FFFF80;
+    }
+
+    #controls #opacity-slider {
+      width: calc(100% - 2rem);
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
 </head>
+
 <body>
-<canvas id="canvas" width="6400" height="3153"></canvas>
-<!-- Controls container -->
-<div id="controls-container" class="draggable">
-<div id="drag-handle">
-<i class="fas fa-arrows-alt"></i>
-</div>
-<button id="toggle-menu">Show Controls</button>
-<div id="controls">
-<div style="display:flex; justify-content:space-between; align-items:center">
-<h3>Adjust Settings</h3>
-<button id="toggle-dark-mode">
-<i class="fas fa-sun"></i>
-</button>
-<button id="flip-position">
-<i class="fas fa-exchange-alt"></i>
-</button>
-</div>
-<label for="visualization-mode">Mode:</label>
-<select id="visualization-mode" style="width: 100%; margin-bottom: 10px;">
-<option value="many">Many Lines</option>
-<option value="single">Single Line</option>
-<option value="pendulum">Pendulum</option>
-</select>
-<br>
-<label for="opacity-slider">Opacity:</label>
-<input type="range" id="opacity-slider" min="0.1" max="1.0" step="0.1" value="1.0">
-<br>
-<label for="line-thickness">Line Thickness:</label>
-<input type="range" id="line-thickness" min="1" max="40" value="4">
-<br>
-<label for="radiating-line-count">Radiating Line Count:</label>
-<input type="range" id="radiating-line-count" min="2" max="72" value="3">
-<br>
-<label for="line-color">Line Color:</label>
-<input type="color" id="line-color" value="#7B68EE">
-<br>
-<label for="special-line-color">Special Line Color:</label>
-<input type="color" id="special-line-color" value="#FFFFFF">
-<br>
-<label for="bg-color">Background Color:</label>
-<input type="color" id="bg-color" value="#ff0000">
-<br>
-        <label for="text-size">Text Size:</label>
-        <input type="range" id="text-size" min="8" max="24" value="12">
-        <br>
-        <label for="text-distance">Text Distance:</label>
-        <input type="range" id="text-distance" min="1.0" max="3.0" step="0.1" value="1.5">
-        <br>
-<label for="text-color">Text Color:</label>
-<input type="color" id="text-color" value="#800080">
-<br>
-<label for="circle-outline-color">Circle Outline Color</label>
-<input type="color" id="circle-outline-color" value="#ffffff">
-<br>
-<label for="horizontal-offset">Horizontal Offset:</label>
-<input type="range" id="horizontal-offset" min="-1200" max="1200" value="0">
-<br>
-<label for="vertical-offset">Vertical Offset:</label>
-<input type="range" id="vertical-offset" min="-1200" max="1200" value="0">
-<br>
-<label for="arc-offset">Arc Offset:</label>
-<input type="range" id="arc-offset" min="-200" max="1200" value="0">
-<br>
-<label for="line-length">Line Length:</label>
-<input type="range" id="line-length" min="0.1" max="2.0" step="0.1" value="1.0">
-<br>
-<label for="rotation-velocity">Rotation Velocity:</label>
-<input type="range" id="rotation-velocity" min="1" max="10" value="1">
-<br>
-<label for="autopilot-speed">Autopilot Speed:</label>
-<input type="range" id="autopilot-speed" min="5" max="40" value="10">
-<br>
-<!-- Autopilot Toggles -->
-<div style="margin-bottom: 10px;">
-<button id="toggle-autopilot-1">Start Autopilot 1</button>
-</div>
-<div>
-<button id="toggle-autopilot-2">Start Autopilot 2</button>
-</div>
-<input type="checkbox" id="rotate-clockwise" checked> Rotate Clockwise <br>
-<input type="checkbox" id="rotate-counterclockwise"> Rotate Counter-Clockwise <br>
-</div>
-</div>
-<script>
-function standardize_color(str) {
-var ctx = document.createElement('canvas').getContext('2d');
-ctx.fillStyle = str;
-return ctx.fillStyle;
-}
-
-function setBackgroundColor(color) {
-    try {
-      // Attempt to standardize the color string first
-      const standardizedColor = standardize_color(color);
-      document.body.style.backgroundColor = standardizedColor;
-    } catch (error) {
-      console.error("Error setting background color:", error, "Using default orange.");
-      document.body.style.backgroundColor = "orange"; // Fallback
+  <canvas id="canvas" width="6400" height="3153"></canvas>
+  <!-- Controls container -->
+  <div id="controls-container" class="draggable">
+    <div id="drag-handle">
+      <i class="fas fa-arrows-alt"></i>
+    </div>
+    <button id="toggle-menu">Show Controls</button>
+    <div id="controls">
+      <div style="display:flex; justify-content:space-between; align-items:center">
+        <h3>Adjust Settings</h3>
+        <button id="toggle-dark-mode">
+          <i class="fas fa-sun"></i>
+        </button>
+        <button id="flip-position">
+          <i class="fas fa-exchange-alt"></i>
+        </button>
+      </div>
+      <label for="visualization-mode">Mode:</label>
+      <select id="visualization-mode" style="width: 100%; margin-bottom: 10px;">
+        <option value="many">Many Lines</option>
+        <option value="single">Single Line</option>
+        <option value="pendulum">Pendulum</option>
+      </select>
+      <br>
+      <label for="opacity-slider">Opacity:</label>
+      <input type="range" id="opacity-slider" min="0.1" max="1.0" step="0.1" value="1.0">
+      <br>
+      <label for="line-thickness">Line Thickness:</label>
+      <input type="range" id="line-thickness" min="1" max="40" value="4">
+      <br>
+      <div id="radiating-line-count-container">
+        <label for="radiating-line-count">Radiating Line Count:</label>
+        <input type="range" id="radiating-line-count" min="2" max="72" value="3">
+      </div>
+      <div id="line-color-container">
+        <label for="line-color">Line Color:</label>
+        <input type="color" id="line-color" value="#7B68EE">
+      </div>
+      <div id="pendulum-size-container" style="display: none;">
+        <label for="pendulum-thickness">Pendulum Thickness:</label>
+        <input type="range" id="pendulum-thickness" min="1" max="500" value="20">
+      </div>
+      <label for="special-line-color" id="special-line-color-label">Special Line Color:</label>
+      <input type="color" id="special-line-color" value="#FFFFFF">
+      <br>
+      <label for="bg-color">Background Color:</label>
+      <input type="color" id="bg-color" value="#ff0000">
+      <br>
+      <label for="text-size">Text Size:</label>
+      <input type="range" id="text-size" min="8" max="24" value="12">
+      <br>
+      <label for="text-distance">Text Distance:</label>
+      <input type="range" id="text-distance" min="1.0" max="5.0" step="0.1" value="1.5">
+      <br>
+      <label for="text-color">Text Color:</label>
+      <input type="color" id="text-color" value="#800080">
+      <br>
+      <label for="circle-outline-color">Circle Outline Color</label>
+      <input type="color" id="circle-outline-color" value="#ffffff">
+      <br>
+      <label for="horizontal-offset">Horizontal Offset:</label>
+      <input type="range" id="horizontal-offset" min="-1200" max="1200" value="0">
+      <br>
+      <label for="vertical-offset">Vertical Offset:</label>
+      <input type="range" id="vertical-offset" min="-1200" max="1200" value="0">
+      <br>
+      <label for="arc-offset">Arc Offset:</label>
+      <input type="range" id="arc-offset" min="-200" max="1200" value="0">
+      <br>
+      <label for="line-length">Line Length:</label>
+      <input type="range" id="line-length" min="0.1" max="4.0" step="0.1" value="1.0">
+      <br>
+      <label for="rotation-velocity">Rotation Velocity:</label>
+      <input type="range" id="rotation-velocity" min="1" max="10" value="1">
+      <br>
+      <label for="autopilot-speed">Autopilot Speed:</label>
+      <input type="range" id="autopilot-speed" min="5" max="40" value="10">
+      <br>
+      <!-- Autopilot Toggles -->
+      <div style="margin-bottom: 10px;">
+        <button id="toggle-autopilot-1">Start Autopilot 1</button>
+      </div>
+      <div>
+        <button id="toggle-autopilot-2">Start Autopilot 2</button>
+      </div>
+      <input type="checkbox" id="rotate-clockwise" checked> Rotate Clockwise <br>
+      <input type="checkbox" id="rotate-counterclockwise"> Rotate Counter-Clockwise <br>
+    </div>
+  </div>
+  <script>
+    function standardize_color(str) {
+      var ctx = document.createElement('canvas').getContext('2d');
+      ctx.fillStyle = str;
+      return ctx.fillStyle;
     }
-  }
-  // Modify the initialization section
-  function initializeBackgroundColor() {
-    const savedBgColor = getLocalStorageValue('bgColor');
-    if (savedBgColor) {
-      bgColor = savedBgColor; // Apply saved color to variable
-      setBackgroundColor(bgColor);
-      document.getElementById('bg-color').value = bgColor; // Update the color picker
-    } else {
-      bgColor = 'orange'; // Set default color
-      setBackgroundColor(bgColor);
+
+    function setBackgroundColor(color) {
+      try {
+        // Attempt to standardize the color string first
+        const standardizedColor = standardize_color(color);
+        document.body.style.backgroundColor = standardizedColor;
+      } catch (error) {
+        console.error("Error setting background color:", error, "Using default orange.");
+        document.body.style.backgroundColor = "orange"; // Fallback
+      }
     }
-  }
-  // Call this immediately after your localStorage initialization
-  document.addEventListener('DOMContentLoaded', function() {
-    initializeBackgroundColor();
-  });
-  // Add a window load event listener as a backup
-  window.addEventListener('load', function() {
-    initializeBackgroundColor();
-  });
-  interact('.draggable').draggable({
-    // Restrict dragging within the window
-    modifiers: [
-      interact.modifiers.restrictRect({
-        restriction: 'parent',
-        endOnly: true
-      })
-    ],
-    // Enable autoScroll for smoother dragging near edges
-    autoScroll: true,
-    // Call this function on every dragmove event
-    listeners: {
-      move: dragMoveListener,
-      // you can also add listeners for 'start' and 'end'
-    },
-    // If using a drag handle, specify it here:
-    allowFrom: '#drag-handle'
-  });
-
-  function dragMoveListener(event) {
-    var target = event.target;
-    // keep the dragged position in the data-x/data-y attributes
-    var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-    var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-    // translate the element
-    target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
-    // update the position attributes
-    target.setAttribute('data-x', x);
-    target.setAttribute('data-y', y);
-    // Save the new position to localStorage
-    setLocalStorageValue('controlsPosition', JSON.stringify({
-      x: x,
-      y: y
-    }));
-  }
-  // --- Local Storage Functions ---
-  function getLocalStorageValue(k) {
-    try {
-      return localStorage.getItem(k);
-    } catch (error) {
-      return null;
+    // Modify the initialization section
+    function initializeBackgroundColor() {
+      const savedBgColor = getLocalStorageValue('bgColor');
+      if (savedBgColor) {
+        bgColor = savedBgColor; // Apply saved color to variable
+        setBackgroundColor(bgColor);
+        document.getElementById('bg-color').value = bgColor; // Update the color picker
+      } else {
+        bgColor = 'orange'; // Set default color
+        setBackgroundColor(bgColor);
+      }
     }
-  }
+    // Call this immediately after your localStorage initialization
+    document.addEventListener('DOMContentLoaded', function () {
+      initializeBackgroundColor();
+    });
+    // Add a window load event listener as a backup
+    window.addEventListener('load', function () {
+      initializeBackgroundColor();
+    });
+    interact('.draggable').draggable({
+      // Restrict dragging within the window
+      modifiers: [
+        interact.modifiers.restrictRect({
+          restriction: 'parent',
+          endOnly: true
+        })
+      ],
+      // Enable autoScroll for smoother dragging near edges
+      autoScroll: true,
+      // Call this function on every dragmove event
+      listeners: {
+        move: dragMoveListener,
+        // you can also add listeners for 'start' and 'end'
+      },
+      // If using a drag handle, specify it here:
+      allowFrom: '#drag-handle'
+    });
 
-  function setLocalStorageValue(k, v) {
-    try {
-      localStorage.setItem(k, v);
-    } catch (error) {
-      // ignore
+    function dragMoveListener(event) {
+      var target = event.target;
+      // keep the dragged position in the data-x/data-y attributes
+      var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+      var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+      // translate the element
+      target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+      // update the position attributes
+      target.setAttribute('data-x', x);
+      target.setAttribute('data-y', y);
+      // Save the new position to localStorage
+      setLocalStorageValue('controlsPosition', JSON.stringify({
+        x: x,
+        y: y
+      }));
     }
-  }
-
-  function initializeLocalStorage(key, defaultValue) {
-    if (getLocalStorageValue(key) === null) {
-      setLocalStorageValue(key, defaultValue);
+    // --- Local Storage Functions ---
+    function getLocalStorageValue(k) {
+      try {
+        return localStorage.getItem(k);
+      } catch (error) {
+        return null;
+      }
     }
-  }
-  // --- Utility Functions ---
-  function angleName(num) {
-    if (num >= 90 && num < 270) return (num - 90).toFixed(0) + "°";
-    if (num >= 270 && num < 360) return (num - 270).toFixed(0) + "°";
-    if (num >= 0 && num < 90) return (num + 90).toFixed(0) + "°";
-  }
-  // --- Initialization and Setup ---
-  let canvas = document.getElementById("canvas");
-  let context = canvas.getContext("2d");
-  let canvasHeight = window.innerHeight;
-  let canvasWidth = window.innerWidth;
-  let radius = Math.min(canvasWidth, canvasHeight) / 4;
-  let textSize = parseInt(getLocalStorageValue('textSize')); // Add text size
-  let textDistance = parseFloat(getLocalStorageValue('textDistance')); 
-  canvas.width = canvasWidth;
-  canvas.height = canvasHeight;
 
-  // Initialize pendulum variables
-  let pendulumAngle = 0;
-  let pendulumRadius = 20; // Size of the rotating circle
+    function setLocalStorageValue(k, v) {
+      try {
+        localStorage.setItem(k, v);
+      } catch (error) {
+        // ignore
+      }
+    }
 
-  // Initialize localStorage values with defaults if they don't exist
-  const defaultSettings = {
-    'mode': 'many',
-    'color': standardize_color('MediumSlateBlue'),
-    'color2': standardize_color('blue'),
-    'color3': standardize_color('blue'),
-    'bgColor': standardize_color('orange'),
-    'textColor': standardize_color('purple'),
-    'textSize': '12',
-    'textDistance': '1.5',
-    'startAngle': '0',
-    'horizontalOffset': '0',
-    'verticalOffset': '0',
-    'arcOffset': '0',
-    'rotationVelocity': '1',
-    'lineLength': '1.0',
-    'isDarkMode': 'false',
-    'isReversed': 'false',
-    'lineThickness': '4',
-    'radiatingLineCount': '3',
-    'autopilotSpeed': '10',
-    'rotateClockwise': 'true',
-    'rotateCounterclockwise': 'false',
-    'opacity': '1.0',
-    'controlsPosition': JSON.stringify({
-      x: 0,
-      y: 0
-    })
-  };
-  for (const key in defaultSettings) {
-    initializeLocalStorage(key, defaultSettings[key]);
-  }
-  // Retrieve values from localStorage
-  let mode = getLocalStorageValue("mode");
-  let color = getLocalStorageValue("color");
-  let color2 = getLocalStorageValue("color2");
-  let color3 = getLocalStorageValue("color3");
-  let bgColor = getLocalStorageValue("bgColor");
-  let textColor = getLocalStorageValue("textColor");
-  let horizontalOffset = parseInt(getLocalStorageValue('horizontalOffset'));
-  let verticalOffset = parseInt(getLocalStorageValue('verticalOffset'));
-  let arcOffset = parseInt(getLocalStorageValue('arcOffset'));
-  let rotationVelocity = parseInt(getLocalStorageValue('rotationVelocity'));
-  let lineLength = parseFloat(getLocalStorageValue('lineLength'));
-  let isDarkMode = getLocalStorageValue('isDarkMode') === 'true';
-  let isReversed = getLocalStorageValue('isReversed') === 'true';
-  let lineThickness = parseInt(getLocalStorageValue('lineThickness'));
-  let radiatingLineCount = parseInt(getLocalStorageValue('radiatingLineCount'));
-  let startAngle = parseInt(getLocalStorageValue('startAngle'));
-  let autopilotSpeed = parseInt(getLocalStorageValue('autopilotSpeed'));
-  let rotateClockwise = getLocalStorageValue('rotateClockwise') === 'true';
-  let rotateCounterclockwise = getLocalStorageValue('rotateCounterclockwise') === 'true';
-  let opacity = parseFloat(getLocalStorageValue('opacity'));
-  // Apply retrieved values to the elements
-  document.getElementById('line-color').value = color;
-  document.getElementById('special-line-color').value = color2;
-  document.getElementById('circle-outline-color').value = color3;
-  // document.getElementById('bg-color').value = bgColor; // Moved to initializeBackgroundColor
-  document.getElementById('text-color').value = textColor;
-  document.getElementById('line-thickness').value = lineThickness;
-  document.getElementById('radiating-line-count').value = radiatingLineCount;
-  document.getElementById('horizontal-offset').value = horizontalOffset;
-  document.getElementById('vertical-offset').value = verticalOffset;
-  document.getElementById('arc-offset').value = arcOffset;
-  document.getElementById('line-length').value = lineLength;
-  document.getElementById('text-size').value = textSize;
-  document.getElementById('text-distance').value = textDistance;
-  document.getElementById('rotation-velocity').value = rotationVelocity;
-  document.getElementById('autopilot-speed').value = autopilotSpeed;
-  document.getElementById('rotate-clockwise').checked = rotateClockwise;
-  document.getElementById('rotate-counterclockwise').checked = rotateCounterclockwise;
-  document.getElementById('opacity-slider').value = opacity;
-  document.getElementById('visualization-mode').value = mode;
-  // --- Controls and Event Listeners ---
-  // Get the control and toggle button elements
-  const controls = document.getElementById('controls');
-  const toggleMenuButton = document.getElementById('toggle-menu');
-  const flipPositionButton = document.getElementById('flip-position');
-  const controlsContainer = document.getElementById('controls-container');
-  // Retrieve and apply the saved position of the controls container
-  const savedPosition = JSON.parse(getLocalStorageValue('controlsPosition'));
-  if (savedPosition) {
-    controlsContainer.style.transform = `translate(${savedPosition.x}px, ${savedPosition.y}px)`;
-    controlsContainer.setAttribute('data-x', savedPosition.x);
-    controlsContainer.setAttribute('data-y', savedPosition.y);
-  }
-  // Apply initial position state
-  if (isReversed) {
-    controlsContainer.classList.add('reverse');
-  }
-  toggleMenuButton.addEventListener('click', () => {
-    controls.style.display = controls.style.display === 'block' ? 'none' : 'block';
-  });
-  flipPositionButton.addEventListener('click', () => {
-    isReversed = !isReversed;
-    setLocalStorageValue('controlsReversed', isReversed);
-    controlsContainer.classList.toggle('reverse');
-  });
-  // Set initial slider min/max values based on canvas size
-  const horizontalOffsetSlider = document.getElementById('horizontal-offset');
-  const verticalOffsetSlider = document.getElementById('vertical-offset');
-
-  function setSliderLimits() {
-    const maxHorizontal = Math.floor(canvasWidth / 2) * 0.70;
-    const maxVertical = Math.floor(canvasHeight / 2) * 0.70;
-    horizontalOffsetSlider.min = -maxHorizontal;
-    horizontalOffsetSlider.max = maxHorizontal;
-    verticalOffsetSlider.min = -maxVertical;
-    verticalOffsetSlider.max = maxVertical;
-    horizontalOffsetSlider.value = horizontalOffset;
-    verticalOffsetSlider.value = verticalOffset;
-  }
-  setSliderLimits();
-  // Event listeners for input changes
-  document.getElementById('visualization-mode').addEventListener('change', function() {
-    mode = this.value;
-    setLocalStorageValue('mode', mode);
-    draw();
-  });
-  document.getElementById('horizontal-offset').addEventListener('input', function() {
-    horizontalOffset = parseInt(this.value);
-    setLocalStorageValue('horizontalOffset', horizontalOffset);
-    draw();
-  });
-  document.getElementById('vertical-offset').addEventListener('input', function() {
-    verticalOffset = parseInt(this.value);
-    setLocalStorageValue('verticalOffset', verticalOffset);
-    draw();
-  });
-  document.getElementById('arc-offset').addEventListener('input', function() {
-    arcOffset = parseInt(this.value);
-    setLocalStorageValue('arcOffset', arcOffset);
-    draw();
-  });
-  document.getElementById('line-length').addEventListener('input', function() {
-    lineLength = parseFloat(this.value);
-    setLocalStorageValue('lineLength', lineLength);
-    draw();
-  });
-  document.getElementById('rotation-velocity').addEventListener('input', function() {
-    rotationVelocity = parseInt(this.value);
-    setLocalStorageValue('rotationVelocity', rotationVelocity);
-    draw();
-  });
-  document.getElementById('line-thickness').addEventListener('input', function() {
-    lineThickness = this.value;
-    setLocalStorageValue('lineThickness', lineThickness);
-    draw();
-  });
-  document.getElementById('radiating-line-count').addEventListener('input', function() {
-    radiatingLineCount = this.value;
-    setLocalStorageValue('radiatingLineCount', radiatingLineCount);
-    draw();
-  });
-  document.getElementById('line-color').addEventListener('input', function() {
-    color = this.value;
-    setLocalStorageValue('color', color);
-    draw();
-  });
-  document.getElementById('special-line-color').addEventListener('input', function() {
-    color2 = this.value;
-    setLocalStorageValue('color2', color2);
-    draw();
-  });
-  document.getElementById('text-size').addEventListener('input', function() {
-  textSize = parseInt(this.value);
-  setLocalStorageValue('textSize', textSize);
-  draw();
-});
-
-document.getElementById('text-distance').addEventListener('input', function() {
-  textDistance = parseFloat(this.value);
-  setLocalStorageValue('textDistance', textDistance);
-  draw();
-});
-  document.getElementById('bg-color').addEventListener('input', function() {
-    bgColor = this.value;
-    setLocalStorageValue('bgColor', bgColor);
-    setBackgroundColor(bgColor);
-  });
-  document.getElementById('text-color').addEventListener('input', function() {
-    textColor = this.value;
-    setLocalStorageValue('textColor', textColor);
-    draw();
-  });
-  document.getElementById('circle-outline-color').addEventListener('input', function() {
-    color3 = this.value;
-    setLocalStorageValue('color3', color3);
-    draw();
-  });
-  document.getElementById('opacity-slider').addEventListener('input', function() {
-    opacity = parseFloat(this.value);
-    setLocalStorageValue('opacity', opacity);
-    controls.style.opacity = opacity;
-  });
-  // --- Resize and Key Event Handling ---
-  window.addEventListener("resize", function() {
-    canvasWidth = window.innerWidth;
-    canvasHeight = window.innerHeight;
+    function initializeLocalStorage(key, defaultValue) {
+      if (getLocalStorageValue(key) === null) {
+        setLocalStorageValue(key, defaultValue);
+      }
+    }
+    // --- Utility Functions ---
+    function angleName(num) {
+      if (num >= 90 && num < 270) return (num - 90).toFixed(0) + "°";
+      if (num >= 270 && num < 360) return (num - 270).toFixed(0) + "°";
+      if (num >= 0 && num < 90) return (num + 90).toFixed(0) + "°";
+    }
+    // --- Initialization and Setup ---
+    let canvas = document.getElementById("canvas");
+    let context = canvas.getContext("2d");
+    let canvasHeight = window.innerHeight;
+    let canvasWidth = window.innerWidth;
+    let radius = Math.min(canvasWidth, canvasHeight) / 4;
+    let textSize = parseInt(getLocalStorageValue('textSize')); // Add text size
+    let textDistance = parseFloat(getLocalStorageValue('textDistance'));
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
+
+    // Initialize pendulum variables
+    let pendulumAngle = 0;
+    let pendulumRadius = 20; // Size of the rotating circle
+
+    // Initialize localStorage values with defaults if they don't exist
+    const defaultSettings = {
+      'mode': 'many',
+      'color': standardize_color('MediumSlateBlue'),
+      'color2': standardize_color('blue'),
+      'color3': standardize_color('blue'),
+      'bgColor': standardize_color('orange'),
+      'textColor': standardize_color('purple'),
+      'textSize': '12',
+      'pendulumThickness': '20',
+      'textDistance': '1.5',
+      'startAngle': '0',
+      'horizontalOffset': '0',
+      'verticalOffset': '0',
+      'arcOffset': '0',
+      'rotationVelocity': '1',
+      'lineLength': '1.0',
+      'isDarkMode': 'false',
+      'isReversed': 'false',
+      'lineThickness': '4',
+      'radiatingLineCount': '3',
+      'autopilotSpeed': '10',
+      'rotateClockwise': 'true',
+      'rotateCounterclockwise': 'false',
+      'opacity': '1.0',
+      'controlsPosition': JSON.stringify({
+        x: 0,
+        y: 0
+      })
+    };
+    for (const key in defaultSettings) {
+      initializeLocalStorage(key, defaultSettings[key]);
+    }
+    // Retrieve values from localStorage
+    let mode = getLocalStorageValue("mode");
+    let color = getLocalStorageValue("color");
+    let color2 = getLocalStorageValue("color2");
+    let color3 = getLocalStorageValue("color3");
+    let bgColor = getLocalStorageValue("bgColor");
+    let textColor = getLocalStorageValue("textColor");
+    let pendulumThickness = parseInt(getLocalStorageValue('pendulumThickness'));
+    let horizontalOffset = parseInt(getLocalStorageValue('horizontalOffset'));
+    let verticalOffset = parseInt(getLocalStorageValue('verticalOffset'));
+    let arcOffset = parseInt(getLocalStorageValue('arcOffset'));
+    let rotationVelocity = parseInt(getLocalStorageValue('rotationVelocity'));
+    let lineLength = parseFloat(getLocalStorageValue('lineLength'));
+    let isDarkMode = getLocalStorageValue('isDarkMode') === 'true';
+    let isReversed = getLocalStorageValue('isReversed') === 'true';
+    let lineThickness = parseInt(getLocalStorageValue('lineThickness'));
+    let radiatingLineCount = parseInt(getLocalStorageValue('radiatingLineCount'));
+    let startAngle = parseInt(getLocalStorageValue('startAngle'));
+    let autopilotSpeed = parseInt(getLocalStorageValue('autopilotSpeed'));
+    let rotateClockwise = getLocalStorageValue('rotateClockwise') === 'true';
+    let rotateCounterclockwise = getLocalStorageValue('rotateCounterclockwise') === 'true';
+    let opacity = parseFloat(getLocalStorageValue('opacity'));
+    // Apply retrieved values to the elements
+    document.getElementById('line-color').value = color;
+    document.getElementById('special-line-color').value = color2;
+    document.getElementById('circle-outline-color').value = color3;
+    // document.getElementById('bg-color').value = bgColor; // Moved to initializeBackgroundColor
+    document.getElementById('text-color').value = textColor;
+    document.getElementById('line-thickness').value = lineThickness;
+    document.getElementById('radiating-line-count').value = radiatingLineCount;
+    document.getElementById('horizontal-offset').value = horizontalOffset;
+    document.getElementById('vertical-offset').value = verticalOffset;
+    document.getElementById('arc-offset').value = arcOffset;
+    document.getElementById('line-length').value = lineLength;
+    document.getElementById('text-size').value = textSize;
+    document.getElementById('pendulum-thickness').value = pendulumThickness;
+    document.getElementById('text-distance').value = textDistance;
+    document.getElementById('rotation-velocity').value = rotationVelocity;
+    document.getElementById('autopilot-speed').value = autopilotSpeed;
+    document.getElementById('rotate-clockwise').checked = rotateClockwise;
+    document.getElementById('rotate-counterclockwise').checked = rotateCounterclockwise;
+    document.getElementById('opacity-slider').value = opacity;
+    document.getElementById('visualization-mode').value = mode;
+    // --- Controls and Event Listeners ---
+    // Get the control and toggle button elements
+    const controls = document.getElementById('controls');
+    const toggleMenuButton = document.getElementById('toggle-menu');
+    const flipPositionButton = document.getElementById('flip-position');
+    const controlsContainer = document.getElementById('controls-container');
+    const radiatingLineCountContainer = document.getElementById('radiating-line-count-container');
+    // Retrieve and apply the saved position of the controls container
+    const savedPosition = JSON.parse(getLocalStorageValue('controlsPosition'));
+    if (savedPosition) {
+      controlsContainer.style.transform = `translate(${savedPosition.x}px, ${savedPosition.y}px)`;
+      controlsContainer.setAttribute('data-x', savedPosition.x);
+      controlsContainer.setAttribute('data-y', savedPosition.y);
+    }
+    // Apply initial position state
+    if (isReversed) {
+      controlsContainer.classList.add('reverse');
+    }
+    toggleMenuButton.addEventListener('click', () => {
+      controls.style.display = controls.style.display === 'block' ? 'none' : 'block';
+    });
+    flipPositionButton.addEventListener('click', () => {
+      isReversed = !isReversed;
+      setLocalStorageValue('controlsReversed', isReversed);
+      controlsContainer.classList.toggle('reverse');
+    });
+    // Set initial slider min/max values based on canvas size
+    const horizontalOffsetSlider = document.getElementById('horizontal-offset');
+    const verticalOffsetSlider = document.getElementById('vertical-offset');
+
+    function setSliderLimits() {
+      const maxHorizontal = Math.floor(canvasWidth / 2) * 0.70;
+      const maxVertical = Math.floor(canvasHeight / 2) * 0.70;
+      horizontalOffsetSlider.min = -maxHorizontal;
+      horizontalOffsetSlider.max = maxHorizontal;
+      verticalOffsetSlider.min = -maxVertical;
+      verticalOffsetSlider.max = maxVertical;
+      horizontalOffsetSlider.value = horizontalOffset;
+      verticalOffsetSlider.value = verticalOffset;
+    }
     setSliderLimits();
-    draw();
-  });
-  let pressedKeys = {};
-  window.addEventListener("keydown", function(event) {
-    pressedKeys[event.key] = true;
-    updateKeys(pressedKeys);
-  });
-  window.addEventListener("keyup", function(event) {
-    delete pressedKeys[event.key];
-    updateKeys(pressedKeys);
-  });
+    // Function to toggle visibility of line count
+    function toggleLineCountVisibility() {
+  const radiatingLineCountContainer = document.getElementById('radiating-line-count-container');
+  const lineColorContainer = document.getElementById('line-color-container');
+  const pendulumSizeContainer = document.getElementById('pendulum-size-container'); // New
 
-  function updateKeys(keys) {
-    let offsetStep = 10;
-    let hasChanged = false;
-    if (keys["a"]) {
-      startAngle = (startAngle - rotationVelocity + 360) % 360;
-      setLocalStorageValue('startAngle', startAngle);
-      hasChanged = true;
-    }
-    if (keys["d"]) {
-      startAngle = (startAngle + rotationVelocity) % 360;
-      setLocalStorageValue('startAngle', startAngle);
-      hasChanged = true;
-    }
-    if (keys["m"]) {
-  mode = mode === "many" ? "single" : "many";
-  if (mode === "single") {
-    mode = "pendulum";
-  } else if (mode === "pendulum"){
-    mode = "many";
+  if (mode === 'many') {
+    radiatingLineCountContainer.style.display = 'block';
+    lineColorContainer.style.display = 'block';
+    pendulumSizeContainer.style.display = 'none'; // Hide in "many" mode
+  } else if (mode === 'single') {
+    radiatingLineCountContainer.style.display = 'none';
+    lineColorContainer.style.display = 'none';
+    pendulumSizeContainer.style.display = 'none'; // Hide in "single" mode
+  } else if (mode === 'pendulum') {
+    radiatingLineCountContainer.style.display = 'none';
+    lineColorContainer.style.display = 'block';
+    pendulumSizeContainer.style.display = 'block'; // Show only in "pendulum" mode
   }
-  setLocalStorageValue("mode", mode);
-  document.getElementById('visualization-mode').value = mode;
-  updateTextPlaceholder(); // Update placeholder text
-  hasChanged = true;
 }
-    if (keys["j"]) {
-      horizontalOffset -= offsetStep;
+    // Call on initialization
+    toggleLineCountVisibility();
+    // Event listeners for input changes
+    document.getElementById('visualization-mode').addEventListener('change', function () {
+      mode = this.value;
+      setLocalStorageValue('mode', mode);
+      toggleLineCountVisibility();
+      updateTextPlaceholder();
+      draw();
+    });
+    document.getElementById('horizontal-offset').addEventListener('input', function () {
+      horizontalOffset = parseInt(this.value);
       setLocalStorageValue('horizontalOffset', horizontalOffset);
-      document.getElementById('horizontal-offset').value = horizontalOffset;
-      hasChanged = true;
-    }
-    if (keys["l"]) {
-      horizontalOffset += offsetStep;
-      setLocalStorageValue('horizontalOffset', horizontalOffset);
-      document.getElementById('horizontal-offset').value = horizontalOffset;
-      hasChanged = true;
-    }
-    if (keys["i"]) {
-      verticalOffset -= offsetStep;
+      draw();
+    });
+    document.getElementById('pendulum-thickness').addEventListener('input', function () {
+  pendulumThickness = parseInt(this.value);
+  setLocalStorageValue('pendulumThickness', pendulumThickness);
+  draw();
+});
+    document.getElementById('vertical-offset').addEventListener('input', function () {
+      verticalOffset = parseInt(this.value);
       setLocalStorageValue('verticalOffset', verticalOffset);
-      document.getElementById('vertical-offset').value = verticalOffset;
-      hasChanged = true;
-    }
-    if (keys["k"]) {
-      verticalOffset += offsetStep;
-      setLocalStorageValue('verticalOffset', verticalOffset);
-      document.getElementById('vertical-offset').value = verticalOffset;
-      hasChanged = true;
-    }
-    if (keys["u"]) {
-      arcOffset -= offsetStep;
+      draw();
+    });
+    document.getElementById('arc-offset').addEventListener('input', function () {
+      arcOffset = parseInt(this.value);
       setLocalStorageValue('arcOffset', arcOffset);
-      document.getElementById('arc-offset').value = arcOffset;
-      hasChanged = true;
+      draw();
+    });
+    document.getElementById('line-length').addEventListener('input', function () {
+      lineLength = parseFloat(this.value);
+      setLocalStorageValue('lineLength', lineLength);
+      draw();
+    });
+    document.getElementById('rotation-velocity').addEventListener('input', function () {
+      rotationVelocity = parseInt(this.value);
+      setLocalStorageValue('rotationVelocity', rotationVelocity);
+      draw();
+    });
+    document.getElementById('line-thickness').addEventListener('input', function () {
+      lineThickness = this.value;
+      setLocalStorageValue('lineThickness', lineThickness);
+      draw();
+    });
+    document.getElementById('radiating-line-count').addEventListener('input', function () {
+      radiatingLineCount = this.value;
+      setLocalStorageValue('radiatingLineCount', radiatingLineCount);
+      draw();
+    });
+    document.getElementById('line-color').addEventListener('input', function () {
+      color = this.value;
+      setLocalStorageValue('color', color);
+      draw();
+    });
+    document.getElementById('special-line-color').addEventListener('input', function () {
+      color2 = this.value;
+      setLocalStorageValue('color2', color2);
+      draw();
+    });
+    document.getElementById('text-size').addEventListener('input', function () {
+      textSize = parseInt(this.value);
+      setLocalStorageValue('textSize', textSize);
+      draw();
+    });
+
+    document.getElementById('text-distance').addEventListener('input', function () {
+      textDistance = parseFloat(this.value);
+      setLocalStorageValue('textDistance', textDistance);
+      draw();
+    });
+    document.getElementById('bg-color').addEventListener('input', function () {
+      bgColor = this.value;
+      setLocalStorageValue('bgColor', bgColor);
+      setBackgroundColor(bgColor);
+    });
+    document.getElementById('text-color').addEventListener('input', function () {
+      textColor = this.value;
+      setLocalStorageValue('textColor', textColor);
+      draw();
+    });
+    document.getElementById('circle-outline-color').addEventListener('input', function () {
+      color3 = this.value;
+      setLocalStorageValue('color3', color3);
+      draw();
+    });
+    document.getElementById('opacity-slider').addEventListener('input', function () {
+      opacity = parseFloat(this.value);
+      setLocalStorageValue('opacity', opacity);
+      controls.style.opacity = opacity;
+    });
+    // --- Resize and Key Event Handling ---
+    window.addEventListener("resize", function () {
+      canvasWidth = window.innerWidth;
+      canvasHeight = window.innerHeight;
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      setSliderLimits();
+      draw();
+    });
+    let pressedKeys = {};
+    window.addEventListener("keydown", function (event) {
+      pressedKeys[event.key] = true;
+      updateKeys(pressedKeys);
+    });
+    window.addEventListener("keyup", function (event) {
+      delete pressedKeys[event.key];
+      updateKeys(pressedKeys);
+    });
+
+    function updateKeys(keys) {
+  let offsetStep = 10;
+  let hasChanged = false;
+
+  if (keys["a"]) {
+    if (mode === "pendulum") {
+      pendulumAngle = (pendulumAngle - rotationVelocity + 360) % 360; // Adjust pendulum angle
+    } else {
+      startAngle = (startAngle - rotationVelocity + 360) % 360; // Adjust start angle for other modes
+      setLocalStorageValue('startAngle', startAngle);
     }
-    if (keys["o"]) {
-      arcOffset += offsetStep;
-      setLocalStorageValue('arcOffset', arcOffset);
-      document.getElementById('arc-offset').value = arcOffset;
-      hasChanged = true;
-    }
-    if (hasChanged && !shouldAnimate) draw();
+    hasChanged = true;
   }
 
-  // --- Pendulum Drawing Function ---
-  function drawPendulum() {
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Draw main circle
-      context.strokeStyle = color3;
-      context.beginPath();
-      context.setLineDash([14, 14]);
-      context.arc(canvas.width / 2 + horizontalOffset, canvas.height / 2 + verticalOffset, 
-                  radius * 1.7 + arcOffset, 0, 2 * Math.PI);
-      context.lineWidth = 4;
-      context.stroke();
-      context.setLineDash([]);
+  if (keys["d"]) {
+    if (mode === "pendulum") {
+      pendulumAngle = (pendulumAngle + rotationVelocity) % 360; // Adjust pendulum angle
+    } else {
+      startAngle = (startAngle + rotationVelocity) % 360; // Adjust start angle for other modes
+      setLocalStorageValue('startAngle', startAngle);
+    }
+    hasChanged = true;
+  }
 
-      // Calculate pendulum position
-      const centerX = canvas.width / 2 + horizontalOffset;
-      const centerY = canvas.height / 2 + verticalOffset;
-      const orbitRadius = radius * lineLength; // Use lineLength to control orbit size
-      
-      const pendulumX = centerX + orbitRadius * Math.cos(pendulumAngle * Math.PI / 180);
-      const pendulumY = centerY + orbitRadius * Math.sin(pendulumAngle * Math.PI / 180);
+  if (keys["m"]) {
+    mode = mode === "many" ? "single" : mode === "single" ? "pendulum" : "many"; // Toggle modes
+    setLocalStorageValue("mode", mode);
+    document.getElementById('visualization-mode').value = mode;
+    toggleLineCountVisibility();
+    updateTextPlaceholder();
+    hasChanged = true;
+  }
 
-      // Draw line from center to pendulum
-      context.beginPath();
-      context.strokeStyle = color;
-      context.lineWidth = lineThickness;
-      context.moveTo(centerX, centerY);
-      context.lineTo(pendulumX, pendulumY);
-      context.stroke();
+  if (keys["j"]) {
+    horizontalOffset -= offsetStep;
+    setLocalStorageValue('horizontalOffset', horizontalOffset);
+    document.getElementById('horizontal-offset').value = horizontalOffset;
+    hasChanged = true;
+  }
 
-      // Draw pendulum circle
-      context.beginPath();
-      context.fillStyle = color2;
-      context.arc(pendulumX, pendulumY, pendulumRadius, 0, 2 * Math.PI);
-      context.fill();
+  if (keys["l"]) {
+    horizontalOffset += offsetStep;
+    setLocalStorageValue('horizontalOffset', horizontalOffset);
+    document.getElementById('horizontal-offset').value = horizontalOffset;
+    hasChanged = true;
+  }
 
-      // Draw angle text
-      context.font = textSize + "px Verdana"; // Use textSize
+  if (keys["i"]) {
+    verticalOffset -= offsetStep;
+    setLocalStorageValue('verticalOffset', verticalOffset);
+    document.getElementById('vertical-offset').value = verticalOffset;
+    hasChanged = true;
+  }
+
+  if (keys["k"]) {
+    verticalOffset += offsetStep;
+    setLocalStorageValue('verticalOffset', verticalOffset);
+    document.getElementById('vertical-offset').value = verticalOffset;
+    hasChanged = true;
+  }
+
+  if (keys["u"]) {
+    arcOffset -= offsetStep;
+    setLocalStorageValue('arcOffset', arcOffset);
+    document.getElementById('arc-offset').value = arcOffset;
+    hasChanged = true;
+  }
+
+  if (keys["o"]) {
+    arcOffset += offsetStep;
+    setLocalStorageValue('arcOffset', arcOffset);
+    document.getElementById('arc-offset').value = arcOffset;
+    hasChanged = true;
+  }
+
+  if (hasChanged && !shouldAnimate) draw();
+}
+
+    // --- Pendulum Drawing Function ---
+    function drawPendulum() {
+  context.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw main circle
+  context.strokeStyle = color3;
+  context.beginPath();
+  context.setLineDash([14, 14]);
+  context.arc(canvas.width / 2 + horizontalOffset, canvas.height / 2 + verticalOffset,
+    radius * 1.7 + arcOffset, 0, 2 * Math.PI);
+  context.lineWidth = 4;
+  context.stroke();
+  context.setLineDash([]);
+
+  // Calculate pendulum position
+  const centerX = canvas.width / 2 + horizontalOffset;
+  const centerY = canvas.height / 2 + verticalOffset;
+  const orbitRadius = radius * lineLength;
+
+  const pendulumX = centerX + orbitRadius * Math.cos(pendulumAngle * Math.PI / 180);
+  const pendulumY = centerY + orbitRadius * Math.sin(pendulumAngle * Math.PI / 180);
+
+  // Draw line from center to pendulum
+  context.beginPath();
+  context.strokeStyle = color;
+  context.lineWidth = lineThickness; // Use lineThickness here
+  context.moveTo(centerX, centerY);
+  context.lineTo(pendulumX, pendulumY);
+  context.stroke();
+
+  // Draw pendulum circle
+  context.beginPath();
+  context.fillStyle = color2;
+  context.arc(pendulumX, pendulumY, pendulumThickness / 2, 0, 2 * Math.PI); // Use pendulumThickness here
+  context.fill();
+
+  // Draw angle text
+  context.font = textSize + "px Verdana";
   context.textAlign = "center";
-      context.fillStyle = textColor;
-      const textDist = radius * textDistance; // Use textDistance
+  context.fillStyle = textColor;
+  const textDist = radius * textDistance;
   const textX = centerX + textDist * Math.cos(pendulumAngle * Math.PI / 180);
   const textY = centerY + textDist * Math.sin(pendulumAngle * Math.PI / 180);
   context.fillText(angleName(pendulumAngle), textX, textY);
-  }
-
-  // --- Drawing Functions ---
-  function drawManyLines() {
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.strokeStyle = color3;
-    context.beginPath();
-    context.setLineDash([14, 14]);
-    context.arc(canvas.width / 2 + horizontalOffset, canvas.height / 2 + verticalOffset, radius * 1.7 + arcOffset, 0, 2 * Math.PI);
-    context.lineWidth = 4;
-    context.stroke();
-    context.setLineDash([]);
-    context.font = textSize + "px Verdana";
-    context.textAlign = "center";
-    let lineStartDistance = radius * 0.0;
-    let lineEndDistance = radius * lineLength;
-    let textDist = radius * textDistance; // Use textDistance
-    for (let i = 0; i < 360; i += (360 / radiatingLineCount)) {
-      let angle = (i + startAngle) % 360;
-      let startX = (canvas.width / 2 + horizontalOffset) + lineStartDistance * Math.cos(angle * Math.PI / 180);
-      let startY = (canvas.height / 2 + verticalOffset) + lineStartDistance * Math.sin(angle * Math.PI / 180);
-      let endX = (canvas.width / 2 + horizontalOffset) + lineEndDistance * Math.cos(angle * Math.PI / 180);
-      let endY = (canvas.height / 2 + verticalOffset) + lineEndDistance * Math.sin(angle * Math.PI / 180);
-      let x3 = (canvas.width / 2 + horizontalOffset) + textDist * Math.cos(angle * Math.PI / 180); // Use textDist
-    let y3 = (canvas.height / 2 + verticalOffset) + textDist * Math.sin(angle * Math.PI / 180); // Use textDist
-      context.lineWidth = lineThickness;
-      context.strokeStyle = (i <= 10 || (i >= 180 && i <= 180)) ? color2 : color;
-      context.beginPath();
-      context.moveTo(startX, startY);
-      context.lineTo(endX, endY);
-      context.stroke();
-      context.fillStyle = textColor;
-      context.fillText(angleName(angle), x3, y3);
-    }
-  }
-
-  function drawSingleLine() {
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.strokeStyle = color3;
-    context.beginPath();
-    context.setLineDash([14, 14]);
-    context.arc(canvas.width / 2 + horizontalOffset, canvas.height / 2 + verticalOffset, radius * 1.7 + arcOffset, 0, 2 * Math.PI);
-    context.lineWidth = 4;
-    context.stroke();
-    context.setLineDash([]);
-    context.font = textSize + "px Verdana"; // Use textSize
-    context.textAlign = "center";
-    let angle = startAngle % 360;
-    let lineStartDistance = radius * 0.0;
-    let lineEndDistance = radius * lineLength;
-    let textDist = radius * textDistance; // Use textDistance
-    let startX = (canvas.width / 2 + horizontalOffset) + lineStartDistance * Math.cos(angle * Math.PI / 180);
-    let startY = (canvas.height / 2 + verticalOffset) + lineStartDistance * Math.sin(angle * Math.PI / 180);
-    let endX = (canvas.width / 2 + horizontalOffset) + lineEndDistance * Math.cos(angle * Math.PI / 180);
-    let endY = (canvas.height / 2 + verticalOffset) + lineEndDistance * Math.sin(angle * Math.PI / 180);
-    let x3 = (canvas.width / 2 + horizontalOffset) + textDist * Math.cos(angle * Math.PI / 180); // Use textDist
-    let y3 = (canvas.height / 2 + verticalOffset) + textDist * Math.sin(angle * Math.PI / 180); // Use textDist
-    context.lineWidth = lineThickness;
-    context.strokeStyle = color;
-    context.beginPath();
-    context.moveTo(startX, startY);
-    context.lineTo(endX, endY);
-    context.stroke();
-    context.fillStyle = textColor;
-    context.fillText(angleName(angle), x3, y3);
-  }
-
-  function draw() {
-    if (mode === "many") {
-        drawManyLines();
-    } else if (mode === "single") {
-        drawSingleLine();
-    } else if (mode === "pendulum") {
-        drawPendulum();
-    }
-  }
-  draw() // Initial draw on page load
-  document.getElementById('visualization-mode').value = mode;
-  updateTextPlaceholder();
-
-  // --- Animation update for pendulum ---
-  function updatePendulum() {
-      if (mode === "pendulum") {
-          pendulumAngle = (pendulumAngle + rotationVelocity * rotationDirection) % 360;
-          if (pendulumAngle < 0) pendulumAngle += 360;
-      }
-  }
-
-  // --- Dark Mode Toggle ---
-  const toggleDarkModeButton = document.getElementById('toggle-dark-mode');
-  const controlsElement = document.getElementById('controls');
-  let darkModeIcon = document.querySelector('#toggle-dark-mode i');
-
-  function setMode(mode) {
-    const dragHandle = document.getElementById('drag-handle');
-    const flipButton = document.getElementById('flip-position');
-    const autopilot1Button = document.getElementById('toggle-autopilot-1');
-    const autopilot2Button = document.getElementById('toggle-autopilot-2');
-    if (mode) {
-      controlsElement.classList.add('dark-mode');
-      toggleMenuButton.classList.add('dark-mode');
-      dragHandle.classList.add('dark-mode');
-      flipButton.classList.add('dark-mode');
-      autopilot1Button.classList.add('dark-mode');
-      autopilot2Button.classList.add('dark-mode');
-      darkModeIcon.classList.remove('fa-sun');
-      darkModeIcon.classList.add('fa-moon');
-    } else {
-      controlsElement.classList.remove('dark-mode');
-      toggleMenuButton.classList.remove('dark-mode');
-      dragHandle.classList.remove('dark-mode');
-      flipButton.classList.remove('dark-mode');
-      autopilot1Button.classList.remove('dark-mode');
-      autopilot2Button.classList.remove('dark-mode');
-      darkModeIcon.classList.remove('fa-moon');
-      darkModeIcon.classList.add('fa-sun');
-    }
-  }
-  setMode(isDarkMode);
-  toggleDarkModeButton.addEventListener('click', () => {
-    isDarkMode = !isDarkMode;
-    setLocalStorageValue('isDarkMode', isDarkMode);
-    setMode(isDarkMode);
-  });
-  // --- Autopilot and Animation Logic ---
-  let animationFrameId;
-  let shouldAnimate = false;
-  let isTransitioning = false;
-  let currentHorizontalOffset = 0;
-  let currentVerticalOffset = 0;
-  let targetHorizontalOffset = 0;
-  let targetVerticalOffset = 0;
-  let autopilot1Active = false;
-  let autopilot2Active = false;
-  let autopilotRotationInterval;
-  let autopilotCenterShiftTimeout;
-  let rotationDirection = 1;
-  // Ensure consistent state on initialization
-  if (rotateCounterclockwise) {
-    rotateClockwise = false;
-    rotationDirection = -1;
-  } else {
-    rotateClockwise = true;
-    rotateCounterclockwise = false;
-    rotationDirection = 1;
-  }
-
-  function animate() {
-      if (!shouldAnimate) return;
-      updatePendulum();
-      draw();
-      animationFrameId = requestAnimationFrame(animate);
-  }
-  // --- Autopilot 1 Event Listeners and Functions ---
-  const toggleAutopilot1Button = document.getElementById("toggle-autopilot-1");
-  const rotateClockwiseToggle = document.getElementById('rotate-clockwise');
-  const rotateCounterClockwiseToggle = document.getElementById('rotate-counterclockwise');
-  toggleAutopilot1Button.addEventListener('click', () => {
-    if (!autopilot1Active) {
-      startAutopilot1();
-    } else {
-      stopAutopilot1();
-    }
-  });
-  rotateClockwiseToggle.addEventListener('change', () => {
-    if (rotateClockwiseToggle.checked) {
-      rotationDirection = 1;
-      rotateCounterClockwiseToggle.checked = false;
-      setLocalStorageValue('rotateClockwise', true);
-      setLocalStorageValue('rotateCounterclockwise', false);
-    } else if (!rotateCounterClockwiseToggle.checked) {
-      // Don't allow both to be unchecked
-      rotateClockwiseToggle.checked = true;
-      setLocalStorageValue('rotateClockwise', true);
-    }
-  });
-  rotateCounterClockwiseToggle.addEventListener('change', () => {
-    if (rotateCounterClockwiseToggle.checked) {
-      rotationDirection = -1;
-      rotateClockwiseToggle.checked = false;
-      setLocalStorageValue('rotateClockwise', false);
-      setLocalStorageValue('rotateCounterclockwise', true);
-    } else if (!rotateClockwiseToggle.checked) {
-      // Don't allow both to be unchecked
-      rotateCounterClockwiseToggle.checked = true;
-      setLocalStorageValue('rotateCounterclockwise', true);
-    }
-  });
-  document.getElementById('autopilot-speed').addEventListener('input', function() {
-    autopilotSpeed = parseInt(this.value);
-    setLocalStorageValue('autopilotSpeed', autopilotSpeed);
-  });
-
-  function updateTextPlaceholder() {
-    const specialLineColorLabel = document.querySelector('label[for="special-line-color"]');
-    if (mode === "pendulum") {
-        specialLineColorLabel.innerHTML = "Pendulum Color:";
-    } else {
-        specialLineColorLabel.innerHTML = "Special Line Color:";
-    }
 }
 
-  function startAutopilot1() {
-    // Stop autopilot 2 if it's running
-    if (autopilot2Active) {
-      stopAutopilot2();
+    // --- Drawing Functions ---
+    function drawManyLines() {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.strokeStyle = color3;
+      context.beginPath();
+      context.setLineDash([14, 14]);
+      context.arc(canvas.width / 2 + horizontalOffset, canvas.height / 2 + verticalOffset, radius * 1.7 + arcOffset, 0, 2 * Math.PI);
+      context.lineWidth = 4;
+      context.stroke();
+      context.setLineDash([]);
+      context.font = textSize + "px Verdana";
+      context.textAlign = "center";
+      let lineStartDistance = radius * 0.0;
+      let lineEndDistance = radius * lineLength;
+      let textDist = radius * textDistance; // Use textDistance
+      for (let i = 0; i < 360; i += (360 / radiatingLineCount)) {
+        let angle = (i + startAngle) % 360;
+        let startX = (canvas.width / 2 + horizontalOffset) + lineStartDistance * Math.cos(angle * Math.PI / 180);
+        let startY = (canvas.height / 2 + verticalOffset) + lineStartDistance * Math.sin(angle * Math.PI / 180);
+        let endX = (canvas.width / 2 + horizontalOffset) + lineEndDistance * Math.cos(angle * Math.PI / 180);
+        let endY = (canvas.height / 2 + verticalOffset) + lineEndDistance * Math.sin(angle * Math.PI / 180);
+        let x3 = (canvas.width / 2 + horizontalOffset) + textDist * Math.cos(angle * Math.PI / 180); // Use textDist
+        let y3 = (canvas.height / 2 + verticalOffset) + textDist * Math.sin(angle * Math.PI / 180); // Use textDist
+        context.lineWidth = lineThickness;
+        context.strokeStyle = (i <= 10 || (i >= 180 && i <= 180)) ? color2 : color;
+        context.beginPath();
+        context.moveTo(startX, startY);
+        context.lineTo(endX, endY);
+        context.stroke();
+        context.fillStyle = textColor;
+        context.fillText(angleName(angle), x3, y3);
+      }
     }
-    autopilot1Active = true;
-    toggleAutopilot1Button.innerText = 'Stop Autopilot 1';
-    toggleAutopilot2Button.innerText = 'Start Autopilot 2';
-    // Clear any existing intervals and timeouts
-    clearInterval(autopilotRotationInterval);
-    clearTimeout(autopilotCenterShiftTimeout);
-    autopilotRotationInterval = setInterval(() => {
-      let currentKeys = {};
-      currentKeys[rotationDirection === 1 ? "d" : "a"] = true;
-      updateKeys(currentKeys);
-    }, 16);
-    shiftCenter();
-    shouldAnimate = true;
-    if (!animationFrameId) {
-      animate();
-    }
-  }
 
-  function stopAutopilot1() {
-    autopilot1Active = false;
-    toggleAutopilot1Button.innerText = 'Start Autopilot 1';
-    clearInterval(autopilotRotationInterval);
-    clearTimeout(autopilotCenterShiftTimeout);
-    shouldAnimate = false;
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
-    isTransitioning = false;
+    function drawSingleLine() {
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw circle outline
+  context.strokeStyle = color3;
+  context.beginPath();
+  context.setLineDash([14, 14]);
+  context.arc(canvas.width / 2 + horizontalOffset, canvas.height / 2 + verticalOffset, radius * 1.7 + arcOffset, 0, 2 * Math.PI);
+  context.lineWidth = 4;
+  context.stroke();
+  context.setLineDash([]);
+  
+  // Set up text properties
+  context.font = textSize + "px Verdana";
+  context.textAlign = "center";
+  
+  // Calculate positions
+  let angle = startAngle % 360;
+  let lineStartDistance = radius * 0.0;
+  let lineEndDistance = radius * lineLength;
+  let textDist = radius * textDistance;
+  
+  // Calculate coordinates
+  let startX = (canvas.width / 2 + horizontalOffset) + lineStartDistance * Math.cos(angle * Math.PI / 180);
+  let startY = (canvas.height / 2 + verticalOffset) + lineStartDistance * Math.sin(angle * Math.PI / 180);
+  let endX = (canvas.width / 2 + horizontalOffset) + lineEndDistance * Math.cos(angle * Math.PI / 180);
+  let endY = (canvas.height / 2 + verticalOffset) + lineEndDistance * Math.sin(angle * Math.PI / 180);
+  let x3 = (canvas.width / 2 + horizontalOffset) + textDist * Math.cos(angle * Math.PI / 180);
+  let y3 = (canvas.height / 2 + verticalOffset) + textDist * Math.sin(angle * Math.PI / 180);
+  
+  // Draw the line using color2 (special line color)
+  context.lineWidth = lineThickness;
+  context.strokeStyle = color2;
+  context.beginPath();
+  context.moveTo(startX, startY);
+  context.lineTo(endX, endY);
+  context.stroke();
+  
+  // Draw the text
+  context.fillStyle = textColor;
+  context.fillText(angleName(angle), x3, y3);
+}
+function draw() {
+  if (mode === "many") {
+    drawManyLines();
+  } else if (mode === "single") {
+    drawSingleLine();
+  } else if (mode === "pendulum") {
+    drawPendulum();
   }
-  // --- Autopilot 2 Event Listeners and Functions ---
-  const toggleAutopilot2Button = document.getElementById("toggle-autopilot-2");
-  toggleAutopilot2Button.addEventListener('click', () => {
-    if (!autopilot2Active) {
-      startAutopilot2();
+}
+draw() // Initial draw on page load
+document.getElementById('visualization-mode').value = mode;
+updateTextPlaceholder();
+
+// --- Animation update for pendulum ---
+function updatePendulum() {
+  if (mode === "pendulum") {
+    pendulumAngle = (pendulumAngle + rotationVelocity * rotationDirection) % 360;
+    if (pendulumAngle < 0) pendulumAngle += 360;
+  }
+}
+
+// --- Dark Mode Toggle ---
+const toggleDarkModeButton = document.getElementById('toggle-dark-mode');
+const controlsElement = document.getElementById('controls');
+let darkModeIcon = document.querySelector('#toggle-dark-mode i');
+
+function setMode(mode) {
+  const dragHandle = document.getElementById('drag-handle');
+  const flipButton = document.getElementById('flip-position');
+  const autopilot1Button = document.getElementById('toggle-autopilot-1');
+  const autopilot2Button = document.getElementById('toggle-autopilot-2');
+  if (mode) {
+    controlsElement.classList.add('dark-mode');
+    toggleMenuButton.classList.add('dark-mode');
+    dragHandle.classList.add('dark-mode');
+    flipButton.classList.add('dark-mode');
+    autopilot1Button.classList.add('dark-mode');
+    autopilot2Button.classList.add('dark-mode');
+    darkModeIcon.classList.remove('fa-sun');
+    darkModeIcon.classList.add('fa-moon');
+  } else {
+    controlsElement.classList.remove('dark-mode');
+    toggleMenuButton.classList.remove('dark-mode');
+    dragHandle.classList.remove('dark-mode');
+    flipButton.classList.remove('dark-mode');
+    autopilot1Button.classList.remove('dark-mode');
+    autopilot2Button.classList.remove('dark-mode');
+    darkModeIcon.classList.remove('fa-moon');
+    darkModeIcon.classList.add('fa-sun');
+  }
+}
+setMode(isDarkMode);
+toggleDarkModeButton.addEventListener('click', () => {
+  isDarkMode = !isDarkMode;
+  setLocalStorageValue('isDarkMode', isDarkMode);
+  setMode(isDarkMode);
+});
+// --- Autopilot and Animation Logic ---
+let animationFrameId;
+let shouldAnimate = false;
+let isTransitioning = false;
+let currentHorizontalOffset = 0;
+let currentVerticalOffset = 0;
+let targetHorizontalOffset = 0;
+let targetVerticalOffset = 0;
+let autopilot1Active = false;
+let autopilot2Active = false;
+let autopilotRotationInterval;
+let autopilotCenterShiftTimeout;
+let rotationDirection = 1;
+// Ensure consistent state on initialization
+if (rotateCounterclockwise) {
+  rotateClockwise = false;
+  rotationDirection = -1;
+} else {
+  rotateClockwise = true;
+  rotateCounterclockwise = false;
+  rotationDirection = 1;
+}
+
+function animate() {
+  if (!shouldAnimate) return;
+  updatePendulum();
+  draw();
+  animationFrameId = requestAnimationFrame(animate);
+}
+// --- Autopilot 1 Event Listeners and Functions ---
+const toggleAutopilot1Button = document.getElementById("toggle-autopilot-1");
+const rotateClockwiseToggle = document.getElementById('rotate-clockwise');
+const rotateCounterClockwiseToggle = document.getElementById('rotate-counterclockwise');
+toggleAutopilot1Button.addEventListener('click', () => {
+  if (!autopilot1Active) {
+    startAutopilot1();
+  } else {
+    stopAutopilot1();
+  }
+});
+rotateClockwiseToggle.addEventListener('change', () => {
+  if (rotateClockwiseToggle.checked) {
+    rotationDirection = 1;
+    rotateCounterClockwiseToggle.checked = false;
+    setLocalStorageValue('rotateClockwise', true);
+    setLocalStorageValue('rotateCounterclockwise', false);
+  } else if (!rotateCounterClockwiseToggle.checked) {
+    // Don't allow both to be unchecked
+    rotateClockwiseToggle.checked = true;
+    setLocalStorageValue('rotateClockwise', true);
+  }
+});
+rotateCounterClockwiseToggle.addEventListener('change', () => {
+  if (rotateCounterClockwiseToggle.checked) {
+    rotationDirection = -1;
+    rotateClockwiseToggle.checked = false;
+    setLocalStorageValue('rotateClockwise', false);
+    setLocalStorageValue('rotateCounterclockwise', true);
+  } else if (!rotateClockwiseToggle.checked) {
+    // Don't allow both to be unchecked
+    rotateCounterClockwiseToggle.checked = true;
+    setLocalStorageValue('rotateCounterclockwise', true);
+  }
+});
+document.getElementById('autopilot-speed').addEventListener('input', function () {
+  autopilotSpeed = parseInt(this.value);
+  setLocalStorageValue('autopilotSpeed', autopilotSpeed);
+});
+
+function updateTextPlaceholder() {
+  const specialLineColorLabel = document.getElementById('special-line-color-label');
+  if (mode === "pendulum") {
+    specialLineColorLabel.innerHTML = "Pendulum Color:";
+  } else if (mode === "single") {
+    specialLineColorLabel.innerHTML = "Line Color:";
+  } else {
+    specialLineColorLabel.innerHTML = "Special Line Color:";
+  }
+}
+
+function startAutopilot1() {
+  // Stop autopilot 2 if it's running
+  if (autopilot2Active) {
+    stopAutopilot2();
+  }
+  autopilot1Active = true;
+  toggleAutopilot1Button.innerText = 'Stop Autopilot 1';
+  toggleAutopilot2Button.innerText = 'Start Autopilot 2';
+  // Clear any existing intervals and timeouts
+  clearInterval(autopilotRotationInterval);
+  clearTimeout(autopilotCenterShiftTimeout);
+  autopilotRotationInterval = setInterval(() => {
+    let currentKeys = {};
+    currentKeys[rotationDirection === 1 ? "d" : "a"] = true;
+    updateKeys(currentKeys);
+  }, 16);
+  shiftCenter();
+  shouldAnimate = true;
+  if (!animationFrameId) {
+    animate();
+  }
+}
+
+function stopAutopilot1() {
+  autopilot1Active = false;
+  toggleAutopilot1Button.innerText = 'Start Autopilot 1';
+  clearInterval(autopilotRotationInterval);
+  clearTimeout(autopilotCenterShiftTimeout);
+  shouldAnimate = false;
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+  isTransitioning = false;
+}
+// --- Autopilot 2 Event Listeners and Functions ---
+const toggleAutopilot2Button = document.getElementById("toggle-autopilot-2");
+toggleAutopilot2Button.addEventListener('click', () => {
+  if (!autopilot2Active) {
+    startAutopilot2();
+  } else {
+    stopAutopilot2();
+  }
+});
+
+function startAutopilot2() {
+  // Stop autopilot 1 if it's running
+  if (autopilot1Active) {
+    stopAutopilot1();
+  }
+  autopilot2Active = true;
+  toggleAutopilot2Button.innerText = 'Stop Autopilot 2';
+  toggleAutopilot1Button.innerText = 'Start Autopilot 1';
+  // Clear any existing intervals and timeouts
+  clearInterval(autopilotRotationInterval);
+  clearTimeout(autopilotCenterShiftTimeout);
+  autopilotRotationInterval = setInterval(() => {
+    let currentKeys = {};
+    currentKeys[rotationDirection === 1 ? "d" : "a"] = true;
+    updateKeys(currentKeys);
+  }, 16);
+  shiftCenter2();
+  shouldAnimate = true;
+  if (!animationFrameId) {
+    animate();
+  }
+}
+
+function stopAutopilot2() {
+  autopilot2Active = false;
+  toggleAutopilot2Button.innerText = 'Start Autopilot 2';
+  clearInterval(autopilotRotationInterval);
+  clearTimeout(autopilotCenterShiftTimeout);
+  shouldAnimate = false;
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+  isTransitioning = false;
+}
+// Transition functions (updated for continuous transition)
+function transitionCenter() {
+  if (isTransitioning) return;
+  isTransitioning = true;
+  const duration = 1000; // Transition duration in milliseconds
+  const startTime = performance.now();
+  const startHorizontalOffset = horizontalOffset;
+  const startVerticalOffset = verticalOffset;
+
+  function animateTransition(currentTime) {
+    if (!isTransitioning) return;
+    const elapsedTime = currentTime - startTime;
+    const progress = Math.min(elapsedTime / duration, 1);
+    horizontalOffset = startHorizontalOffset + (targetHorizontalOffset - startHorizontalOffset);
+    verticalOffset = startVerticalOffset + (targetVerticalOffset - startVerticalOffset);
+    document.getElementById('horizontal-offset').value = horizontalOffset;
+    document.getElementById('vertical-offset').value = verticalOffset;
+    draw();
+    if (progress < 1) {
+      requestAnimationFrame(animateTransition);
     } else {
-      stopAutopilot2();
-    }
-  });
-
-  function startAutopilot2() {
-    // Stop autopilot 1 if it's running
-    if (autopilot1Active) {
-      stopAutopilot1();
-    }
-    autopilot2Active = true;
-    toggleAutopilot2Button.innerText = 'Stop Autopilot 2';
-    toggleAutopilot1Button.innerText = 'Start Autopilot 1';
-    // Clear any existing intervals and timeouts
-    clearInterval(autopilotRotationInterval);
-    clearTimeout(autopilotCenterShiftTimeout);
-    autopilotRotationInterval = setInterval(() => {
-      let currentKeys = {};
-      currentKeys[rotationDirection === 1 ? "d" : "a"] = true;
-      updateKeys(currentKeys);
-    }, 16);
-    shiftCenter2();
-    shouldAnimate = true;
-    if (!animationFrameId) {
-      animate();
-    }
-  }
-
-  function stopAutopilot2() {
-    autopilot2Active = false;
-    toggleAutopilot2Button.innerText = 'Start Autopilot 2';
-    clearInterval(autopilotRotationInterval);
-    clearTimeout(autopilotCenterShiftTimeout);
-    shouldAnimate = false;
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
-    isTransitioning = false;
-  }
-  // Transition functions (updated for continuous transition)
-  function transitionCenter() {
-    if (isTransitioning) return;
-    isTransitioning = true;
-    const duration = 1000; // Transition duration in milliseconds
-    const startTime = performance.now();
-    const startHorizontalOffset = horizontalOffset;
-    const startVerticalOffset = verticalOffset;
-
-    function animateTransition(currentTime) {
-      if (!isTransitioning) return;
-      const elapsedTime = currentTime - startTime;
-      const progress = Math.min(elapsedTime / duration, 1);
-      horizontalOffset = startHorizontalOffset + (targetHorizontalOffset - startHorizontalOffset);
-      verticalOffset = startVerticalOffset + (targetVerticalOffset - startVerticalOffset);
-      document.getElementById('horizontal-offset').value = horizontalOffset;
-      document.getElementById('vertical-offset').value = verticalOffset;
-      draw();
-      if (progress < 1) {
-        requestAnimationFrame(animateTransition);
-      } else {
-        horizontalOffset = targetHorizontalOffset;
-        verticalOffset = targetVerticalOffset;
-        isTransitioning = false;
-        // For Autopilot 1, schedule the next shift after a delay
-        if (autopilot1Active) {
-          shiftCenter();
-        }
+      horizontalOffset = targetHorizontalOffset;
+      verticalOffset = targetVerticalOffset;
+      isTransitioning = false;
+      // For Autopilot 1, schedule the next shift after a delay
+      if (autopilot1Active) {
+        shiftCenter();
       }
     }
-    requestAnimationFrame(animateTransition);
   }
+  requestAnimationFrame(animateTransition);
+}
 
-  function transitionCenter2() {
-    isTransitioning = true;
-    const duration = 1000; // Transition duration in milliseconds
-    const startTime = performance.now();
-    const startHorizontalOffset = horizontalOffset;
-    const startVerticalOffset = verticalOffset;
+function transitionCenter2() {
+  isTransitioning = true;
+  const duration = 1000; // Transition duration in milliseconds
+  const startTime = performance.now();
+  const startHorizontalOffset = horizontalOffset;
+  const startVerticalOffset = verticalOffset;
 
-    function animateTransition(currentTime) {
-      if (!isTransitioning) return;
-      const elapsedTime = currentTime - startTime;
-      const progress = Math.min(elapsedTime / duration, 1); // Use duration here
-      const easedProgress = easeInOutCubic(progress);
-      horizontalOffset = startHorizontalOffset + (targetHorizontalOffset - startHorizontalOffset) * easedProgress;
-      verticalOffset = startVerticalOffset + (targetVerticalOffset - startVerticalOffset) * easedProgress;
-      document.getElementById('horizontal-offset').value = horizontalOffset;
-      document.getElementById('vertical-offset').value = verticalOffset;
-      draw();
-      if (progress < 1) {
-        requestAnimationFrame(animateTransition);
-      } else {
-        horizontalOffset = targetHorizontalOffset;
-        verticalOffset = targetVerticalOffset;
-        isTransitioning = false;
-        // For Autopilot 2, immediately start the next transition
-        if (autopilot2Active) {
-          shiftCenter2();
-        }
+  function animateTransition(currentTime) {
+    if (!isTransitioning) return;
+    const elapsedTime = currentTime - startTime;
+    const progress = Math.min(elapsedTime / duration, 1); // Use duration here
+    const easedProgress = easeInOutCubic(progress);
+    horizontalOffset = startHorizontalOffset + (targetHorizontalOffset - startHorizontalOffset) * easedProgress;
+    verticalOffset = startVerticalOffset + (targetVerticalOffset - startVerticalOffset) * easedProgress;
+    document.getElementById('horizontal-offset').value = horizontalOffset;
+    document.getElementById('vertical-offset').value = verticalOffset;
+    draw();
+    if (progress < 1) {
+      requestAnimationFrame(animateTransition);
+    } else {
+      horizontalOffset = targetHorizontalOffset;
+      verticalOffset = targetVerticalOffset;
+      isTransitioning = false;
+      // For Autopilot 2, immediately start the next transition
+      if (autopilot2Active) {
+        shiftCenter2();
       }
     }
-    requestAnimationFrame(animateTransition);
   }
-  // Easing function (no changes)
-  function easeInOutCubic(t) {
-    return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
-  }
-  // Shift center functions (updated for each Autopilot mode)
-  function shiftCenter() {
-    // Calculate delay based on autopilotSpeed
-    const delay = 3000 * (1 - autopilotSpeed / 40); // Adjust formula as needed
-    autopilotCenterShiftTimeout = setTimeout(() => {
-      const maxHorizontal = parseInt(document.getElementById('horizontal-offset').max);
-      const minHorizontal = parseInt(document.getElementById('horizontal-offset').min);
-      const maxVertical = parseInt(document.getElementById('vertical-offset').max);
-      const minVertical = parseInt(document.getElementById('vertical-offset').min);
-      targetHorizontalOffset = Math.floor(Math.random() * (maxHorizontal - minHorizontal + 1)) + minHorizontal;
-      targetVerticalOffset = Math.floor(Math.random() * (maxVertical - minVertical + 1)) + minVertical;
-      transitionCenter();
-    }, delay); // Use calculated delay
-  }
+  requestAnimationFrame(animateTransition);
+}
+// Easing function (no changes)
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+}
+// Shift center functions (updated for each Autopilot mode)
+function shiftCenter() {
+  // Calculate delay based on autopilotSpeed
+  const delay = 3000 * (1 - autopilotSpeed / 40); // Adjust formula as needed
+  autopilotCenterShiftTimeout = setTimeout(() => {
+    const maxHorizontal = parseInt(document.getElementById('horizontal-offset').max);
+    const minHorizontal = parseInt(document.getElementById('horizontal-offset').min);
+    const maxVertical = parseInt(document.getElementById('vertical-offset').max);
+    const minVertical = parseInt(document.getElementById('vertical-offset').min);
+    targetHorizontalOffset = Math.floor(Math.random() * (maxHorizontal - minHorizontal + 1)) + minHorizontal;
+    targetVerticalOffset = Math.floor(Math.random() * (maxVertical - minVertical + 1)) + minVertical;
+    transitionCenter();
+  }, delay); // Use calculated delay
+}
 
-  function shiftCenter2() {
-    // Calculate delay based on autopilotSpeed
-    const delay = 1000 * (1 - autopilotSpeed / 40); // Adjust formula as needed
-    // Use setTimeout for Autopilot 2 to introduce delay
-    autopilotCenterShiftTimeout = setTimeout(() => {
-      const maxHorizontal = parseInt(document.getElementById('horizontal-offset').max);
-      const minHorizontal = parseInt(document.getElementById('horizontal-offset').min);
-      const maxVertical = parseInt(document.getElementById('vertical-offset').max);
-      const minVertical = parseInt(document.getElementById('vertical-offset').min);
-      targetHorizontalOffset = Math.floor(Math.random() * (maxHorizontal - minHorizontal + 1)) + minHorizontal;
-      targetVerticalOffset = Math.floor(Math.random() * (maxVertical - minVertical + 1)) + minVertical;
-      transitionCenter2();
-    }, delay);
-  }
+function shiftCenter2() {
+  // Calculate delay based on autopilotSpeed
+  const delay = 1000 * (1 - autopilotSpeed / 40); // Adjust formula as needed
+  // Use setTimeout for Autopilot 2 to introduce delay
+  autopilotCenterShiftTimeout = setTimeout(() => {
+    const maxHorizontal = parseInt(document.getElementById('horizontal-offset').max);
+    const minHorizontal = parseInt(document.getElementById('horizontal-offset').min);
+    const maxVertical = parseInt(document.getElementById('vertical-offset').max);
+    const minVertical = parseInt(document.getElementById('vertical-offset').min);
+    targetHorizontalOffset = Math.floor(Math.random() * (maxHorizontal - minHorizontal + 1)) + minHorizontal;
+    targetVerticalOffset = Math.floor(Math.random() * (maxVertical - minVertical + 1)) + minVertical;
+    transitionCenter2();
+  }, delay);
+}
 </script>
+</body>
+</html>
