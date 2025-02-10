@@ -2,6 +2,8 @@
 
 https://madalin-fr.github.io/AstigmatismWheelInteraction/
 
+![](assets/preview-image-3.png)
+
 A dynamic web application visualizing an astigmatism wheel with interactive controls. This project allows users to manipulate various parameters of the visual display, including line thickness, color, opacity, and animation.
 
 ## Features
