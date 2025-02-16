@@ -256,6 +256,7 @@
       <label for="circle-outline-color">Circle Outline Color</label>
       <input type="color" id="circle-outline-color" value="#ffffff">
       <br>
+
       <label for="horizontal-offset">Horizontal Offset:</label>
       <input type="range" id="horizontal-offset" min="-1200" max="1200" value="0">
       <br>
@@ -264,6 +265,9 @@
       <br>
       <label for="arc-offset">Arc Offset:</label>
       <input type="range" id="arc-offset" min="-200" max="1200" value="0">
+      <br>
+      <label for="circle-outline-dash-density">Arc Dash Density:</label>
+      <input type="range" id="circle-outline-dash-density" min="1" max="60" value="15">
       <br>
       <label for="text-size">Text Size:</label>
       <input type="range" id="text-size" min="8" max="24" value="12">
@@ -446,7 +450,8 @@
       'controlsPosition': JSON.stringify({
         x: 0,
         y: 0
-      })
+      }),
+      'circleOutlineDashDensity': '14', // Default circle outline dash density
     };
     for (const key in defaultSettings) {
       initializeLocalStorage(key, defaultSettings[key]);
@@ -474,6 +479,7 @@
     let rotateCounterclockwise = getLocalStorageValue('rotateCounterclockwise') === 'true';
     let opacity = parseFloat(getLocalStorageValue('opacity'));
     let autopilotWalkRange = parseInt(getLocalStorageValue('autopilotWalkRange')); // Retrieve walk range
+    let circleOutlineDashDensity = parseInt(getLocalStorageValue('circleOutlineDashDensity')); // Retrieve dash density
 
     // Apply retrieved values to the elements
     document.getElementById('line-color').value = color;
@@ -497,6 +503,7 @@
     document.getElementById('opacity-slider').value = opacity;
     document.getElementById('visualization-mode').value = mode;
     document.getElementById('autopilot-walk-range').value = autopilotWalkRange; // Set walk range slider value
+    document.getElementById('circle-outline-dash-density').value = circleOutlineDashDensity; // Set dash density slider value
 
 
     // --- Controls and Event Listeners ---
@@ -658,6 +665,11 @@
       setLocalStorageValue('autopilotWalkRange', autopilotWalkRange);
       setSliderLimits(); // Update slider limits when walk range changes
     });
+    document.getElementById('circle-outline-dash-density').addEventListener('input', function () {
+      circleOutlineDashDensity = parseInt(this.value);
+      setLocalStorageValue('circleOutlineDashDensity', circleOutlineDashDensity);
+      draw();
+    });
 
 
     // --- Resize and Key Event Handling ---
@@ -766,7 +778,7 @@
       // Draw main circle
       context.strokeStyle = color3;
       context.beginPath();
-      context.setLineDash([14, 14]);
+      context.setLineDash([circleOutlineDashDensity, circleOutlineDashDensity]);
       context.arc(canvas.width / 2 + horizontalOffset, canvas.height / 2 + verticalOffset,
         radius * 1.7 + arcOffset, 0, 2 * Math.PI);
       context.lineWidth = 4;
@@ -810,7 +822,7 @@
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.strokeStyle = color3;
       context.beginPath();
-      context.setLineDash([14, 14]);
+      context.setLineDash([circleOutlineDashDensity, circleOutlineDashDensity]);
       context.arc(canvas.width / 2 + horizontalOffset, canvas.height / 2 + verticalOffset, radius * 1.7 + arcOffset, 0, 2 * Math.PI);
       context.lineWidth = 4;
       context.stroke();
@@ -845,7 +857,7 @@
       // Draw circle outline
       context.strokeStyle = color3;
       context.beginPath();
-      context.setLineDash([14, 14]);
+      context.setLineDash([circleOutlineDashDensity, circleOutlineDashDensity]);
       context.arc(canvas.width / 2 + horizontalOffset, canvas.height / 2 + verticalOffset, radius * 1.7 + arcOffset, 0, 2 * Math.PI);
       context.lineWidth = 4;
       context.stroke();
