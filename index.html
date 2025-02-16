@@ -338,6 +338,7 @@
     // Call this immediately after your localStorage initialization
     document.addEventListener('DOMContentLoaded', function () {
       initializeBackgroundColor();
+      controls.style.opacity = opacity;
     });
     // Add a window load event listener as a backup
     window.addEventListener('load', function () {
@@ -510,7 +511,7 @@
     // Get the control and toggle button elements
     const controls = document.getElementById('controls');
     const toggleMenuButton = document.getElementById('toggle-menu');
-    const flipPositionButton = document.getElementById('flip-position');
+    const flipPositionButton = document.getElementById('flip-position');  
     const controlsContainer = document.getElementById('controls-container');
     const radiatingLineCountContainer = document.getElementById('radiating-line-count-container');
     // Retrieve and apply the saved position of the controls container
