@@ -1047,6 +1047,11 @@
       // Clear any existing intervals and timeouts
       clearInterval(autopilotRotationInterval);
       clearTimeout(autopilotCenterShiftTimeout);
+
+        // *** LOCK the sliders ***
+      horizontalOffsetSlider.disabled = true;
+      verticalOffsetSlider.disabled = true;
+
       autopilotRotationInterval = setInterval(() => {
         let currentKeys = {};
         currentKeys[rotationDirection === 1 ? "d" : "a"] = true;
@@ -1070,7 +1075,12 @@
         animationFrameId = null;
       }
       isTransitioning = false;
+
+        // *** UNLOCK the sliders ***
+      horizontalOffsetSlider.disabled = false;
+      verticalOffsetSlider.disabled = false;
     }
+
     // --- Autopilot 2 Event Listeners and Functions ---
     const toggleAutopilot2Button = document.getElementById("toggle-autopilot-2");
     toggleAutopilot2Button.addEventListener('click', () => {
@@ -1092,6 +1102,11 @@
       // Clear any existing intervals and timeouts
       clearInterval(autopilotRotationInterval);
       clearTimeout(autopilotCenterShiftTimeout);
+
+        // *** LOCK the sliders ***
+      horizontalOffsetSlider.disabled = true;
+      verticalOffsetSlider.disabled = true;
+
       autopilotRotationInterval = setInterval(() => {
         let currentKeys = {};
         currentKeys[rotationDirection === 1 ? "d" : "a"] = true;
@@ -1115,6 +1130,10 @@
         animationFrameId = null;
       }
       isTransitioning = false;
+
+        // *** UNLOCK the sliders ***
+      horizontalOffsetSlider.disabled = false;
+      verticalOffsetSlider.disabled = false;
     }
     // Transition functions (updated for continuous transition)
     function transitionCenter() {
