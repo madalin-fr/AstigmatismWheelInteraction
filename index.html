@@ -14,6 +14,7 @@
       padding: 0;
       width: 100%;
       height: 100%;
+      overflow: hidden; /* Prevent scrollbars during zoom */
     }
 
     div#title {
@@ -26,6 +27,7 @@
     canvas {
       position: absolute;
       margin: auto;
+      /*  transition: transform 0.3s ease;  Removed for smoother immediate zoom */
     }
 
     div#info {
@@ -201,6 +203,36 @@
     #controls #opacity-slider {
       width: calc(100% - 2rem);
     }
+
+     /* Zoom controls */
+    #zoom-controls {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        z-index: 10;
+        display: flex;
+        flex-direction: column; /* Stack buttons vertically */
+        gap: 0.5rem; /* Space between buttons */
+    }
+
+
+    #zoom-controls button {
+        background-color: rgba(255, 255, 255, 0.8);
+        border: 1px solid #666;
+        border-radius: 4px;
+        padding: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        color: black;
+        transition: all 0.3s ease;
+    }
+    #zoom-controls button.dark-mode {
+        background-color: rgba(30,30,30,0.8);
+        color:white;
+        border-color:#999;
+    }
+
+
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
@@ -306,6 +338,13 @@
       <input type="checkbox" id="rotate-counterclockwise"> Rotate Counter-Clockwise <br>
     </div>
   </div>
+
+   <!-- Zoom controls -->
+    <div id="zoom-controls">
+        <button id="zoom-in">+</button>
+        <button id="zoom-out">-</button>
+    </div>
+
   <script>
     function standardize_color(str) {
       var ctx = document.createElement('canvas').getContext('2d');
@@ -339,6 +378,8 @@
     document.addEventListener('DOMContentLoaded', function () {
       initializeBackgroundColor();
       controls.style.opacity = opacity;
+        // Initialize zoom
+        initializeZoom();
     });
     // Add a window load event listener as a backup
     window.addEventListener('load', function () {
@@ -417,6 +458,102 @@
     let textDistance = parseFloat(getLocalStorageValue('textDistance'));
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
+
+
+      // --- Zoom functionality ---
+    let scale = 1;
+    let zoomFactor = 1.1; //  How much to zoom in/out per step
+    let originX = 0;
+    let originY = 0;
+    let isDragging = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    function initializeZoom() {
+        const zoomInButton = document.getElementById('zoom-in');
+        const zoomOutButton = document.getElementById('zoom-out');
+
+        zoomInButton.addEventListener('click', () => {
+          scale *= zoomFactor;
+            updateCanvasTransform();
+        });
+
+        zoomOutButton.addEventListener('click', function() {
+            scale /= zoomFactor;
+            updateCanvasTransform();
+        });
+       // Mouse wheel event for zooming
+        canvas.addEventListener('wheel', function(event) {
+            event.preventDefault(); // Prevent default scrolling
+            const zoomDelta = event.deltaY > 0 ? 1 / zoomFactor : zoomFactor;
+            const rect = canvas.getBoundingClientRect();
+
+            // Calculate the mouse position relative to the canvas
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+             // Adjust origin for zoom
+             originX = mouseX - (mouseX - originX) * zoomDelta;
+             originY = mouseY - (mouseY - originY) * zoomDelta;
+
+
+            scale *= zoomDelta;
+
+
+            updateCanvasTransform();
+
+        });
+
+      // Mouse down event to start dragging
+        canvas.addEventListener('mousedown', function(event) {
+            isDragging = true;
+            lastX = event.clientX;
+            lastY = event.clientY;
+        });
+
+        // Mouse up event to stop dragging
+        canvas.addEventListener('mouseup', function(event) {
+            isDragging = false;
+        });
+
+         // Mouse leave canvas event to stop dragging
+        canvas.addEventListener('mouseleave', function(event) {
+            isDragging = false;
+        });
+
+
+       // Mouse move event to perform panning
+        canvas.addEventListener('mousemove', function(event) {
+            if (isDragging) {
+                const dx = event.clientX - lastX;
+                const dy = event.clientY - lastY;
+
+                originX += dx;
+                originY += dy;
+                lastX = event.clientX;
+                lastY = event.clientY;
+
+                updateCanvasTransform();
+            }
+        });
+
+
+    }
+
+    function updateCanvasTransform() {
+        // Limit the scale to prevent zooming too far in or out
+        scale = Math.max(0.1, Math.min(scale, 5)); // Example limits
+
+        // Apply the transformations
+        context.setTransform(scale, 0, 0, scale, originX, originY);
+
+        // Redraw the canvas with the new transformation
+        draw();
+    }
+
+    // --- END ZOOM FUNCTIONALITY ---
+
+
 
     // Initialize pendulum variables
     let pendulumAngle = parseFloat(getLocalStorageValue('pendulumAngle')) || 0;
@@ -511,7 +648,7 @@
     // Get the control and toggle button elements
     const controls = document.getElementById('controls');
     const toggleMenuButton = document.getElementById('toggle-menu');
-    const flipPositionButton = document.getElementById('flip-position');  
+    const flipPositionButton = document.getElementById('flip-position');
     const controlsContainer = document.getElementById('controls-container');
     const radiatingLineCountContainer = document.getElementById('radiating-line-count-container');
     // Retrieve and apply the saved position of the controls container
@@ -680,7 +817,8 @@
       canvas.width = canvasWidth;
       canvas.height = canvasHeight;
       setSliderLimits();
-      draw();
+      updateCanvasTransform(); // Use updateCanvasTransform to handle redraw
+      //draw();  Removed, called in updateCanvasTransform
     });
     let pressedKeys = {};
     window.addEventListener("keydown", function (event) {
@@ -697,15 +835,15 @@
       let hasChanged = false;
 
       if (keys["a"]) {
-        if (mode === "pendulum") {
-          pendulumAngle = (pendulumAngle - rotationVelocity + 360) % 360; // Adjust pendulum angle
-          setLocalStorageValue('pendulumAngle', pendulumAngle);
-        } else {
-          startAngle = (startAngle - rotationVelocity + 360) % 360; // Adjust start angle for other modes
-          setLocalStorageValue('startAngle', startAngle);
-        }
-        hasChanged = true;
-      }
+  if (mode === "pendulum") {
+    pendulumAngle = (pendulumAngle - rotationVelocity + 360) % 360; // Adjust pendulum angle
+    setLocalStorageValue('pendulumAngle', pendulumAngle);
+  } else {
+    startAngle = (startAngle - rotationVelocity + 360) % 360; // Adjust start angle for other modes
+    setLocalStorageValue('startAngle', startAngle);
+  }
+  hasChanged = true;
+}
 
       if (keys["d"]) {
         if (mode === "pendulum") {
@@ -768,13 +906,25 @@
         document.getElementById('arc-offset').value = arcOffset;
         hasChanged = true;
       }
+      if (keys["="] || keys["+"]) { // Zoom in
+            scale *= zoomFactor;
+            updateCanvasTransform();
+            hasChanged = true;
+        }
+
+        if (keys["-"] || keys["_"]) { // Zoom out
+            scale /= zoomFactor;
+            updateCanvasTransform();
+            hasChanged = true;
+        }
+
 
       if (hasChanged && !shouldAnimate) draw();
     }
 
     // --- Pendulum Drawing Function ---
     function drawPendulum() {
-      context.clearRect(0, 0, canvas.width, canvas.height);
+    //  context.clearRect(0, 0, canvas.width, canvas.height); // No longer needed with setTransform
 
       // Draw main circle
       context.strokeStyle = color3;
@@ -820,7 +970,7 @@
 
     // --- Drawing Functions ---
     function drawManyLines() {
-      context.clearRect(0, 0, canvas.width, canvas.height);
+    //  context.clearRect(0, 0, canvas.width, canvas.height);  // No longer needed
       context.strokeStyle = color3;
       context.beginPath();
       context.setLineDash([circleOutlineDashDensity, circleOutlineDashDensity]);
@@ -853,7 +1003,7 @@
     }
 
     function drawSingleLine() {
-      context.clearRect(0, 0, canvas.width, canvas.height);
+    //  context.clearRect(0, 0, canvas.width, canvas.height); // No longer needed
 
       // Draw circle outline
       context.strokeStyle = color3;
@@ -895,6 +1045,13 @@
       context.fillText(angleName(angle), x3, y3);
     }
     function draw() {
+          // Clear the canvas *before* setting the transform
+        context.save(); // Save the current context state
+        context.setTransform(1, 0, 0, 1, 0, 0); // Reset the transform
+        context.clearRect(0, 0, canvas.width, canvas.height); // Clear the entire canvas
+        context.restore(); // Restore the context state (which includes our zoom transform)
+
+
       if (mode === "many") {
         drawManyLines();
       } else if (mode === "single") {
@@ -918,6 +1075,7 @@
     // --- Dark Mode Toggle ---
     const toggleDarkModeButton = document.getElementById('toggle-dark-mode');
     const controlsElement = document.getElementById('controls');
+     const zoomControls = document.getElementById('zoom-controls');
     let darkModeIcon = document.querySelector('#toggle-dark-mode i');
 
     function setMode(mode) {
@@ -932,6 +1090,10 @@
         flipButton.classList.add('dark-mode');
         autopilot1Button.classList.add('dark-mode');
         autopilot2Button.classList.add('dark-mode');
+         zoomControls.classList.add('dark-mode');
+        for (let button of zoomControls.children) {
+            button.classList.add('dark-mode');
+          }
         darkModeIcon.classList.remove('fa-sun');
         darkModeIcon.classList.add('fa-moon');
       } else {
@@ -941,6 +1103,10 @@
         flipButton.classList.remove('dark-mode');
         autopilot1Button.classList.remove('dark-mode');
         autopilot2Button.classList.remove('dark-mode');
+          zoomControls.classList.remove('dark-mode');
+           for (let button of zoomControls.children) {
+            button.classList.remove('dark-mode');
+          }
         darkModeIcon.classList.remove('fa-moon');
         darkModeIcon.classList.add('fa-sun');
       }
@@ -1234,4 +1400,4 @@
     }
   </script>
 </body>
-</html>
+</html> 
