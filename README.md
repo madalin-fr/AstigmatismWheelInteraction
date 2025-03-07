@@ -1,14 +1,12 @@
 # Astigmatism Wheel Interactions
 
-https://madalin-fr.github.io/AstigmatismWheelInteraction/
+[![Preview](assets/preview-image-3.png)](https://madalin-fr.github.io/AstigmatismWheelInteraction/)
 
-![](assets/preview-image-3.png)
-
-A dynamic web application visualizing an astigmatism wheel with interactive controls. This project allows users to manipulate various parameters of the visual display, including line thickness, color, opacity, and animation.
+A dynamic web application visualizing an astigmatism wheel with interactive controls. This project allows users to manipulate various parameters of the visual display, including line thickness, color, opacity, and animation. It also includes an anaglyph 3D mode for viewing with red-cyan glasses.
 
 ## Features
 
-*   **Interactive Controls:**  A draggable control panel allows for adjusting:
+*   **Interactive Controls:** A draggable control panel allows for adjusting:
     *   Line thickness and color
     *   Number of radiating lines
     *   Background and text colors
@@ -17,28 +15,44 @@ A dynamic web application visualizing an astigmatism wheel with interactive cont
     *   Line length
     *   Rotation speed
     *   Opacity
+    *   Depth offset (for anaglyph 3D mode)
+    *   Left and right eye colors (for anaglyph 3D mode)
+*   **Visualization Modes:**
+    *   **Many Lines:** Displays multiple radiating lines.
+    *   **Single Line:**  Shows a single highlighted line.
+    *   **Pendulum:**  Simulates a pendulum motion.
+    *   **Anaglyph:**  Renders the wheel in 3D for viewing with red-cyan glasses.
 *   **Autopilot Modes:** Two autopilot modes with different behaviors for an animated display.
 *   **Dark Mode:** Toggle between a light and dark user interface.
-*   **Local Storage Persistence:**  Settings are saved in your browser's local storage.
+*   **Zoom and Pan:**  Use the mouse wheel to zoom and click-and-drag to pan the canvas.  +/- keys can also be used for zooming.
+*   **Local Storage Persistence:** Settings are saved in your browser's local storage.
 *   **Responsive Canvas:** The canvas resizes to fill the browser window.
-*  **Arrow-key Rotation:** Use the a/d keys to rotate the wheel, i/k for vertical shift, and j/l for horizontal shift.
-*  **M-key Toggle**: Use the m key to switch between single or many line modes.
+*   **Keyboard Controls:**
+    *   **a/d:** Rotate the wheel (or pendulum).
+    *   **i/k:** Vertical shift.
+    *   **j/l:** Horizontal shift.
+    *   **u/o:** Arc offset.
+    *   **m:** Cycle between visualization modes (Many Lines, Single Line, Pendulum, Anaglyph).
+    * **= / +**: Zoom in.
+    * **- / _**: Zoom out.
 
 ## How to Use
 
-1.  **Open `index.html`:** Simply open the `index.html` file in your web browser.
+1.  **Open in Browser:** Simply open the `index.html` file in your web browser, or visit the live demo: [https://madalin-fr.github.io/AstigmatismWheelInteraction/](https://madalin-fr.github.io/AstigmatismWheelInteraction/)
 2.  **Adjust Controls:** Use the draggable control panel to adjust settings.
     *   Click 'Show Controls' to open or close the settings.
-    *   Drag the top of the controls to move the container.
-3.  **Autopilot:** Start either autopilot mode for animated shifts and rotation.
-4.  **Dark Mode:** Toggle the dark mode switch at the top of the controls panel.
-5.  **Key Commands**: Try using the arrow keys to manipulate the image as described above.
+    *   Drag the handle at the top of the controls to move the container.
+    *   Click the arrows icon to flip the controls to the other side of the screen.
+3.  **Anaglyph 3D:** Select "Anaglyph" from the "Mode" dropdown and use red-cyan glasses to view the 3D effect.  Adjust the "Depth Offset" for optimal viewing.
+4.  **Autopilot:** Start either autopilot mode for animated shifts and rotation.
+5.  **Dark Mode:** Toggle the dark mode switch (sun/moon icon) at the top of the controls panel.
+6.  **Zoom and Pan:** Use the mouse wheel to zoom in/out, and click-and-drag to pan.
 
 ## Technical Details
 
 *   **HTML5 Canvas:** The main visual element is rendered using HTML5 `<canvas>`.
-*   **JavaScript:** The core logic, interaction, and animation are handled with JavaScript.
-*   **InteractJS:**  Used for the drag and drop controls.
+*   **JavaScript:** The core logic, interaction, animation, and anaglyph rendering are handled with JavaScript.
+*   **InteractJS:** Used for the drag and drop controls.
 *   **Font Awesome:** Icons are used to enhance the UI.
 *   **Local Storage:** Settings are saved to the local storage and persisted across sessions.
 *   **Responsive:** The canvas and layout are responsive to different browser sizes.
