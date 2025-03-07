@@ -1443,13 +1443,68 @@ function updateTextPlaceholder() {
 }
 
 function startAutopilot1() {
-    // Stop autopilot 2 if it's running
-    if (autopilot2Active) {
-        stopAutopilot2();
+            // Stop autopilot 2 if it's running
+            if (autopilot2Active) {
+                stopAutopilot2();
+            }
+            autopilot1Active = true;
+            toggleAutopilot1Button.innerText = 'Stop Autopilot 1';
+            toggleAutopilot2Button.innerText = 'Start Autopilot 2';
+            // Clear any existing intervals and timeouts
+            clearInterval(autopilotRotationInterval);
+            clearTimeout(autopilotCenterShiftTimeout);
+
+            // *** LOCK the sliders ***
+            horizontalOffsetSlider.disabled = true;
+            verticalOffsetSlider.disabled = true;
+
+            autopilotRotationInterval = setInterval(() => {
+                let currentKeys = {};
+                currentKeys[rotationDirection === 1 ? "d" : "a"] = true;
+                updateKeys(currentKeys);
+            }, 16);
+            shiftCenter();
+            shouldAnimate = true;
+            if (!animationFrameId) {
+                animate();
+            }
+        }
+
+        function stopAutopilot1() {
+            autopilot1Active = false;
+            toggleAutopilot1Button.innerText = 'Start Autopilot 1';
+            clearInterval(autopilotRotationInterval);
+            clearTimeout(autopilotCenterShiftTimeout);
+            shouldAnimate = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            isTransitioning = false;
+
+            // *** UNLOCK the sliders ***
+            horizontalOffsetSlider.disabled = false;
+            verticalOffsetSlider.disabled = false;
+        }
+
+        // --- Autopilot 2 Event Listeners and Functions ---
+        const toggleAutopilot2Button = document.getElementById("toggle-autopilot-2");
+        toggleAutopilot2Button.addEventListener('click', () => {
+            if (!autopilot2Active) {
+                startAutopilot2();
+            } else {
+                stopAutopilot2();
+            }
+          });
+
+function startAutopilot2() {
+    // Stop autopilot 1 if it's running
+    if (autopilot1Active) {
+        stopAutopilot1();
     }
-    autopilot1Active = true;
-    toggleAutopilot1Button.innerText = 'Stop Autopilot 1';
-    toggleAutopilot2Button.innerText = 'Start Autopilot 2';
+    autopilot2Active = true;
+    toggleAutopilot2Button.innerText = 'Stop Autopilot 2';
+    toggleAutopilot1Button.innerText = 'Start Autopilot 1';
     // Clear any existing intervals and timeouts
     clearInterval(autopilotRotationInterval);
     clearTimeout(autopilotCenterShiftTimeout);
@@ -1463,16 +1518,16 @@ function startAutopilot1() {
         currentKeys[rotationDirection === 1 ? "d" : "a"] = true;
         updateKeys(currentKeys);
     }, 16);
-    shiftCenter();
+    shiftCenter2();
     shouldAnimate = true;
     if (!animationFrameId) {
         animate();
     }
 }
 
-function stopAutopilot1() {
-    autopilot1Active = false;
-    toggleAutopilot1Button.innerText = 'Start Autopilot 1';
+function stopAutopilot2() {
+    autopilot2Active = false;
+    toggleAutopilot2Button.innerText = 'Start Autopilot 2';
     clearInterval(autopilotRotationInterval);
     clearTimeout(autopilotCenterShiftTimeout);
     shouldAnimate = false;
@@ -1485,61 +1540,6 @@ function stopAutopilot1() {
     // *** UNLOCK the sliders ***
     horizontalOffsetSlider.disabled = false;
     verticalOffsetSlider.disabled = false;
-}
-
-// --- Autopilot 2 Event Listeners and Functions ---
-const toggleAutopilot2Button = document.getElementById("toggle-autopilot-2");
-toggleAutopilot2Button.addEventListener('click', () => {
-    if (!autopilot2Active) {
-        startAutopilot2();
-    } else {
-        stopAutopilot2();
-    }
-  });
-
-function startAutopilot2() {
-// Stop autopilot 1 if it's running
-if (autopilot1Active) {
-stopAutopilot1();
-}
-autopilot2Active = true;
-toggleAutopilot2Button.innerText = 'Stop Autopilot 2';
-toggleAutopilot1Button.innerText = 'Start Autopilot 1';
-// Clear any existing intervals and timeouts
-clearInterval(autopilotRotationInterval);
-clearTimeout(autopilotCenterShiftTimeout);
-
-// *** LOCK the sliders ***
-horizontalOffsetSlider.disabled = true;
-verticalOffsetSlider.disabled = true;
-
-autopilotRotationInterval = setInterval(() => {
-let currentKeys = {};
-currentKeys[rotationDirection === 1 ? "d" : "a"] = true;
-updateKeys(currentKeys);
-}, 16);
-shiftCenter2();
-shouldAnimate = true;
-if (!animationFrameId) {
-animate();
-}
-}
-
-function stopAutopilot2() {
-autopilot2Active = false;
-toggleAutopilot2Button.innerText = 'Start Autopilot 2';
-clearInterval(autopilotRotationInterval);
-clearTimeout(autopilotCenterShiftTimeout);
-shouldAnimate = false;
-if (animationFrameId) {
-cancelAnimationFrame(animationFrameId);
-animationFrameId = null;
-}
-isTransitioning = false;
-
-// *** UNLOCK the sliders ***
-horizontalOffsetSlider.disabled = false;
-verticalOffsetSlider.disabled = false;
 }
 // Transition functions (updated for continuous transition)
 function transitionCenter() {
