@@ -14,7 +14,8 @@
       padding: 0;
       width: 100%;
       height: 100%;
-      overflow: hidden; /* Prevent scrollbars during zoom */
+      overflow: hidden;
+      /* Prevent scrollbars during zoom */
     }
 
     div#title {
@@ -204,35 +205,36 @@
       width: calc(100% - 2rem);
     }
 
-     /* Zoom controls */
+    /* Zoom controls */
     #zoom-controls {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        z-index: 10;
-        display: flex;
-        flex-direction: column; /* Stack buttons vertically */
-        gap: 0.5rem; /* Space between buttons */
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      /* Stack buttons vertically */
+      gap: 0.5rem;
+      /* Space between buttons */
     }
 
 
     #zoom-controls button {
-        background-color: rgba(255, 255, 255, 0.8);
-        border: 1px solid #666;
-        border-radius: 4px;
-        padding: 8px;
-        cursor: pointer;
-        font-size: 1rem;
-        color: black;
-        transition: all 0.3s ease;
+      background-color: rgba(255, 255, 255, 0.8);
+      border: 1px solid #666;
+      border-radius: 4px;
+      padding: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      color: black;
+      transition: all 0.3s ease;
     }
+
     #zoom-controls button.dark-mode {
-        background-color: rgba(30,30,30,0.8);
-        color:white;
-        border-color:#999;
+      background-color: rgba(30, 30, 30, 0.8);
+      color: white;
+      border-color: #999;
     }
-
-
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
@@ -261,6 +263,7 @@
         <option value="many">Many Lines</option>
         <option value="single">Single Line</option>
         <option value="pendulum">Pendulum</option>
+        <option value="anaglyph">Anaglyph</option>
       </select>
       <br>
       <label for="opacity-slider">Opacity:</label>
@@ -278,6 +281,16 @@
       <label for="special-line-color" id="special-line-color-label">Special Line Color:</label>
       <input type="color" id="special-line-color" value="#FFFFFF">
       <br>
+
+      <!--Anaglyph Color Pickers-->
+      <div id="anaglyph-color-pickers" style="display: none;">
+        <label for="anaglyph-left-color">Left Eye Color:</label>
+        <input type="color" id="anaglyph-left-color" value="#ff0000">
+        <br>
+        <label for="anaglyph-right-color">Right Eye Color:</label>
+        <input type="color" id="anaglyph-right-color" value="#00ffff">
+        <br>
+      </div>
       <label for="bg-color">Background Color:</label>
       <input type="color" id="bg-color" value="#ff0000">
       <br>
@@ -311,6 +324,14 @@
         <label for="pendulum-thickness">Pendulum Thickness:</label>
         <input type="range" id="pendulum-thickness" min="1" max="500" value="20">
       </div>
+
+      <!-- Depth offset for anaglyph -->
+      <div id="depth-offset-container" style="display: none;">
+        <label for="depth-offset">Depth Offset:</label>
+        <input type="range" id="depth-offset" min="1" max="100" value="10">
+        <br>
+      </div>
+
       <label for="line-thickness">Line Thickness:</label>
       <input type="range" id="line-thickness" min="1" max="40" value="4">
       <br>
@@ -339,11 +360,11 @@
     </div>
   </div>
 
-   <!-- Zoom controls -->
-    <div id="zoom-controls">
-        <button id="zoom-in">+</button>
-        <button id="zoom-out">-</button>
-    </div>
+  <!-- Zoom controls -->
+  <div id="zoom-controls">
+    <button id="zoom-in">+</button>
+    <button id="zoom-out">-</button>
+  </div>
 
   <script>
     function standardize_color(str) {
@@ -378,8 +399,8 @@
     document.addEventListener('DOMContentLoaded', function () {
       initializeBackgroundColor();
       controls.style.opacity = opacity;
-        // Initialize zoom
-        initializeZoom();
+      // Initialize zoom
+      initializeZoom();
     });
     // Add a window load event listener as a backup
     window.addEventListener('load', function () {
@@ -460,7 +481,7 @@
     canvas.height = canvasHeight;
 
 
-      // --- Zoom functionality ---
+    // --- Zoom functionality ---
     let scale = 1;
     let zoomFactor = 1.1; //  How much to zoom in/out per step
     let originX = 0;
@@ -470,85 +491,85 @@
     let lastY = 0;
 
     function initializeZoom() {
-        const zoomInButton = document.getElementById('zoom-in');
-        const zoomOutButton = document.getElementById('zoom-out');
+      const zoomInButton = document.getElementById('zoom-in');
+      const zoomOutButton = document.getElementById('zoom-out');
 
-        zoomInButton.addEventListener('click', () => {
-          scale *= zoomFactor;
-            updateCanvasTransform();
-        });
+      zoomInButton.addEventListener('click', () => {
+        scale *= zoomFactor;
+        updateCanvasTransform();
+      });
 
-        zoomOutButton.addEventListener('click', function() {
-            scale /= zoomFactor;
-            updateCanvasTransform();
-        });
-       // Mouse wheel event for zooming
-        canvas.addEventListener('wheel', function(event) {
-            event.preventDefault(); // Prevent default scrolling
-            const zoomDelta = event.deltaY > 0 ? 1 / zoomFactor : zoomFactor;
-            const rect = canvas.getBoundingClientRect();
+      zoomOutButton.addEventListener('click', function () {
+        scale /= zoomFactor;
+        updateCanvasTransform();
+      });
+      // Mouse wheel event for zooming
+      canvas.addEventListener('wheel', function (event) {
+        event.preventDefault(); // Prevent default scrolling
+        const zoomDelta = event.deltaY > 0 ? 1 / zoomFactor : zoomFactor;
+        const rect = canvas.getBoundingClientRect();
 
-            // Calculate the mouse position relative to the canvas
-            const mouseX = event.clientX - rect.left;
-            const mouseY = event.clientY - rect.top;
+        // Calculate the mouse position relative to the canvas
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
 
-             // Adjust origin for zoom
-             originX = mouseX - (mouseX - originX) * zoomDelta;
-             originY = mouseY - (mouseY - originY) * zoomDelta;
-
-
-            scale *= zoomDelta;
+        // Adjust origin for zoom
+        originX = mouseX - (mouseX - originX) * zoomDelta;
+        originY = mouseY - (mouseY - originY) * zoomDelta;
 
 
-            updateCanvasTransform();
+        scale *= zoomDelta;
 
-        });
+
+        updateCanvasTransform();
+
+      });
 
       // Mouse down event to start dragging
-        canvas.addEventListener('mousedown', function(event) {
-            isDragging = true;
-            lastX = event.clientX;
-            lastY = event.clientY;
-        });
+      canvas.addEventListener('mousedown', function (event) {
+        isDragging = true;
+        lastX = event.clientX;
+        lastY = event.clientY;
+      });
 
-        // Mouse up event to stop dragging
-        canvas.addEventListener('mouseup', function(event) {
-            isDragging = false;
-        });
+      // Mouse up event to stop dragging
+      canvas.addEventListener('mouseup', function (event) {
+        isDragging = false;
+      });
 
-         // Mouse leave canvas event to stop dragging
-        canvas.addEventListener('mouseleave', function(event) {
-            isDragging = false;
-        });
+      // Mouse leave canvas event to stop dragging
+      canvas.addEventListener('mouseleave', function (event) {
+        isDragging = false;
+      });
 
 
-       // Mouse move event to perform panning
-        canvas.addEventListener('mousemove', function(event) {
-            if (isDragging) {
-                const dx = event.clientX - lastX;
-                const dy = event.clientY - lastY;
+      // Mouse move event to perform panning
+      canvas.addEventListener('mousemove', function (event) {
+        if (isDragging) {
+          const dx = event.clientX - lastX;
+          const dy = event.clientY - lastY;
 
-                originX += dx;
-                originY += dy;
-                lastX = event.clientX;
-                lastY = event.clientY;
+          originX += dx;
+          originY += dy;
+          lastX = event.clientX;
+          lastY = event.clientY;
 
-                updateCanvasTransform();
-            }
-        });
+          updateCanvasTransform();
+        }
+      });
 
 
     }
 
     function updateCanvasTransform() {
-        // Limit the scale to prevent zooming too far in or out
-        scale = Math.max(0.1, Math.min(scale, 5)); // Example limits
+      // Limit the scale to prevent zooming too far in or out
+      scale = Math.max(0.1, Math.min(scale, 5)); // Example limits
 
-        // Apply the transformations
-        context.setTransform(scale, 0, 0, scale, originX, originY);
+      // Apply the transformations
+      context.setTransform(scale, 0, 0, scale, originX, originY);
 
-        // Redraw the canvas with the new transformation
-        draw();
+      // Redraw the canvas with the new transformation
+      draw();
     }
 
     // --- END ZOOM FUNCTIONALITY ---
@@ -590,6 +611,9 @@
         y: 0
       }),
       'circleOutlineDashDensity': '14', // Default circle outline dash density
+      'depthOffset': '10', // Default depth offset
+      'anaglyphLeftColor' : '#ff0000',
+      'anaglyphRightColor': '#00ffff',
     };
     for (const key in defaultSettings) {
       initializeLocalStorage(key, defaultSettings[key]);
@@ -618,6 +642,10 @@
     let opacity = parseFloat(getLocalStorageValue('opacity'));
     let autopilotWalkRange = parseInt(getLocalStorageValue('autopilotWalkRange')); // Retrieve walk range
     let circleOutlineDashDensity = parseInt(getLocalStorageValue('circleOutlineDashDensity')); // Retrieve dash density
+    let depthOffset = parseInt(getLocalStorageValue('depthOffset')) || 10;  //Anaglyph Depth
+    let anaglyphLeftColor = getLocalStorageValue('anaglyphLeftColor') || '#ff0000';
+    let anaglyphRightColor = getLocalStorageValue('anaglyphRightColor') || '#00ffff';
+
 
     // Apply retrieved values to the elements
     document.getElementById('line-color').value = color;
@@ -642,6 +670,9 @@
     document.getElementById('visualization-mode').value = mode;
     document.getElementById('autopilot-walk-range').value = autopilotWalkRange; // Set walk range slider value
     document.getElementById('circle-outline-dash-density').value = circleOutlineDashDensity; // Set dash density slider value
+    document.getElementById('depth-offset').value = depthOffset;
+    document.getElementById('anaglyph-left-color').value = anaglyphLeftColor;
+    document.getElementById('anaglyph-right-color').value = anaglyphRightColor;
 
 
     // --- Controls and Event Listeners ---
@@ -687,33 +718,88 @@
       verticalOffsetSlider.value = verticalOffset;
     }
     setSliderLimits();
-    // Function to toggle visibility of line count
-    function toggleLineCountVisibility() {
+
+      // Function to calculate Anaglyph colors based on the background
+    function calculateAnaglyphColors(bgColor) {
+        // Convert hex to RGB
+        let r = parseInt(bgColor.slice(1, 3), 16);
+        let g = parseInt(bgColor.slice(3, 5), 16);
+        let b = parseInt(bgColor.slice(5, 7), 16);
+
+        // Invert the color for a starting point
+        let invR = 255 - r;
+        let invG = 255 - g;
+        let invB = 255 - b;
+
+        // Calculate basic anaglyph colors (red and cyan)
+        let leftColor = { r: invR, g: 0, b: 0 };       // Red
+        let rightColor = { r: 0, g: invG, b: invB }; // Cyan
+
+        // Convert back to hex
+        const toHex = (c) => {
+          let hex = c.toString(16);
+          return hex.length == 1 ? "0" + hex : hex;
+        };
+
+        let leftHex = "#" + toHex(leftColor.r) + toHex(leftColor.g) + toHex(leftColor.b);
+        let rightHex = "#" + toHex(rightColor.r) + toHex(rightColor.g) + toHex(rightColor.b);
+
+        return { left: leftHex, right: rightHex };
+    }
+
+    // Function to toggle visibility of line count and other elements
+    function toggleControlVisibility() {
       const radiatingLineCountContainer = document.getElementById('radiating-line-count-container');
       const lineColorContainer = document.getElementById('line-color-container');
-      const pendulumSizeContainer = document.getElementById('pendulum-size-container'); // New
+      const pendulumSizeContainer = document.getElementById('pendulum-size-container');
+      const depthOffsetContainer = document.getElementById('depth-offset-container');
+      const anaglyphColorPickers = document.getElementById('anaglyph-color-pickers');
 
       if (mode === 'many') {
         radiatingLineCountContainer.style.display = 'block';
         lineColorContainer.style.display = 'block';
-        pendulumSizeContainer.style.display = 'none'; // Hide in "many" mode
+        pendulumSizeContainer.style.display = 'none';
+        depthOffsetContainer.style.display = 'none';
+        anaglyphColorPickers.style.display = 'none';
       } else if (mode === 'single') {
         radiatingLineCountContainer.style.display = 'none';
         lineColorContainer.style.display = 'none';
-        pendulumSizeContainer.style.display = 'none'; // Hide in "single" mode
+        pendulumSizeContainer.style.display = 'none';
+        depthOffsetContainer.style.display = 'none';
+        anaglyphColorPickers.style.display = 'none';
       } else if (mode === 'pendulum') {
         radiatingLineCountContainer.style.display = 'none';
         lineColorContainer.style.display = 'block';
-        pendulumSizeContainer.style.display = 'block'; // Show only in "pendulum" mode
+        pendulumSizeContainer.style.display = 'block';
+        depthOffsetContainer.style.display = 'none';
+        anaglyphColorPickers.style.display = 'none';
+      } else if (mode === 'anaglyph') {
+        radiatingLineCountContainer.style.display = 'block'; // Keep for Anaglyph
+        lineColorContainer.style.display = 'none';  // Hide in Anaglyph mode
+        pendulumSizeContainer.style.display = 'none';
+        depthOffsetContainer.style.display = 'block';
+        anaglyphColorPickers.style.display = 'block';
+
+        // Automatically calculate anaglyph colors when switching to anaglyph mode
+        const calculatedColors = calculateAnaglyphColors(bgColor);
+        anaglyphLeftColor = calculatedColors.left;
+        anaglyphRightColor = calculatedColors.right;
+        document.getElementById('anaglyph-left-color').value = anaglyphLeftColor;
+        document.getElementById('anaglyph-right-color').value = anaglyphRightColor;
+        setLocalStorageValue('anaglyphLeftColor', anaglyphLeftColor);
+        setLocalStorageValue('anaglyphRightColor', anaglyphRightColor);
+
       }
     }
+
     // Call on initialization
-    toggleLineCountVisibility();
+    toggleControlVisibility();
+
     // Event listeners for input changes
     document.getElementById('visualization-mode').addEventListener('change', function () {
       mode = this.value;
       setLocalStorageValue('mode', mode);
-      toggleLineCountVisibility();
+      toggleControlVisibility();
       updateTextPlaceholder();
       draw();
     });
@@ -782,6 +868,16 @@
       bgColor = this.value;
       setLocalStorageValue('bgColor', bgColor);
       setBackgroundColor(bgColor);
+       if(mode === 'anaglyph'){
+        const calculatedColors = calculateAnaglyphColors(bgColor);
+        anaglyphLeftColor = calculatedColors.left;
+        anaglyphRightColor = calculatedColors.right;
+        document.getElementById('anaglyph-left-color').value = anaglyphLeftColor;
+        document.getElementById('anaglyph-right-color').value = anaglyphRightColor;
+        setLocalStorageValue('anaglyphLeftColor', anaglyphLeftColor);
+        setLocalStorageValue('anaglyphRightColor', anaglyphRightColor);
+        draw();
+       }
     });
     document.getElementById('text-color').addEventListener('input', function () {
       textColor = this.value;
@@ -809,6 +905,26 @@
       draw();
     });
 
+    //Anaglyph Depth and Color Listeners
+    document.getElementById('depth-offset').addEventListener('input', function() {
+        depthOffset = parseInt(this.value);
+        setLocalStorageValue('depthOffset', depthOffset);
+        draw();
+    });
+
+    document.getElementById('anaglyph-left-color').addEventListener('input', function() {
+        anaglyphLeftColor = this.value;
+        setLocalStorageValue('anaglyphLeftColor', anaglyphLeftColor);
+        draw();
+    });
+
+     document.getElementById('anaglyph-right-color').addEventListener('input', function() {
+        anaglyphRightColor = this.value;
+        setLocalStorageValue('anaglyphRightColor', anaglyphRightColor);
+        draw();
+    });
+
+
 
     // --- Resize and Key Event Handling ---
     window.addEventListener("resize", function () {
@@ -835,15 +951,15 @@
       let hasChanged = false;
 
       if (keys["a"]) {
-  if (mode === "pendulum") {
-    pendulumAngle = (pendulumAngle - rotationVelocity + 360) % 360; // Adjust pendulum angle
-    setLocalStorageValue('pendulumAngle', pendulumAngle);
-  } else {
-    startAngle = (startAngle - rotationVelocity + 360) % 360; // Adjust start angle for other modes
-    setLocalStorageValue('startAngle', startAngle);
-  }
-  hasChanged = true;
-}
+        if (mode === "pendulum") {
+          pendulumAngle = (pendulumAngle - rotationVelocity + 360) % 360; // Adjust pendulum angle
+          setLocalStorageValue('pendulumAngle', pendulumAngle);
+        } else {
+          startAngle = (startAngle - rotationVelocity + 360) % 360; // Adjust start angle for other modes
+          setLocalStorageValue('startAngle', startAngle);
+        }
+        hasChanged = true;
+      }
 
       if (keys["d"]) {
         if (mode === "pendulum") {
@@ -857,10 +973,11 @@
       }
 
       if (keys["m"]) {
-        mode = mode === "many" ? "single" : mode === "single" ? "pendulum" : "many"; // Toggle modes
+          // Toggle between 'many', 'single', 'pendulum' and 'anaglyph'
+        mode = mode === "many" ? "single" : mode === "single" ? "pendulum" : mode === "pendulum" ? "anaglyph" : "many";
         setLocalStorageValue("mode", mode);
         document.getElementById('visualization-mode').value = mode;
-        toggleLineCountVisibility();
+        toggleControlVisibility();
         updateTextPlaceholder();
         hasChanged = true;
       }
@@ -907,16 +1024,16 @@
         hasChanged = true;
       }
       if (keys["="] || keys["+"]) { // Zoom in
-            scale *= zoomFactor;
-            updateCanvasTransform();
-            hasChanged = true;
-        }
+        scale *= zoomFactor;
+        updateCanvasTransform();
+        hasChanged = true;
+      }
 
-        if (keys["-"] || keys["_"]) { // Zoom out
-            scale /= zoomFactor;
-            updateCanvasTransform();
-            hasChanged = true;
-        }
+      if (keys["-"] || keys["_"]) { // Zoom out
+        scale /= zoomFactor;
+        updateCanvasTransform();
+        hasChanged = true;
+      }
 
 
       if (hasChanged && !shouldAnimate) draw();
@@ -924,7 +1041,7 @@
 
     // --- Pendulum Drawing Function ---
     function drawPendulum() {
-    //  context.clearRect(0, 0, canvas.width, canvas.height); // No longer needed with setTransform
+      //  context.clearRect(0, 0, canvas.width, canvas.height); // No longer needed with setTransform
 
       // Draw main circle
       context.strokeStyle = color3;
@@ -970,7 +1087,7 @@
 
     // --- Drawing Functions ---
     function drawManyLines() {
-    //  context.clearRect(0, 0, canvas.width, canvas.height);  // No longer needed
+      //  context.clearRect(0, 0, canvas.width, canvas.height);  // No longer needed
       context.strokeStyle = color3;
       context.beginPath();
       context.setLineDash([circleOutlineDashDensity, circleOutlineDashDensity]);
@@ -1003,7 +1120,7 @@
     }
 
     function drawSingleLine() {
-    //  context.clearRect(0, 0, canvas.width, canvas.height); // No longer needed
+      //  context.clearRect(0, 0, canvas.width, canvas.height); // No longer needed
 
       // Draw circle outline
       context.strokeStyle = color3;
@@ -1044,12 +1161,76 @@
       context.fillStyle = textColor;
       context.fillText(angleName(angle), x3, y3);
     }
+
+    function drawAnaglyph() {
+       // Draw circle outline (do this only once, not for each eye)
+      context.strokeStyle = color3;
+      context.beginPath();
+      context.setLineDash([circleOutlineDashDensity, circleOutlineDashDensity]);
+      context.arc(canvas.width / 2 + horizontalOffset, canvas.height / 2 + verticalOffset, radius * 1.7 + arcOffset, 0, 2 * Math.PI);
+      context.lineWidth = 4;
+      context.stroke();
+      context.setLineDash([]);
+
+        // Set up text properties
+      context.font = textSize + "px Verdana";
+      context.textAlign = "center";
+
+        // Cached calculations to avoid repetition
+      const centerX = canvas.width / 2 + horizontalOffset;
+      const centerY = canvas.height / 2 + verticalOffset;
+      const baseDepth = depthOffset;  // Base depth, can be adjusted
+      const lineStartDistance = radius * 0.0;
+      const lineEndDistance = radius * lineLength;
+      const textDist = radius * textDistance; // Use textDistance
+
+      for (let i = 0; i < 360; i += (360 / radiatingLineCount)) {
+        let angle = (i + startAngle) % 360;
+        let depth = baseDepth * (radius * 1.7 + arcOffset) * 0.01; // Scale depth by circle size
+
+        // Left Eye (Red)
+        let leftStartX = centerX + lineStartDistance * Math.cos(angle * Math.PI / 180) - depth;
+        let leftStartY = centerY + lineStartDistance * Math.sin(angle * Math.PI / 180);
+        let leftEndX = centerX + lineEndDistance * Math.cos(angle * Math.PI / 180) - depth;
+        let leftEndY = centerY + lineEndDistance * Math.sin(angle * Math.PI / 180);
+        let leftTextX = centerX + textDist * Math.cos(angle * Math.PI / 180) - depth;
+        let leftTextY = centerY + textDist * Math.sin(angle * Math.PI / 180);
+
+        context.lineWidth = lineThickness;
+        context.strokeStyle = anaglyphLeftColor;
+        context.beginPath();
+        context.moveTo(leftStartX, leftStartY);
+        context.lineTo(leftEndX, leftEndY);
+        context.stroke();
+        context.fillStyle = anaglyphLeftColor; // Use anaglyph color for text
+        context.fillText(angleName(angle), leftTextX, leftTextY);
+
+
+        // Right Eye (Cyan)
+        let rightStartX = centerX + lineStartDistance * Math.cos(angle * Math.PI / 180) + depth;
+        let rightStartY = centerY + lineStartDistance * Math.sin(angle * Math.PI / 180);
+        let rightEndX = centerX + lineEndDistance * Math.cos(angle * Math.PI / 180) + depth;
+        let rightEndY = centerY + lineEndDistance * Math.sin(angle * Math.PI / 180);
+        let rightTextX = centerX + textDist * Math.cos(angle * Math.PI / 180) + depth;
+        let rightTextY = centerY + textDist * Math.sin(angle * Math.PI / 180);
+
+        context.lineWidth = lineThickness;
+        context.strokeStyle = anaglyphRightColor;
+        context.beginPath();
+        context.moveTo(rightStartX, rightStartY);
+        context.lineTo(rightEndX, rightEndY);
+        context.stroke();
+        context.fillStyle = anaglyphRightColor; // Use anaglyph color for text
+        context.fillText(angleName(angle), rightTextX, rightTextY);
+      }
+    }
+
     function draw() {
-          // Clear the canvas *before* setting the transform
-        context.save(); // Save the current context state
-        context.setTransform(1, 0, 0, 1, 0, 0); // Reset the transform
-        context.clearRect(0, 0, canvas.width, canvas.height); // Clear the entire canvas
-        context.restore(); // Restore the context state (which includes our zoom transform)
+      // Clear the canvas *before* setting the transform
+      context.save(); // Save the current context state
+      context.setTransform(1, 0, 0, 1, 0, 0); // Reset the transform
+      context.clearRect(0, 0, canvas.width, canvas.height); // Clear the entire canvas
+      context.restore(); // Restore the context state (which includes our zoom transform)
 
 
       if (mode === "many") {
@@ -1058,6 +1239,8 @@
         drawSingleLine();
       } else if (mode === "pendulum") {
         drawPendulum();
+      } else if (mode === "anaglyph") {
+        drawAnaglyph();
       }
     }
     draw() // Initial draw on page load
@@ -1075,7 +1258,7 @@
     // --- Dark Mode Toggle ---
     const toggleDarkModeButton = document.getElementById('toggle-dark-mode');
     const controlsElement = document.getElementById('controls');
-     const zoomControls = document.getElementById('zoom-controls');
+    const zoomControls = document.getElementById('zoom-controls');
     let darkModeIcon = document.querySelector('#toggle-dark-mode i');
 
     function setMode(mode) {
@@ -1090,10 +1273,10 @@
         flipButton.classList.add('dark-mode');
         autopilot1Button.classList.add('dark-mode');
         autopilot2Button.classList.add('dark-mode');
-         zoomControls.classList.add('dark-mode');
+        zoomControls.classList.add('dark-mode');
         for (let button of zoomControls.children) {
-            button.classList.add('dark-mode');
-          }
+          button.classList.add('dark-mode');
+        }
         darkModeIcon.classList.remove('fa-sun');
         darkModeIcon.classList.add('fa-moon');
       } else {
@@ -1103,10 +1286,10 @@
         flipButton.classList.remove('dark-mode');
         autopilot1Button.classList.remove('dark-mode');
         autopilot2Button.classList.remove('dark-mode');
-          zoomControls.classList.remove('dark-mode');
-           for (let button of zoomControls.children) {
-            button.classList.remove('dark-mode');
-          }
+        zoomControls.classList.remove('dark-mode');
+        for (let button of zoomControls.children) {
+          button.classList.remove('dark-mode');
+        }
         darkModeIcon.classList.remove('fa-moon');
         darkModeIcon.classList.add('fa-sun');
       }
@@ -1214,7 +1397,7 @@
       clearInterval(autopilotRotationInterval);
       clearTimeout(autopilotCenterShiftTimeout);
 
-        // *** LOCK the sliders ***
+      // *** LOCK the sliders ***
       horizontalOffsetSlider.disabled = true;
       verticalOffsetSlider.disabled = true;
 
@@ -1242,7 +1425,7 @@
       }
       isTransitioning = false;
 
-        // *** UNLOCK the sliders ***
+      // *** UNLOCK the sliders ***
       horizontalOffsetSlider.disabled = false;
       verticalOffsetSlider.disabled = false;
     }
@@ -1269,7 +1452,7 @@
       clearInterval(autopilotRotationInterval);
       clearTimeout(autopilotCenterShiftTimeout);
 
-        // *** LOCK the sliders ***
+      // *** LOCK the sliders ***
       horizontalOffsetSlider.disabled = true;
       verticalOffsetSlider.disabled = true;
 
@@ -1297,7 +1480,7 @@
       }
       isTransitioning = false;
 
-        // *** UNLOCK the sliders ***
+      // *** UNLOCK the sliders ***
       horizontalOffsetSlider.disabled = false;
       verticalOffsetSlider.disabled = false;
     }
@@ -1400,4 +1583,5 @@
     }
   </script>
 </body>
-</html> 
+
+</html>
