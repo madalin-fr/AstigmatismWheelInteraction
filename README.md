@@ -14,7 +14,7 @@ A dynamic web application visualizing an astigmatism wheel with interactive cont
     *   Arc offset
     *   Line length
     *   Rotation speed
-    *   Opacity
+    *   Opacity 
     *   Depth offset (for anaglyph 3D mode)
     *   Left and right eye colors (for anaglyph 3D mode)
 *   **Visualization Modes:**
@@ -64,4 +64,4 @@ This project is licensed under the Creative Commons Attribution-NonCommercial-Sh
 [http://creativecommons.org/licenses/by-nc-sa/4.0/](http://creativecommons.org/licenses/by-nc-sa/4.0/)
 
 © 2023 Jeremy Bornstein. All Rights Reserved.
-© 2024 Frîncu Mădălin-Gabriel. All Rights Reserved.
+© 2024-2025 Frîncu Mădălin-Gabriel. All Rights Reserved.
