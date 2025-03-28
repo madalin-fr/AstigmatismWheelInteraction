@@ -353,7 +353,7 @@
             <input type="range" id="line-length" min="0.1" max="4.0" step="0.1" value="1.0">
             <br>
             <label for="rotation-velocity">Rotation Velocity:</label>
-            <input type="range" id="rotation-velocity" min="1" max="10" value="1">
+            <input type="range" id="rotation-velocity" min="0.1" max="10" step="0.1" value="1">
             <br>
             <label for="autopilot-speed">Autopilot Speed:</label>
             <input type="range" id="autopilot-speed" min="5" max="40" value="10">
@@ -544,7 +544,7 @@
             horizontalOffset: '0',
             verticalOffset: '0',
             arcOffset: '0',
-            rotationVelocity: '1',
+            rotationVelocity: '1.0',
             lineLength: '1.0',
             isDarkMode: 'false',
             isReversed: 'false',
@@ -578,7 +578,7 @@
         let horizontalOffset = parseInt(getLocalStorageValue('horizontalOffset'));
         let verticalOffset = parseInt(getLocalStorageValue('verticalOffset'));
         let arcOffset = parseInt(getLocalStorageValue('arcOffset'));
-        let rotationVelocity = parseInt(getLocalStorageValue('rotationVelocity'));
+        let rotationVelocity = parseFloat(getLocalStorageValue('rotationVelocity'));
         let lineLength = parseFloat(getLocalStorageValue('lineLength'));
         let isDarkMode = getLocalStorageValue('isDarkMode') === 'true';
         let isReversed = getLocalStorageValue('isReversed') === 'true';
@@ -873,7 +873,7 @@ inputElements.forEach(id => {
                 setLocalStorageValue('lineLength', lineLength);
                 break;
             case 'rotation-velocity':
-                rotationVelocity = parseInt(this.value);
+                rotationVelocity = parseFloat(this.value);
                 setLocalStorageValue('rotationVelocity', rotationVelocity);
                 break;
             case 'line-thickness':
