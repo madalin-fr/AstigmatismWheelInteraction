@@ -1489,75 +1489,88 @@ function rgbToHex(r, g, b) {
         }
 
 
-        function drawManyLines() {
-            const centerX = getWorldCenterX();
-            const centerY = getWorldCenterY();
-            const currentRadius = radius * 1.7 + arcOffset;
+ function drawManyLines() {
+    const centerX = getWorldCenterX();
+    const centerY = getWorldCenterY();
+    const currentRadius = radius * 1.7 + arcOffset;
 
-            // Draw circle outline
-            context.strokeStyle = color3;
-            context.lineWidth = Math.max(1, 4 / scale);
-            context.setLineDash([circleOutlineDashDensity / scale, circleOutlineDashDensity / scale]);
-            context.beginPath();
-            context.arc(centerX, centerY, currentRadius, 0, 2 * Math.PI);
-            context.stroke();
-            context.setLineDash([]);
+    // Draw circle outline
+    context.strokeStyle = color3;
+    context.lineWidth = Math.max(1, 4 / scale);
+    context.setLineDash([circleOutlineDashDensity / scale, circleOutlineDashDensity / scale]);
+    context.beginPath();
+    context.arc(centerX, centerY, currentRadius, 0, 2 * Math.PI);
+    context.stroke();
+    context.setLineDash([]);
 
-            // Prepare text drawing
-            context.font = `${textSize}px Verdana`;
-            context.textAlign = "center";
-            context.textBaseline = "middle";
+    // Prepare text drawing
+    context.font = `${textSize}px Verdana`;
+    context.textAlign = "center";
+    context.textBaseline = "middle";
 
-            // Line distances from center
-            const lineStartDistance = radius * 0.0; // Start lines from the center
-            const lineEndDistance = radius * lineLength;
-            const textDist = radius * textDistance;
+    // Line distances from center
+    const lineStartDistance = radius * 0.0; // Start lines from the center
+    const lineEndDistance = radius * lineLength;
+    const textDist = radius * textDistance;
 
-            const numLines = parseInt(radiatingLineCount); // Ensure it's an integer
-             if (numLines < 2) return; // Need at least 2 lines
-             const angleIncrement = 360 / numLines;
+    const numLines = parseInt(radiatingLineCount); // Ensure it's an integer
+     if (numLines < 1) return; // Need at least 1 line
+     const angleIncrement = (numLines > 1) ? (360 / numLines) : 0; // Avoid division by zero
 
-             const currentLineThickness = Math.max(1, lineThickness / scale); // Scale line thickness
+     const currentLineThickness = Math.max(1, lineThickness / scale); // Scale line thickness
 
-            for (let i = 0; i < numLines; i++) {
-                 let angleDeg = (i * angleIncrement + startAngle);
-                 // Normalize angle for display and calculations
-                 let normalizedAngleDeg = ((angleDeg % 360) + 360) % 360;
-                 let angleRad = normalizedAngleDeg * Math.PI / 180;
+     // Determine the index of the line opposite the first one (index 0)
+     // This only makes sense if the number of lines is even.
+     const oppositeIndex = (numLines > 1 && numLines % 2 === 0) ? (numLines / 2) : -1; // Use -1 if no direct opposite
 
-                // Calculate line start and end points
-                let startX = centerX + lineStartDistance * Math.cos(angleRad);
-                let startY = centerY + lineStartDistance * Math.sin(angleRad);
-                let endX = centerX + lineEndDistance * Math.cos(angleRad);
-                let endY = centerY + lineEndDistance * Math.sin(angleRad);
+    // Optional: Logs for debugging
+    // console.log("--- drawManyLines START ---");
+    // console.log(`  Settings: numLines=${numLines}, oppositeIndex=${oppositeIndex}, color=${color}, color2=${color2}`);
 
-                 // Determine line color (special color for 0/180 degrees equivalent)
-                 // Use a small tolerance for floating point comparisons
-                 const tolerance = 0.1;
-                 const isSpecialAngle = Math.abs(normalizedAngleDeg - 90) < tolerance || Math.abs(normalizedAngleDeg - 270) < tolerance;
-                 context.strokeStyle = isSpecialAngle ? color2 : color; // Use special color (color2) for 90/270 (visual 0/180)
+    for (let i = 0; i < numLines; i++) {
+         let angleDeg = (i * angleIncrement + startAngle);
 
-                // Draw the line
-                context.lineWidth = currentLineThickness;
-                context.beginPath();
-                context.moveTo(startX, startY);
-                context.lineTo(endX, endY);
-                context.stroke();
+        // Normalize angle for calculations and text display
+        let normalizedAngleDeg = ((angleDeg % 360) + 360) % 360;
+        let angleRad = normalizedAngleDeg * Math.PI / 180;
 
-                // Calculate text position
-                let textX = centerX + textDist * Math.cos(angleRad);
-                let textY = centerY + textDist * Math.sin(angleRad);
+        // --- MODIFIED LOGIC ---
+        // Assign the special color (color2) to the first line (index 0)
+        // AND to its opposite line, but only if numLines is even.
+        const isDesignatedSpecialLine = (i === 0) || (oppositeIndex !== -1 && i === oppositeIndex);
+        context.strokeStyle = isDesignatedSpecialLine ? color2 : color;
+        // --- END MODIFIED LOGIC ---
 
-                 // Draw the text
-                context.fillStyle = textColor;
-                 context.save();
-                 context.translate(textX, textY);
-                 // context.rotate(angleRad + Math.PI / 2); // Optional radial text
-                 context.fillText(angleName(normalizedAngleDeg), 0, 0);
-                 context.restore();
-            }
-        }
+        // Optional: Log the color decision
+        // console.log(`  Line ${i}: isDesignatedSpecialLine=${isDesignatedSpecialLine}, Assigned strokeStyle: ${context.strokeStyle}`);
 
+        // Calculate line start and end points
+        let startX = centerX + lineStartDistance * Math.cos(angleRad);
+        let startY = centerY + lineStartDistance * Math.sin(angleRad);
+        let endX = centerX + lineEndDistance * Math.cos(angleRad);
+        let endY = centerY + lineEndDistance * Math.sin(angleRad);
+
+        // Draw the line
+        context.lineWidth = currentLineThickness;
+        context.beginPath();
+        context.moveTo(startX, startY);
+        context.lineTo(endX, endY);
+        context.stroke();
+
+        // Calculate text position
+        let textX = centerX + textDist * Math.cos(angleRad);
+        let textY = centerY + textDist * Math.sin(angleRad);
+
+         // Draw the text
+        context.fillStyle = textColor;
+         context.save();
+         context.translate(textX, textY);
+         // context.rotate(angleRad + Math.PI / 2); // Optional radial text
+         context.fillText(angleName(normalizedAngleDeg), 0, 0);
+         context.restore();
+    }
+    // console.log("--- drawManyLines END ---");
+}
         function drawSingleLine() {
             const centerX = getWorldCenterX();
             const centerY = getWorldCenterY();
