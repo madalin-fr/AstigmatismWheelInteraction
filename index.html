@@ -419,10 +419,10 @@
 
                 <!-- Pan Controls (Now control originX/Y) -->
                 <label for="horizontal-offset">Horizontal Pan:</label>
-                <input type="range" id="horizontal-offset" min="-2000" max="2000" value="0" step="10"> <!-- Range set dynamically -->
+                <input type="range" id="horizontal-offset" min="-2000" max="2000" value="0" step="1"> <!-- Range set dynamically -->
                 <br>
                 <label for="vertical-offset">Vertical Pan:</label>
-                <input type="range" id="vertical-offset" min="-2000" max="2000" value="0" step="10"> <!-- Range set dynamically -->
+                <input type="range" id="vertical-offset" min="-2000" max="2000" value="0" step="1"> <!-- Range set dynamically -->
                 <br>
                 <!-- End Pan Controls -->
 
@@ -446,10 +446,10 @@
                 <input type="range" id="line-length" min="0.1" max="4.0" step="0.1" value="1.0">
                 <br>
 
-                <!-- MOVED ROTATION CHECKBOXES HERE -->
                 <label for="rotation-velocity">Rotation Velocity:</label>
                 <input type="range" id="rotation-velocity" min="0.1" max="10" step="0.1" value="1">
                 <br>
+                <!-- MOVED ROTATION CHECKBOXES HERE -->
                 <div style="margin-top: 5px; margin-bottom: 10px;"> <!-- Adjusted margin -->
                     <input type="checkbox" id="rotate-clockwise" checked>
                     <label for="rotate-clockwise" style="display: inline; margin: 0 5px 0 0;">Rotate Clockwise</label> <br>
@@ -735,25 +735,51 @@
         // --- UI Initialization Function ---
 
         /**
-         * Sets the min/max range for the pan sliders based on canvas dimensions.
-         * Allows panning roughly one screen width/height away from center.
+         * Sets the min/max range for the pan sliders based on canvas dimensions,
+         * current scale, and the effective radius of the drawn circle, ensuring
+         * some part of the circle always remains visible.
          */
         function updatePanSliderLimits() {
-            const maxPanX = canvasWidth; // Allow panning full width off screen
-            const maxPanY = canvasHeight; // Allow panning full height off screen
-            horizontalOffsetSlider.min = -maxPanX;
-            horizontalOffsetSlider.max = maxPanX;
-            verticalOffsetSlider.min = -maxPanY;
-            verticalOffsetSlider.max = maxPanY;
+            // Calculate the largest radius of the drawn content (outer circle)
+            // Consider potential negative arcOffset clamping if needed, but this formula works
+            const effectiveRadius = (radius * 1.7 + arcOffset);
+            const scaledRadius = effectiveRadius * scale; // Radius as it appears on screen
 
-            // Clamp current origin to new limits *after* setting them
-            originX = Math.max(parseFloat(horizontalOffsetSlider.min), Math.min(originX, parseFloat(horizontalOffsetSlider.max)));
-            originY = Math.max(parseFloat(verticalOffsetSlider.min), Math.min(originY, parseFloat(verticalOffsetSlider.max)));
+            // Calculate the logical center coordinates
+            const logicalCenterX = canvasWidth / 2;
+            const logicalCenterY = canvasHeight / 2;
 
-            // Update sliders if clamping occurred (important for consistency)
+            // Calculate maximum allowed origin shift to keep edges visible
+
+            // Max originX: Allows the *left* edge of the circle to touch the *right* edge of the viewport
+            const maxOriginX = canvasWidth - (logicalCenterX - effectiveRadius) * scale;
+            // Min originX: Allows the *right* edge of the circle to touch the *left* edge of the viewport
+            const minOriginX = 0 - (logicalCenterX + effectiveRadius) * scale;
+
+            // Max originY: Allows the *top* edge of the circle to touch the *bottom* edge of the viewport
+            const maxOriginY = canvasHeight - (logicalCenterY - effectiveRadius) * scale;
+            // Min originY: Allows the *bottom* edge of the circle to touch the *top* edge of the viewport
+            const minOriginY = 0 - (logicalCenterY + effectiveRadius) * scale;
+
+            // Apply the calculated limits to the sliders
+            horizontalOffsetSlider.min = minOriginX;
+            horizontalOffsetSlider.max = maxOriginX;
+            verticalOffsetSlider.min = minOriginY;
+            verticalOffsetSlider.max = maxOriginY;
+
+            // Clamp current origin to the *new* limits immediately
+            // This prevents the view from getting stuck if limits shrink
+            originX = Math.max(minOriginX, Math.min(originX, maxOriginX));
+            originY = Math.max(minOriginY, Math.min(originY, maxOriginY));
+
+            // Update slider thumbs to reflect potentially clamped origin values
             horizontalOffsetSlider.value = originX;
             verticalOffsetSlider.value = originY;
+
+            // Debugging logs (optional)
+            // console.log(`Limits updated: X[${minOriginX.toFixed(1)}, ${maxOriginX.toFixed(1)}], Y[${minOriginY.toFixed(1)}, ${maxOriginY.toFixed(1)}], Scale: ${scale.toFixed(2)}, EffRad: ${effectiveRadius.toFixed(1)}`);
         }
+
 
         function initializeUI() {
             // Set control values from loaded settings
@@ -932,7 +958,12 @@
 
                     // Other visual parameter updates
                     case 'pendulum-thickness': pendulumThickness = parseInt(this.value); setLocalStorageValue('pendulumThickness', pendulumThickness); break;
-                    case 'arc-offset': arcOffset = parseInt(this.value); setLocalStorageValue('arcOffset', arcOffset); break;
+                    case 'arc-offset':
+                        arcOffset = parseInt(this.value);
+                        setLocalStorageValue('arcOffset', arcOffset);
+                        updatePanSliderLimits(); // Limits depend on radius/offset
+                        needsRedraw = true;
+                        break;
                     case 'line-length': lineLength = parseFloat(this.value); setLocalStorageValue('lineLength', lineLength); break;
                     case 'rotation-velocity': rotationVelocity = parseFloat(this.value); setLocalStorageValue('rotationVelocity', rotationVelocity); break;
                     case 'line-thickness': lineThickness = parseInt(this.value); setLocalStorageValue('lineThickness', lineThickness); break;
@@ -974,11 +1005,13 @@
 
                 // Apply canvas transform if needed (for pan sliders)
                 if (updateTransform) {
+                    // updateCanvasTransform calls draw via requestAnimationFrame if not animating
                     updateCanvasTransform();
                 }
                 // Request redraw if needed and not animating or handled by transform update
                 else if (needsRedraw && !shouldAnimate) {
-                     requestAnimationFrame(draw); // Use rAF for efficiency
+                     // updatePanSliderLimits might have already clamped origin, ensure redraw happens
+                     requestAnimationFrame(draw);
                 }
             });
         });
@@ -1008,21 +1041,15 @@
             radius = Math.min(canvasWidth, canvasHeight) / 4.5;
 
             // --- Clamp Controls Panel Position ---
-            // Ensure the control panel doesn't get stuck off-screen after resize
             const currentX = parseFloat(controlsContainer.getAttribute('data-x')) || 0;
             const currentY = parseFloat(controlsContainer.getAttribute('data-y')) || 0;
-            const panelRect = controlsContainer.getBoundingClientRect(); // Get current size
-            const panelWidth = panelRect.width || 280; // Use measured or fallback width
-            const panelHeight = panelRect.height || 50; // Use measured or fallback height
-
-            const maxX = window.innerWidth - panelWidth - 5; // Max X (top-left) with padding
-            const maxY = window.innerHeight - panelHeight - 5; // Max Y (top-left) with padding
-
-            // Clamp position to be within new viewport bounds
+            const panelRect = controlsContainer.getBoundingClientRect();
+            const panelWidth = panelRect.width || 280;
+            const panelHeight = panelRect.height || 50;
+            const maxX = window.innerWidth - panelWidth - 5;
+            const maxY = window.innerHeight - panelHeight - 5;
             const clampedX = Math.max(0, Math.min(currentX, maxX));
             const clampedY = Math.max(0, Math.min(currentY, maxY));
-
-            // Apply clamped position if it changed
             if (clampedX !== currentX || clampedY !== currentY) {
                 controlsContainer.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
                 controlsContainer.setAttribute('data-x', clampedX);
@@ -1041,140 +1068,87 @@
         // Keyboard state tracking
         let pressedKeys = {};
         window.addEventListener("keydown", function (event) {
-             // Ignore keydowns if focus is on an input/select/button to allow typing/interaction
-             if (['INPUT', 'SELECT', 'BUTTON'].includes(event.target.tagName)) {
-                 // Allow +/- for zoom even if zoom buttons have focus? Maybe not for simplicity.
-                 return;
+            if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta') return;
+            pressedKeys[event.key.toLowerCase()] = true;
+            
+            handleKeyPresses(event); // Call the old handler
+             // Prevent default for handled keys
+             if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', '+', '-', '=', '_', 'm', 'r', 'c', 'w', 's', 'a', 'd', 'q', 'e'].includes(event.key.toLowerCase())) {
+                 event.preventDefault();
              }
-             // Ignore if modifier keys are the primary press (e.g., holding Shift)
-             if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta') {
-                 return;
-             }
-
-            const key = event.key.toLowerCase(); // Normalize key
-            if (!pressedKeys[key]) { // Prevent repeated triggers for held keys if handled by single press
-                pressedKeys[key] = true;
-                handleKeyPresses(event, true); // Pass event and indicate it's a down press
-            }
-            // Prevent default browser actions for keys we handle (like arrows scrolling)
-            if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', '+', '-', '=', '_', 'm', 'r', 'c'].includes(key)) {
-                event.preventDefault();
-            }
         });
 
         window.addEventListener("keyup", function (event) {
-             const key = event.key.toLowerCase();
-             delete pressedKeys[key];
-             // Optionally handle key up actions if needed
-             // handleKeyPresses(event, false);
+             delete pressedKeys[event.key.toLowerCase()];
         });
 
-        // Handles both single key presses and continuous actions based on pressedKeys
-        function handleKeyPresses(event, isKeyDown) {
-            // Panning speed adjusted by zoom level for consistent perceived movement
-            const panStep = 15 / scale;
-            // Rotation speed uses the velocity slider value
-            const angleStep = rotationVelocity;
-            let needsRedraw = false; // Track if redraw is needed by key actions
-            let transformChanged = false; // Track if pan/zoom requires transform update
-
+              
+ // OLD handleKeyPresses function
+ function handleKeyPresses(event) {
+            let offsetStep = 10 / scale; // Base offset step on scale
+            let angleStep = Math.max(0.5, rotationVelocity); // Base angle step on velocity
+            let hasChanged = false;
             const key = event.key.toLowerCase();
 
-             // --- Continuous Actions (checked directly via pressedKeys) ---
-             // These run as long as the key is held down (handled by browser repeat or animation loop)
-             // We check `pressedKeys` directly here.
+             // Rotation
+             if (pressedKeys["a"] || pressedKeys["arrowleft"]) {
+                if (mode === "pendulum") { pendulumAngle -= angleStep; } else { startAngle -= angleStep; }
+                 hasChanged = true;
+             }
+             if (pressedKeys["d"] || pressedKeys["arrowright"]) {
+                 if (mode === "pendulum") { pendulumAngle += angleStep; } else { startAngle += angleStep; }
+                 hasChanged = true;
+             }
+             // Panning (World Offset)
+             if (pressedKeys["w"] || pressedKeys["arrowup"]) { verticalOffset -= offsetStep; hasChanged = true; }
+             if (pressedKeys["s"] || pressedKeys["arrowdown"]) { verticalOffset += offsetStep; hasChanged = true; }
+             if (pressedKeys["q"]) { horizontalOffset -= offsetStep; hasChanged = true; } // Use Q/E for H offset
+             if (pressedKeys["e"]) { horizontalOffset += offsetStep; hasChanged = true; }
 
-             if (pressedKeys["a"] || pressedKeys["arrowleft"]) { // Rotate left/CCW
-                if (mode === "pendulum") pendulumAngle -= angleStep; else startAngle -= angleStep;
-                needsRedraw = true;
-             }
-             if (pressedKeys["d"] || pressedKeys["arrowright"]) { // Rotate right/CW
-                 if (mode === "pendulum") pendulumAngle += angleStep; else startAngle += angleStep;
-                 needsRedraw = true;
-             }
-             if (pressedKeys["w"] || pressedKeys["arrowup"]) { // Pan Up (positive Y offset)
-                 originY += panStep; transformChanged = true;
-             }
-             if (pressedKeys["s"] || pressedKeys["arrowdown"]) { // Pan Down (negative Y offset)
-                 originY -= panStep; transformChanged = true;
-             }
-             if (pressedKeys["q"]) { // Pan Left (positive X offset) - Less common binding
-                 originX += panStep; transformChanged = true;
-             }
-             if (pressedKeys["e"]) { // Pan Right (negative X offset) - Less common binding
-                 originX -= panStep; transformChanged = true;
-             }
-
-             // --- Single Press Actions (only trigger on keydown) ---
-             if (isKeyDown) {
-                 if (key === "m") { // Toggle Mode
-                    const modes = ['many', 'single', 'pendulum', 'anaglyph'];
-                    const currentModeIndex = modes.indexOf(mode);
-                    const nextModeIndex = (currentModeIndex + 1) % modes.length;
-                    // Trigger change via the select element to sync UI and logic
-                    const modeSelect = document.getElementById('visualization-mode');
-                    modeSelect.value = modes[nextModeIndex];
-                    modeSelect.dispatchEvent(new Event('input', { bubbles: true }));
-                    // Redraw is handled by the 'input' event listener
-                    needsRedraw = false;
-                    transformChanged = false;
+             // Single Press Actions
+             if (event.type === 'keydown' && !event.repeat) { // Check type and !repeat for single press
+                if (key === "m") { /* Mode toggle logic */
+                    const modes = ['many', 'single', 'pendulum', 'anaglyph']; const currentModeIndex = modes.indexOf(mode);
+                    const nextModeIndex = (currentModeIndex + 1) % modes.length; const modeSelect = document.getElementById('visualization-mode');
+                    modeSelect.value = modes[nextModeIndex]; modeSelect.dispatchEvent(new Event('input', { bubbles: true }));
+                    hasChanged = false; // Handled by input event
                 }
-                 if (key === "r") { // Reset View (Zoom and Pan)
-                     scale = 1.0;
-                     originX = 0;
-                     originY = 0;
-                     transformChanged = true; // Will update sliders and redraw
-                     needsRedraw = false;
-                 }
-                 // Reset Center Offset (C) - Not applicable now pan is separate
-                 // if (key === "c") { ... }
-
-                if (key === "=" || key === "+") { // Zoom In
-                     zoom(1 / zoomFactor, canvasWidth / 2, canvasHeight / 2); // Zoom towards center
-                     transformChanged = false; // zoom() calls updateCanvasTransform()
-                     needsRedraw = false;
-                 }
-                 if (key === "-" || key === "_") { // Zoom Out
-                     zoom(zoomFactor, canvasWidth / 2, canvasHeight / 2); // Zoom out from center
-                     transformChanged = false;
-                     needsRedraw = false;
-                 }
-             }
-
-            // --- Update UI & LocalStorage for changed state ---
-            if (transformChanged) {
-                // Clamp origin to slider limits before updating UI
-                const minH = parseFloat(horizontalOffsetSlider.min);
-                const maxH = parseFloat(horizontalOffsetSlider.max);
-                const minV = parseFloat(verticalOffsetSlider.min);
-                const maxV = parseFloat(verticalOffsetSlider.max);
-                originX = Math.max(minH, Math.min(originX, maxH));
-                originY = Math.max(minV, Math.min(originY, maxV));
-
-                // Update sliders to reflect new pan position
-                horizontalOffsetSlider.value = originX;
-                verticalOffsetSlider.value = originY;
-                // Save the new pan position
-                setLocalStorageValue('originX', originX);
-                setLocalStorageValue('originY', originY);
-                // Apply the transform and redraw
-                updateCanvasTransform();
+                if (key === "r") { /* Reset View (Zoom/Pan) */
+                    scale = 1; viewOriginX = 0; viewOriginY = 0;
+                    updateCanvasTransform(); hasChanged = false;
+                }
+                if (key === "c") { /* Reset Center Offset (World Offset) */
+                    horizontalOffset = 0; verticalOffset = 0;
+                    document.getElementById('horizontal-offset').value = horizontalOffset; document.getElementById('vertical-offset').value = verticalOffset;
+                    setLocalStorageValue('horizontalOffset', horizontalOffset); setLocalStorageValue('verticalOffset', verticalOffset);
+                    hasChanged = true;
+                }
+                if (key === "=" || key === "+") { /* Zoom in */
+                    zoom(1 / zoomFactor, canvasWidth / 2, canvasHeight / 2); hasChanged = false;
+                }
+                if (key === "-" || key === "_") { /* Zoom out */
+                    zoom(zoomFactor, canvasWidth / 2, canvasHeight / 2); hasChanged = false;
+                }
             }
 
-            // Save angles (could throttle this if performance is an issue)
-            if (needsRedraw && (pressedKeys["a"] || pressedKeys["d"] || pressedKeys["arrowleft"] || pressedKeys["arrowright"])) {
-                 if (mode === "pendulum") {
-                     setLocalStorageValue('pendulumAngle', pendulumAngle);
-                 } else {
-                     setLocalStorageValue('startAngle', startAngle);
-                 }
+            // Update UI/LS for changed offsets from keys
+            if (pressedKeys["w"] || pressedKeys["s"] || pressedKeys["q"] || pressedKeys["e"]) {
+                const minH = parseInt(horizontalOffsetSlider.min); const maxH = parseInt(horizontalOffsetSlider.max);
+                const minV = parseInt(verticalOffsetSlider.min); const maxV = parseInt(verticalOffsetSlider.max);
+                horizontalOffset = Math.max(minH, Math.min(horizontalOffset, maxH));
+                verticalOffset = Math.max(minV, Math.min(verticalOffset, maxV));
+                horizontalOffsetSlider.value = horizontalOffset; verticalOffsetSlider.value = verticalOffset;
+                setLocalStorageValue('horizontalOffset', horizontalOffset); setLocalStorageValue('verticalOffset', verticalOffset);
+            }
+             // Save angles on key press
+             if (pressedKeys["a"] || pressedKeys["d"] || pressedKeys["arrowleft"] || pressedKeys["arrowright"]) {
+                 if (mode === "pendulum") setLocalStorageValue('pendulumAngle', pendulumAngle);
+                 else setLocalStorageValue('startAngle', startAngle);
              }
 
-            // Request redraw if needed and not handled by transform update or autopilot
-            if (needsRedraw && !transformChanged && !shouldAnimate) {
-                requestAnimationFrame(draw);
-            }
+            if (hasChanged && !shouldAnimate) requestAnimationFrame(draw);
         }
+
 
 
         // --- Zoom and Pan Implementation ---
@@ -1192,164 +1166,83 @@
 
             // Mouse Wheel Zooming
             canvas.addEventListener('wheel', function (event) {
-                event.preventDefault(); // Prevent page scrolling
-                const delta = event.deltaY > 0 ? zoomFactor : 1 / zoomFactor; // Determine zoom direction
+                event.preventDefault();
+                const delta = event.deltaY > 0 ? zoomFactor : 1 / zoomFactor;
                 const rect = canvas.getBoundingClientRect();
-                // Calculate mouse position relative to the canvas
                 const mouseX = event.clientX - rect.left;
                 const mouseY = event.clientY - rect.top;
-                // Zoom towards the mouse cursor position
                 zoom(delta, mouseX, mouseY);
             });
 
             // --- Touch Events for Mobile Pan and Pinch Zoom ---
             canvas.addEventListener('touchstart', (event) => {
-                 // Prevent default touch actions like scrolling or double-tap zoom
-                 // Be cautious if you need default actions elsewhere on the page
-                 // event.preventDefault();
-
                 if (event.touches.length === 1) {
-                    // --- Single Touch: Start Panning ---
-                    isDragging = true;
-                    isPinching = false; // Ensure not pinching
+                    isDragging = true; isPinching = false;
                     const touch = event.touches[0];
-                    // Record starting touch position and current pan origin
-                    lastX = touch.clientX;
-                    lastY = touch.clientY;
-                    // No need to store startOriginX/Y, pan is relative to last position
-                    canvas.style.cursor = 'grabbing'; // Visual feedback
-
+                    lastX = touch.clientX; lastY = touch.clientY;
+                    canvas.style.cursor = 'grabbing';
                 } else if (event.touches.length === 2) {
-                    // --- Two Touches: Start Pinch Zoom ---
-                    isDragging = false; // Stop panning if two fingers down
-                    isPinching = true;
-                    event.preventDefault(); // Prevent default pinch actions (like page zoom)
-                    const touch1 = event.touches[0];
-                    const touch2 = event.touches[1];
-                    // Calculate initial distance between fingers
+                    isDragging = false; isPinching = true;
+                    event.preventDefault();
+                    const touch1 = event.touches[0]; const touch2 = event.touches[1];
                     pinchStartDistance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
                 }
-            }, { passive: false }); // Need passive: false to preventDefault reliably
+            }, { passive: false });
 
             canvas.addEventListener('touchmove', (event) => {
-                // Always prevent default during touch move on canvas to avoid scrolling interference
                  event.preventDefault();
-
                 if (event.touches.length === 1 && isDragging) {
-                    // --- Single Touch Move: Panning ---
                     const touch = event.touches[0];
-                    // Calculate change in position since last move event
-                    const dx = touch.clientX - lastX;
-                    const dy = touch.clientY - lastY;
-
-                    // Update pan origin (add delta to current origin)
-                    originX += dx;
-                    originY += dy;
-
-                    // Update last position for the next move event
-                    lastX = touch.clientX;
-                    lastY = touch.clientY;
-
-                    // Update sliders and apply transform
-                    updatePanFromInteraction(); // Helper to update sliders/storage/transform
-
-
+                    const dx = touch.clientX - lastX; const dy = touch.clientY - lastY;
+                    originX += dx; originY += dy;
+                    lastX = touch.clientX; lastY = touch.clientY;
+                    updatePanFromInteraction();
                 } else if (event.touches.length === 2 && isPinching) {
-                    // --- Two Touches Move: Pinch Zoom ---
-                    const touch1 = event.touches[0];
-                    const touch2 = event.touches[1];
-                    // Calculate current distance and pinch center
+                    const touch1 = event.touches[0]; const touch2 = event.touches[1];
                     const currentDistance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
                     const rect = canvas.getBoundingClientRect();
                     const pinchCenterX = ((touch1.clientX + touch2.clientX) / 2) - rect.left;
                     const pinchCenterY = ((touch1.clientY + touch2.clientY) / 2) - rect.top;
-
-                    // Calculate zoom delta (inverse relationship: smaller distance -> zoom in -> delta < 1)
-                    if (pinchStartDistance > 0) { // Avoid division by zero
+                    if (pinchStartDistance > 0) {
                          const delta = pinchStartDistance / currentDistance;
-                         zoom(delta, pinchCenterX, pinchCenterY); // Zoom towards the pinch center
+                         zoom(delta, pinchCenterX, pinchCenterY);
                     }
-
-                    // Update start distance for continuous zoom
                     pinchStartDistance = currentDistance;
                 }
-            }, { passive: false }); // Need passive: false to preventDefault
+            }, { passive: false });
 
             canvas.addEventListener('touchend', (event) => {
-                 // If less than 2 fingers, stop pinching
-                 if (event.touches.length < 2) {
-                     isPinching = false;
-                     pinchStartDistance = 0;
-                 }
-                 // If no fingers left, stop dragging/panning
-                 if (event.touches.length < 1) {
-                     isDragging = false;
-                     canvas.style.cursor = 'grab'; // Reset cursor
-                 }
+                 if (event.touches.length < 2) { isPinching = false; pinchStartDistance = 0; }
+                 if (event.touches.length < 1) { isDragging = false; canvas.style.cursor = 'grab'; }
              });
 
-             // Handle cases where touch is cancelled (e.g., moving off screen)
              canvas.addEventListener('touchcancel', (event) => {
-                 isDragging = false;
-                 isPinching = false;
-                 pinchStartDistance = 0;
-                 canvas.style.cursor = 'grab';
+                 isDragging = false; isPinching = false; pinchStartDistance = 0; canvas.style.cursor = 'grab';
              });
-
 
             // --- Mouse Drag Panning ---
             canvas.addEventListener('mousedown', function (event) {
-                 if (event.button !== 0) return; // Only pan with left mouse button
-                 // Prevent starting drag if interacting with controls that might overlay canvas edge
-                if (event.target !== canvas) return;
-
-                isDragging = true;
-                isPinching = false; // Ensure not pinching
-                // Record starting mouse position and current pan origin
-                lastX = event.clientX;
-                lastY = event.clientY;
-                canvas.style.cursor = 'grabbing'; // Indicate panning action
-                event.preventDefault(); // Prevent text selection during drag
+                 if (event.button !== 0 || event.target !== canvas) return;
+                isDragging = true; isPinching = false;
+                lastX = event.clientX; lastY = event.clientY;
+                canvas.style.cursor = 'grabbing';
+                event.preventDefault();
             });
-
             canvas.addEventListener('mousemove', function (event) {
                 if (isDragging) {
-                    // Calculate change in position
-                    const dx = event.clientX - lastX;
-                    const dy = event.clientY - lastY;
-
-                    // Update pan origin
-                    originX += dx;
-                    originY += dy;
-
-                    // Update last position
-                    lastX = event.clientX;
-                    lastY = event.clientY;
-
-                    // Update sliders and apply transform
+                    const dx = event.clientX - lastX; const dy = event.clientY - lastY;
+                    originX += dx; originY += dy;
+                    lastX = event.clientX; lastY = event.clientY;
                     updatePanFromInteraction();
                 }
             });
-
-            // Stop panning on mouse up anywhere
             window.addEventListener('mouseup', function (event) {
-                 if (event.button === 0 && isDragging) {
-                    isDragging = false;
-                    canvas.style.cursor = 'grab'; // Reset cursor
-                 }
+                 if (event.button === 0 && isDragging) { isDragging = false; canvas.style.cursor = 'grab'; }
             });
-
-            // Stop panning if mouse leaves the canvas *while dragging*
             canvas.addEventListener('mouseleave', function (event) {
-                if (isDragging) {
-                    // Optional: Decide if you want dragging to continue even if mouse leaves canvas temporarily
-                    // If yes, remove this block. If no (stop when leaving canvas), keep it.
-                    isDragging = false;
-                    canvas.style.cursor = 'grab';
-                }
+                if (isDragging) { isDragging = false; canvas.style.cursor = 'grab'; }
             });
 
-             // Set initial cursor state
             canvas.style.cursor = 'grab';
         }
 
@@ -1358,13 +1251,11 @@
          * Updates sliders, clamps origin, saves to LS, and applies transform.
          */
         function updatePanFromInteraction() {
+            // Clamping happens within updatePanSliderLimits, which is called by zoom
+            // or can be called explicitly if needed elsewhere.
             // Clamp origin values to the pan slider's min/max range
-            const minH = parseFloat(horizontalOffsetSlider.min);
-            const maxH = parseFloat(horizontalOffsetSlider.max);
-            const minV = parseFloat(verticalOffsetSlider.min);
-            const maxV = parseFloat(verticalOffsetSlider.max);
-            originX = Math.max(minH, Math.min(originX, maxH));
-            originY = Math.max(minV, Math.min(originY, maxV));
+            originX = Math.max(parseFloat(horizontalOffsetSlider.min), Math.min(originX, parseFloat(horizontalOffsetSlider.max)));
+            originY = Math.max(parseFloat(verticalOffsetSlider.min), Math.min(originY, parseFloat(verticalOffsetSlider.max)));
 
             // Update the slider positions to reflect the new pan origin
             horizontalOffsetSlider.value = originX;
@@ -1388,16 +1279,20 @@
             const newScale = Math.max(minScale, Math.min(scale * delta, maxScale)); // Apply zoom limits
             // Calculate how much the scale actually changed (might be clamped)
             const scaleChange = newScale / scale;
+            if (Math.abs(scaleChange - 1) < 0.001) return; // Avoid tiny changes if scale is clamped
 
             // Adjust originX/Y so the point (pointX, pointY) remains fixed *relative* to the viewport
-            // Formula: newOrigin = point - (point - oldOrigin) * scaleChangeRatio
             originX = pointX - (pointX - originX) * scaleChange;
             originY = pointY - (pointY - originY) * scaleChange;
 
             scale = newScale; // Update the global scale
 
-            // Update pan sliders to reflect potential origin change due to zoom pivot
-            updatePanFromInteraction(); // This also calls updateCanvasTransform
+            // Recalculate pan limits based on new scale and update sliders/origin
+            updatePanSliderLimits();
+
+            // Update pan sliders to reflect potential origin change due to zoom pivot AND clamping
+            updatePanFromInteraction(); // Calls updateCanvasTransform internally
+
             // setLocalStorageValue('scale', scale); // Optionally save scale
         }
 
@@ -1483,9 +1378,9 @@
         }
 
         /**
-         * Draws the visualization in "Many Lines" mode. (CORRECTED)
+         * Draws the visualization in "Many Lines" mode.
          */
-         function drawManyLines() {
+        function drawManyLines() {
             const centerX = getLogicalCenterX();
             const centerY = getLogicalCenterY();
             const currentRadius = radius * 1.7 + arcOffset;
@@ -1623,7 +1518,6 @@
             const baseDepthPixelOffset = (depthOffset / 2) * (radius * 0.01) / Math.sqrt(scale) ;
 
             // --- Draw Circle Outline (Once, neutrally or averaged) ---
-            // Draw using the standard outline color for simplicity.
             context.strokeStyle = color3;
             context.lineWidth = Math.max(1, 4 / scale);
             context.setLineDash([circleOutlineDashDensity / scale, circleOutlineDashDensity / scale]);
@@ -1778,18 +1672,23 @@
          * Updates the startAngle or pendulumAngle based on rotationVelocity and direction.
          * Called within the animation loop.
          */
-        function updateAnglesForAnimation() {
+         function updateAnglesForAnimation() {
+            // If user is manually rotating, let handleKeyPresses manage it.
+            if (pressedKeys["a"] || pressedKeys["arrowleft"] || pressedKeys["d"] || pressedKeys["arrowright"]) {
+                return; // Skip automatic update
+            }
+
+            // If no manual keys, proceed with automatic animation rotation
             const effectiveRotationVelocity = rotationVelocity * rotationDirection;
              if (mode === "pendulum") {
                  pendulumAngle += effectiveRotationVelocity;
-                 // Don't save to LS on every frame, maybe only when autopilot stops or user interacts?
+                 // Maybe save LS less frequently, e.g., on autopilot stop?
                  // setLocalStorageValue('pendulumAngle', pendulumAngle);
              } else { // Many, Single, Anaglyph modes
                  startAngle += effectiveRotationVelocity;
                  // setLocalStorageValue('startAngle', startAngle);
              }
         }
-
         // --- Dark Mode ---
         /**
          * Applies or removes dark mode CSS classes to relevant elements.
@@ -1848,12 +1747,12 @@
                  setLocalStorageValue('rotateClockwise', 'false');
                  setLocalStorageValue('rotateCounterclockwise', 'true');
              } else if (!rotateClockwiseToggle.checked) {
-                // Correction: if you uncheck this, re-check the *other* one (clockwise)
-                rotateCounterClockwiseToggle.checked = false; // Uncheck self first
-                rotateClockwiseToggle.checked = true;        // Check the other
-                rotationDirection = 1;                      // Update direction
-                setLocalStorageValue('rotateClockwise', 'true');
-                setLocalStorageValue('rotateCounterclockwise', 'false');
+                 // Correction: if you uncheck this, re-check the *other* one (clockwise)
+                 rotateCounterClockwiseToggle.checked = false; // Uncheck self first
+                 rotateClockwiseToggle.checked = true;        // Check the other
+                 rotationDirection = 1;                      // Update direction
+                 setLocalStorageValue('rotateClockwise', 'true');
+                 setLocalStorageValue('rotateCounterclockwise', 'false');
              }
         });
 
@@ -2104,7 +2003,7 @@
              // Avoid spamming localStorage during transition; save only at the end
 
              // Apply the transform to the canvas so the movement is visible
-             updateCanvasTransform(); // <<<<< FIX: Apply transform here
+             updateCanvasTransform(); // Apply transform BEFORE draw in animation loop
 
              // Check if transition is complete
              if (progress >= 1) {
