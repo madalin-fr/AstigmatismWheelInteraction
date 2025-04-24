@@ -14,16 +14,16 @@
 
     <!-- SEO Meta Tags - Enhanced -->
     <meta name="description"
-        content="Explore astigmatism with this interactive online wheel visualization. Adjust line count, colors, rotation, anaglyph 3D, and autopilot modes. A web-based tool for learning and visual exploration, not a medical diagnosis."> <!-- Refined description -->
+        content="Explore astigmatism with this interactive online wheel visualization. Adjust line count, colors, rotation, anaglyph 3D, zoom/pan, and autopilot modes. A web-based tool for learning and visual exploration, not a medical diagnosis."> <!-- Refined description -->
     <meta name="keywords"
-        content="astigmatism, astigmatism wheel, interactive visualization, eye chart simulation, ophthalmology tool, vision visualization, visual acuity, refractive error, anaglyph 3D vision, interactive eye simulation, web-based vision tool, online astigmatism explorer, learn about astigmatism, javascript canvas animation"> <!-- Expanded keywords -->
+        content="astigmatism, astigmatism wheel, interactive visualization, eye chart simulation, ophthalmology tool, vision visualization, visual acuity, refractive error, anaglyph 3D vision, interactive eye simulation, web-based vision tool, online astigmatism explorer, learn about astigmatism, javascript canvas animation, zoom, pan"> <!-- Expanded keywords -->
     <link rel="canonical" href="https://madalin-fr.github.io/AstigmatismWheelInteraction/">
     <meta name="robots" content="index, follow">
 
     <!-- Open Graph / Social Media Meta Tags -->
     <meta property="og:title" content="Interactive Astigmatism Wheel Visualization">
     <meta property="og:description"
-        content="Explore astigmatism visually with adjustable settings like anaglyph 3D, line count, colors, and autopilot modes. An interactive learning tool."> <!-- Slightly refined OG desc -->
+        content="Explore astigmatism visually with adjustable settings like anaglyph 3D, line count, colors, zoom/pan, and autopilot modes. An interactive learning tool."> <!-- Slightly refined OG desc -->
     <meta property="og:image" content="https://madalin-fr.github.io/AstigmatismWheelInteraction/assets/preview-image-3.png">
     <meta property="og:url" content="https://madalin-fr.github.io/AstigmatismWheelInteraction/">
     <meta property="og:type" content="website">
@@ -33,12 +33,10 @@
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Interactive Astigmatism Wheel Visualization">
-    <meta name="twitter:description" content="An interactive online tool to visualize and explore the concepts of astigmatism with various customizable settings."> <!-- Slightly refined Twitter desc -->
+    <meta name="twitter:description" content="An interactive online tool to visualize and explore the concepts of astigmatism with various customizable settings including zoom and pan."> <!-- Slightly refined Twitter desc -->
     <meta name="twitter:image" content="https://madalin-fr.github.io/AstigmatismWheelInteraction/assets/preview-image-3.png">
     <!-- <meta name="twitter:site" content="@yourtwitterhandle"> --> <!-- Optional: Add if you have a related Twitter account -->
     <!-- <meta name="twitter:creator" content="@yourtwitterhandle"> --> <!-- Optional: Add if you have a related Twitter account -->
-
-    <!-- Removed the second, redundant meta description tag -->
 
     <style>
         /* Visually hide h1, but keep for SEO/Screen Readers */
@@ -59,60 +57,27 @@
             padding: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            overflow: hidden; /* Prevent scrollbars */
             background-color: #000000; /* Default BG set via JS, but good to have a fallback */
-        }
-
-        /* (Rest of your existing CSS remains unchanged) */
-        div#title { /* Note: This div isn't present in the body, consider removing if unused */
-            position: absolute;
-            top: 1rem;
-            left: 2rem;
-            text-align: left;
         }
 
         canvas {
             position: absolute;
-            margin: auto;
+            /* Centering handled by drawing logic relative to width/height */
+            /* margin: auto; removed */
+            display: block; /* Prevent extra space below canvas */
             /* Accessibility Note: Canvas content is not directly accessible.
                Ensure descriptions and controls provide context. */
+            /* Cursor styles handled by JS for panning */
         }
 
-        div#info { /* Note: This div isn't present in the body, consider removing if unused */
-            position: absolute;
-            bottom: 1rem;
-            left: 1rem;
-            font-size: 1.5rem;
-        }
-
-        p#license { /* Note: This p isn't present in the body, consider removing if unused */
-            position: absolute;
-            bottom: 1rem;
-            right: 1rem;
-            line-height: 2rem;
-        }
-
+        /* --- Controls Panel Styling --- */
         #controls-container {
             position: absolute;
-            top: 1rem;
-            left: 1rem;
-            z-index: 10;
-        }
-
-        #drag-handle {
-            background-color: rgba(255, 255, 255, 0.8);
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #666;
-            transition: all 0.3s ease;
-        }
-
-        #drag-handle.dark-mode {
-            background-color: rgba(30, 30, 30, 0.9);
-            border-color: #999;
-        }
-
-        #controls-container {
+            /* Default position set via JS/LocalStorage */
+            /* top: 1rem; */
+            /* left: 1rem; */
+            z-index: 10; /* Ensure controls are above canvas */
             display: flex;
             align-items: center;
             gap: 10px;
@@ -122,130 +87,158 @@
             flex-direction: row-reverse;
         }
 
-        #flip-position {
-            background: none;
-            border: none;
-            font-size: 1.4rem;
-            cursor: pointer;
-            padding: 0;
+        #drag-handle {
+            background-color: rgba(220, 220, 220, 0.8); /* Lighter default handle */
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #666;
+            cursor: grab; /* Indicate draggability */
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+            display: flex; /* Center icon */
+            align-items: center;
+            justify-content: center;
+        }
+         #drag-handle:active {
+             cursor: grabbing; /* Indicate active drag */
+         }
+
+        #drag-handle i { /* Style the icon inside */
             color: #333;
             transition: color 0.3s ease;
         }
 
-        #flip-position.dark-mode {
-            color: white;
-        }
-
         #toggle-menu {
-            padding: 1px 25px;
+            padding: 8px 15px; /* Adjusted padding */
             border-radius: 4px;
             cursor: pointer;
             border: 1px solid #666;
-            background-color: rgba(255, 255, 255, 0.8);
+            background-color: rgba(245, 245, 245, 0.85); /* Slightly off-white */
             color: black;
+            font-weight: bold;
             transition: all 0.3s ease;
-        }
-
-        #toggle-menu.dark-mode {
-            background-color: rgba(30, 30, 30, 0.9);
-            color: white;
-            border-color: #999;
-        }
-
-        #drag-handle i {
-            transition: color 0.3s ease;
-        }
-
-        #drag-handle.dark-mode i {
-            color: white;
         }
 
         #controls {
-            display: none;
+            display: none; /* Initially hidden, shown by button */
             position: absolute;
-            top: 35px;
-            left: 0;
-            background-color: rgba(255, 255, 255, 0.8);
+             /* Position relative to #controls-container */
+             top: calc(100% + 5px); /* Position below the handle/button */
+             left: 0; /* Align with left edge */
+            background-color: rgba(245, 245, 245, 0.9); /* Slightly more opaque */
             padding: 1rem;
             border-radius: 8px;
-            max-height: calc(100vh - 4rem);
-            overflow-y: auto;
-            width: 200px;
+            border: 1px solid #ccc;
+            max-height: calc(100vh - 6rem); /* Limit height, adjust as needed */
+            overflow-y: auto; /* Allow scrolling if content exceeds height */
+            width: 250px; /* Fixed width for the panel */
             opacity: 1;
-            transition: background-color 0.3s ease, opacity 0.3s ease;
+            transition: background-color 0.3s ease, opacity 0.3s ease, border-color 0.3s ease;
             color: black;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Subtle shadow */
         }
 
-        #toggle-autopilot-1,
-        #toggle-autopilot-2 {
-            padding: 2px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            border: 1px solid #666;
-            background-color: rgba(255, 255, 255, 0.8);
-            color: black;
-            transition: all 0.3s ease;
-            margin-bottom: 5px;
+        #controls label {
+            display: block; /* Ensure labels are on their own line */
+            margin-top: 8px;
+            margin-bottom: 2px;
+            font-size: 0.9em;
+            font-weight: bold;
         }
 
-        #toggle-autopilot-1.dark-mode,
-        #toggle-autopilot-2.dark-mode {
-            background-color: rgba(30, 30, 30, 0.9);
-            color: white;
-            border-color: #999;
+        #controls input[type='range'],
+        #controls select {
+            width: 100%;
+            margin-bottom: 8px;
         }
-
-        #controls.dark-mode {
-            background-color: rgba(30, 30, 30, 0.9);
-            color: white;
-        }
-
-        #controls.dark-mode input[type='color'] {
-            background-color: white; /* Consider styling these better for dark mode if needed */
-        }
-
-        #controls.dark-mode input[type='range'] {
-             /* Consider styling these better for dark mode if needed */
-        }
+         #controls input[type='color'] {
+             width: 50px; /* Smaller color swatch */
+             height: 25px;
+             padding: 0;
+             border: 1px solid #ccc;
+             vertical-align: middle;
+             margin-left: 5px;
+         }
 
         #controls h3 {
-            margin-right: 10px;
-            margin-top: 0; /* Good practice to reset margin */
+            margin: 0 10px 10px 0; /* Adjust margins */
+            font-size: 1.1em;
         }
 
-        #controls #toggle-dark-mode {
+        #controls #toggle-dark-mode,
+        #controls #flip-position {
             background: none;
             border: none;
             font-size: 1.4rem;
             padding: 0px;
             cursor: pointer;
-            margin: 0px;
-            position: relative; /* Or adjust layout as needed */
-        }
-
-        #controls #toggle-dark-mode i {
+            margin: 0 5px; /* Spacing */
+            position: relative;
             color: #333;
-            transition: all 0.3s ease-in-out;
+            transition: color 0.3s ease;
+        }
+        #controls #toggle-dark-mode i.fa-sun { color: #FFD700; text-shadow: 0 0 2px #fff;}
+        #controls #toggle-dark-mode i.fa-moon { color: #4a4a4a; }
+
+
+        #toggle-autopilot-1,
+        #toggle-autopilot-2 {
+            padding: 6px 12px; /* Adjusted padding */
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #666;
+            background-color: rgba(220, 220, 220, 0.8); /* Button background */
+            color: black;
+            transition: all 0.3s ease;
+            margin-bottom: 5px;
+            width: 100%; /* Make buttons fill width */
+            box-sizing: border-box; /* Include padding/border in width */
+            font-weight: bold;
+        }
+         #toggle-autopilot-1.active, /* Style for active autopilot button */
+         #toggle-autopilot-2.active {
+            background-color: #a8e6cf; /* Example active color */
+            border-color: #7fcdb8;
+         }
+
+        /* --- Dark Mode Styles --- */
+        body.dark-mode-body { background-color: #1a1a1a; } /* Dark body background */
+
+        #controls-container.dark-mode #drag-handle {
+            background-color: rgba(50, 50, 50, 0.9);
+            border-color: #777;
+        }
+        #controls-container.dark-mode #drag-handle i { color: #eee; }
+        #controls-container.dark-mode #toggle-menu {
+            background-color: rgba(40, 40, 40, 0.9);
+            color: white;
+            border-color: #777;
+        }
+        #controls.dark-mode {
+            background-color: rgba(30, 30, 30, 0.95);
+            color: #eee; /* Light text */
+            border-color: #555;
+        }
+        #controls.dark-mode label { color: #ccc; }
+        #controls.dark-mode input[type='color'] { border-color: #555; }
+        #controls.dark-mode select { background-color: #333; color: #eee; border-color: #555; }
+        #controls.dark-mode input[type='range'] { /* Style range sliders for dark mode if needed */ }
+        #controls.dark-mode #toggle-dark-mode,
+        #controls.dark-mode #flip-position { color: #ccc; }
+        #controls.dark-mode #toggle-dark-mode i.fa-moon { color: #FFFF80; text-shadow: 0 0 3px #aaa;}
+        #controls.dark-mode #toggle-dark-mode i.fa-sun { color: #777; text-shadow: none;} /* Dim sun in dark mode */
+        #controls.dark-mode #toggle-autopilot-1,
+        #controls.dark-mode #toggle-autopilot-2 {
+            background-color: rgba(60, 60, 60, 0.9);
+            color: white;
+            border-color: #888;
+        }
+        #controls.dark-mode #toggle-autopilot-1.active,
+        #controls.dark-mode #toggle-autopilot-2.active {
+            background-color: #2a5a4a; /* Darker active color */
+            border-color: #4a7a6a;
         }
 
-        #controls #toggle-dark-mode i.fa-sun {
-            color: #FFD700;
-            text-shadow: 0 0 2px #fff;
-        }
-
-        #controls.dark-mode #toggle-dark-mode i.fa-moon {
-            color: #FFFF80; /* Adjusted moon color for visibility */
-        }
-
-        #controls.dark-mode #toggle-dark-mode i.fa-sun {
-             /* Sun icon when dark mode is active - keep it distinct */
-             color: #A9A9A9; /* Example: Dim yellow/grey */
-        }
-
-        #controls #opacity-slider {
-            width: calc(100% - 2rem); /* Check layout, ensure label fits */
-        }
-
+        /* --- Zoom Controls --- */
         #zoom-controls {
             position: absolute;
             top: 1rem;
@@ -257,27 +250,31 @@
         }
 
         #zoom-controls button {
-            background-color: rgba(255, 255, 255, 0.8);
+            background-color: rgba(245, 245, 245, 0.85);
             border: 1px solid #666;
             border-radius: 4px;
-            padding: 8px;
+            padding: 0; /* Remove padding */
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 1.2rem; /* Increase font size */
+            font-weight: bold;
             color: black;
             transition: all 0.3s ease;
-            width: 35px; /* Ensure consistent button size */
-            height: 35px;
+            width: 35px; /* Fixed width */
+            height: 35px; /* Fixed height */
             display: flex; /* Center content */
             align-items: center;
             justify-content: center;
+            line-height: 1; /* Ensure '+' and '-' center well */
         }
 
         #zoom-controls button.dark-mode {
-            background-color: rgba(30, 30, 30, 0.8);
+            background-color: rgba(40, 40, 40, 0.9);
             color: white;
-            border-color: #999;
+            border-color: #777;
         }
+
     </style>
+    <!-- External Libraries -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
 
@@ -287,43 +284,33 @@
       "@context": "https://schema.org",
       "@type": "WebPage",
       "name": "Interactive Astigmatism Wheel: Explore & Visualize Online",
-      "description": "Explore astigmatism with this interactive online wheel visualization. Adjust line count, colors, rotation, anaglyph 3D, and autopilot modes. A web-based tool for learning and visual exploration, not a medical diagnosis.",
+      "description": "Explore astigmatism with this interactive online wheel visualization. Adjust line count, colors, rotation, anaglyph 3D, zoom/pan, and autopilot modes. A web-based tool for learning and visual exploration, not a medical diagnosis.",
       "url": "https://madalin-fr.github.io/AstigmatismWheelInteraction/",
       "author": {
         "@type": "Person",
         "name": "Frincu Madalin"
       },
       "license": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-      "keywords": "astigmatism, astigmatism wheel, interactive visualization, eye chart simulation, ophthalmology tool, vision visualization, visual acuity, refractive error, anaglyph 3D vision, interactive eye simulation, web-based vision tool, online astigmatism explorer, learn about astigmatism",
+      "keywords": "astigmatism, astigmatism wheel, interactive visualization, eye chart simulation, ophthalmology tool, vision visualization, visual acuity, refractive error, anaglyph 3D vision, interactive eye simulation, web-based vision tool, online astigmatism explorer, learn about astigmatism, javascript canvas animation, zoom, pan",
       "mainEntity": {
         "@type": "WebApplication",
         "name": "Astigmatism Wheel Interactions",
-        "description": "An interactive web application for visualizing astigmatism concepts using a rotating wheel chart with customizable parameters.",
+        "description": "An interactive web application for visualizing astigmatism concepts using a rotating wheel chart with customizable parameters, zoom/pan, and autopilot features.",
         "applicationCategory": "VisualizationTool",
         "operatingSystem": "Web/Online",
         "browserRequirements": "Requires JavaScript and HTML5 Canvas support.",
-        "author": {
-          "@type": "Person",
-          "name": "Frincu Madalin"
-        },
-        "copyrightHolder": {
-          "@type": "Person",
-          "name": "Frincu Madalin"
-        },
-        "license": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-        "url": "https://madalin-fr.github.io/AstigmatismWheelInteraction/",
-        "image": "https://madalin-fr.github.io/AstigmatismWheelInteraction/assets/preview-image-3.png",
         "featureList": [
           "Multiple visualization modes (Many Lines, Single Line, Pendulum, Anaglyph 3D)",
           "Adjustable line count, color, thickness, length",
           "Customizable background and text colors",
           "Anaglyph 3D mode with adjustable depth and eye colors",
           "Interactive rotation control",
-          "Autopilot modes for automatic animation",
-          "Zoom and Pan functionality",
+          "Autopilot modes for automatic animation (random jumps or smooth transitions)",
+          "Zoom and Pan functionality (mouse wheel/drag, touch pinch/drag)",
           "Dark/Light mode toggle",
           "Draggable controls interface"
         ]
+        // Add other relevant properties like author, copyrightHolder, license, url, image if desired
       }
     }
     </script>
@@ -336,24 +323,29 @@
 
     <!-- Main Content Area -->
     <main>
-        <canvas id="canvas" width="6400" height="3153">
+        <canvas id="canvas">
             <!-- Fallback content for non-supporting browsers -->
             Your browser does not support the HTML5 canvas element. This interactive visualization requires a modern browser with Canvas support.
         </canvas>
 
         <!-- Controls container -->
         <div id="controls-container" class="draggable">
-            <div id="drag-handle" title="Drag Controls"> <!-- Added title for usability -->
+            <!-- Handle for dragging the entire controls panel -->
+            <div id="drag-handle" title="Drag Controls">
                 <i class="fas fa-arrows-alt"></i>
             </div>
-            <button id="toggle-menu" title="Show/Hide Controls Menu">Show Controls</button> <!-- Added title -->
-            <div id="controls">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;"> <!-- Added margin -->
-                    <h3>Adjust Settings</h3>
-                    <button id="toggle-dark-mode" title="Toggle Dark/Light Mode"> <!-- Added title -->
+            <!-- Button to show/hide the main controls panel -->
+            <button id="toggle-menu" title="Show/Hide Controls Menu" aria-expanded="false" aria-controls="controls">Show Controls</button>
+            <!-- The actual controls panel -->
+            <div id="controls" role="region" aria-labelledby="controls-heading" aria-hidden="true">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                    <h3 id="controls-heading">Adjust Settings</h3>
+                    <!-- Dark mode toggle button -->
+                    <button id="toggle-dark-mode" title="Toggle Dark/Light Mode">
                         <i class="fas fa-sun"></i> <!-- Icon changes via JS -->
                     </button>
-                    <button id="flip-position" title="Flip Controls Position"> <!-- Added title -->
+                    <!-- Button to flip control handle/menu order -->
+                    <button id="flip-position" title="Flip Controls Position">
                         <i class="fas fa-exchange-alt"></i>
                     </button>
                 </div>
@@ -367,13 +359,14 @@
                 </select>
                 <br>
 
-                <label for="opacity-slider">Controls Opacity:</label> <!-- Clarified label -->
+                <label for="opacity-slider">Controls Opacity:</label>
                 <input type="range" id="opacity-slider" min="0.1" max="1.0" step="0.1" value="1.0">
                 <br>
 
+                <!-- Controls shown/hidden based on mode -->
                 <div id="radiating-line-count-container">
                     <label for="radiating-line-count">Radiating Line Count:</label>
-                    <input type="range" id="radiating-line-count" min="2" max="72" value="3">
+                    <input type="range" id="radiating-line-count" min="2" max="72" value="12">
                 </div>
 
                 <div id="line-color-container">
@@ -382,11 +375,13 @@
                 </div>
 
                 <!-- Label text updated dynamically via JS -->
-                <label for="special-line-color" id="special-line-color-label">Special Line Color:</label>
-                <input type="color" id="special-line-color" value="#FFFFFF">
+                <div> <!-- Wrap label/input for better control -->
+                    <label for="special-line-color" id="special-line-color-label">Special Line Color:</label>
+                    <input type="color" id="special-line-color" value="#FFFFFF">
+                </div>
                 <br>
 
-                <!--Anaglyph Color Pickers-->
+                <!-- Anaglyph Specific Controls -->
                 <div id="anaglyph-color-pickers" style="display: none;">
                     <label for="anaglyph-left-color">Left Eye Color:</label>
                     <input type="color" id="anaglyph-left-color" value="#ff0000">
@@ -395,54 +390,59 @@
                     <input type="color" id="anaglyph-right-color" value="#00ffff">
                     <br>
                 </div>
+                <div id="depth-offset-container" style="display: none;">
+                    <label for="depth-offset">Anaglyph Depth Offset:</label>
+                    <input type="range" id="depth-offset" min="-50" max="50" value="5"> <!-- Allow negative depth -->
+                    <br>
+                </div>
+                <!-- End Anaglyph Specific -->
+
+                <!-- Pendulum Specific Controls -->
+                <div id="pendulum-size-container" style="display: none;">
+                    <label for="pendulum-thickness">Pendulum Thickness:</label>
+                    <input type="range" id="pendulum-thickness" min="1" max="500" value="20">
+                </div>
+                <!-- End Pendulum Specific -->
+
 
                 <label for="bg-color">Background Color:</label>
-                <input type="color" id="bg-color" value="#ff0000"> <!-- Initial value overridden by JS/LocalStorage -->
+                <input type="color" id="bg-color" value="#000000"> <!-- Initial value overridden by JS/LocalStorage -->
                 <br>
 
                 <label for="text-color">Text Color:</label>
-                <input type="color" id="text-color" value="#800080"> <!-- Initial value overridden by JS/LocalStorage -->
+                <input type="color" id="text-color" value="#FFFFFF"> <!-- Initial value overridden by JS/LocalStorage -->
                 <br>
 
-                <label for="circle-outline-color">Circle Outline Color:</label> <!-- Corrected label text -->
+                <label for="circle-outline-color">Circle Outline Color:</label>
                 <input type="color" id="circle-outline-color" value="#ffffff"> <!-- Initial value overridden by JS/LocalStorage -->
                 <br>
 
-                <label for="horizontal-offset">Horizontal Offset:</label>
-                <input type="range" id="horizontal-offset" min="-1200" max="1200" value="0">
+                <!-- Pan Controls (Now control originX/Y) -->
+                <label for="horizontal-offset">Horizontal Pan:</label>
+                <input type="range" id="horizontal-offset" min="-2000" max="2000" value="0" step="10"> <!-- Wider, fixed range -->
                 <br>
-                <label for="vertical-offset">Vertical Offset:</label>
-                <input type="range" id="vertical-offset" min="-1200" max="1200" value="0">
+                <label for="vertical-offset">Vertical Pan:</label>
+                <input type="range" id="vertical-offset" min="-2000" max="2000" value="0" step="10"> <!-- Wider, fixed range -->
                 <br>
-                <label for="arc-offset">Circle Radius Offset:</label> <!-- Clarified label -->
+                <!-- End Pan Controls -->
+
+                <label for="arc-offset">Circle Radius Offset:</label>
                 <input type="range" id="arc-offset" min="-200" max="1200" value="0">
                 <br>
                 <label for="circle-outline-dash-density">Arc Dash Density:</label>
                 <input type="range" id="circle-outline-dash-density" min="1" max="48" value="15">
                 <br>
-                <label for="text-size">Text Size (px):</label> <!-- Added unit -->
-                <input type="range" id="text-size" min="8" max="72" value="12">
+                <label for="text-size">Text Size (px):</label>
+                <input type="range" id="text-size" min="8" max="72" value="14">
                 <br>
-                <label for="text-distance">Text Distance (Factor):</label> <!-- Clarified label -->
-                <input type="range" id="text-distance" min="1.0" max="5.0" step="0.1" value="1.5">
+                <label for="text-distance">Text Distance (Factor):</label>
+                <input type="range" id="text-distance" min="1.0" max="5.0" step="0.1" value="1.6">
                 <br>
-
-                <div id="pendulum-size-container" style="display: none;">
-                    <label for="pendulum-thickness">Pendulum Thickness:</label>
-                    <input type="range" id="pendulum-thickness" min="1" max="500" value="20">
-                </div>
-
-                <!-- Depth offset for anaglyph -->
-                <div id="depth-offset-container" style="display: none;">
-                    <label for="depth-offset">Anaglyph Depth Offset:</label> <!-- Clarified label -->
-                    <input type="range" id="depth-offset" min="1" max="100" value="10">
-                    <br>
-                </div>
 
                 <label for="line-thickness">Line Thickness:</label>
                 <input type="range" id="line-thickness" min="1" max="40" value="4">
                 <br>
-                <label for="line-length">Line Length (Factor):</label> <!-- Clarified label -->
+                <label for="line-length">Line Length (Factor):</label>
                 <input type="range" id="line-length" min="0.1" max="4.0" step="0.1" value="1.0">
                 <br>
                 <label for="rotation-velocity">Rotation Velocity:</label>
@@ -451,400 +451,285 @@
                 <label for="autopilot-speed">Autopilot Speed:</label>
                 <input type="range" id="autopilot-speed" min="5" max="40" value="10">
                 <br>
-                <!-- New Autopilot Walk Range Control -->
-                <label for="autopilot-walk-range">Autopilot Walk Range (%):</label>
+                <!-- Autopilot Walk Range Control (influences target offset calculation) -->
+                <label for="autopilot-walk-range">Autopilot Pan Range (% Width/Height):</label>
                 <input type="range" id="autopilot-walk-range" min="0" max="90" value="30">
                 <br>
+
                 <!-- Autopilot Toggles -->
-                <div style="margin-bottom: 10px;">
-                    <button id="toggle-autopilot-1" title="Start/Stop Autopilot Mode 1 (Smooth Rotation, Random Jumps)">Start Autopilot 1</button> <!-- Added title -->
+                <div style="margin-top: 10px;"> <!-- Add spacing -->
+                    <button id="toggle-autopilot-1" title="Start/Stop Autopilot Mode 1 (Smooth Rotation, Random Jumps)">Start Autopilot 1</button>
                 </div>
                 <div>
-                    <button id="toggle-autopilot-2" title="Start/Stop Autopilot Mode 2 (Smooth Rotation, Smooth Transitions)">Start Autopilot 2</button> <!-- Added title -->
+                    <button id="toggle-autopilot-2" title="Start/Stop Autopilot Mode 2 (Smooth Rotation, Smooth Transitions)">Start Autopilot 2</button>
                 </div>
 
                 <!-- Rotation Direction Checkboxes -->
-                <div style="margin-top: 10px;"> <!-- Added spacing -->
+                <div style="margin-top: 10px;">
                     <input type="checkbox" id="rotate-clockwise" checked>
-                    <label for="rotate-clockwise">Rotate Clockwise</label> <br>
+                    <label for="rotate-clockwise" style="display: inline; margin: 0 5px 0 0;">Rotate Clockwise</label> <br>
                     <input type="checkbox" id="rotate-counterclockwise">
-                    <label for="rotate-counterclockwise">Rotate Counter-Clockwise</label>
+                    <label for="rotate-counterclockwise" style="display: inline; margin: 0 5px 0 0;">Rotate Counter-Clockwise</label>
                 </div>
             </div>
         </div>
 
         <!-- Zoom controls -->
         <div id="zoom-controls">
-            <button id="zoom-in" title="Zoom In">+</button> <!-- Added title -->
-            <button id="zoom-out" title="Zoom Out">-</button> <!-- Added title -->
+            <button id="zoom-in" title="Zoom In (+)">+</button>
+            <button id="zoom-out" title="Zoom Out (-)">-</button>
         </div>
 
     </main> <!-- End Main Content Area -->
 
-    <!-- Footer or other semantic regions could go here if needed -->
-
     <script>
         // --- Utility Functions ---
+
+        /**
+         * Standardizes a color string (e.g., 'blue', '#f00', 'rgb(255,0,0)')
+         * into a lowercase 6-digit hex format (e.g., '#ff0000') using the canvas API.
+         * @param {string} str - The color string to standardize.
+         * @returns {string} The standardized hex color string, or the original if parsing fails.
+         */
         function standardize_color(str) {
-            // Check if the input is already a valid hex6 color
-            if (/^#[0-9A-F]{6}$/i.test(str)) {
-                return str.toLowerCase(); // Return as is if valid hex6
+            // Optimization: If already hex6, return early
+            if (typeof str === 'string' && /^#[0-9a-f]{6}$/i.test(str)) {
+                return str.toLowerCase();
             }
-            // Otherwise, use canvas to parse and standardize
-            var ctx = document.createElement('canvas').getContext('2d');
-            ctx.fillStyle = str; // This forces the browser to parse the color.
-            let standardized = ctx.fillStyle;
-             // Ensure it's always lowercase hex6 if possible
-            if (standardized.startsWith('#') && standardized.length === 7) {
-                 return standardized.toLowerCase();
+            try {
+                // Use a temporary canvas context to parse the color
+                var ctx = document.createElement('canvas').getContext('2d');
+                ctx.fillStyle = str;
+                let standardized = ctx.fillStyle;
+                // Ensure it's lowercase hex6 if possible
+                if (standardized.startsWith('#') && standardized.length === 7) {
+                    return standardized.toLowerCase();
+                }
+                 // If canvas returns rgb/rgba etc., return that as fallback (though hex is preferred)
+                return standardized;
+            } catch (e) {
+                 console.warn("Could not standardize color:", str, e);
+                 return str; // Return original on error
             }
-            // Fallback if standardization produces something else (e.g., rgba) - though hex is preferred
-            return standardized;
         }
 
-
+        /**
+         * Sets the background color of the HTML body.
+         * @param {string} color - A valid CSS color string.
+         */
         function setBackgroundColor(color) {
             document.body.style.backgroundColor = color;
         }
 
         // --- Local Storage Functions ---
+
+        /**
+         * Safely retrieves a value from localStorage.
+         * @param {string} key - The key to retrieve.
+         * @returns {string | null} The retrieved value, or null if not found or error.
+         */
         function getLocalStorageValue(k) {
             try {
-                const value = localStorage.getItem(k);
-                // console.log(`LS GET: ${k} = ${value}`); // Debug LS
-                return value;
+                return localStorage.getItem(k);
             } catch (error) {
-                console.error("Error reading from localStorage:", error); // Add error logging
+                console.error("Error reading from localStorage:", k, error);
                 return null;
             }
         }
 
+        /**
+         * Safely saves a value to localStorage.
+         * @param {string} key - The key to save under.
+         * @param {string} value - The value to save.
+         */
         function setLocalStorageValue(k, v) {
             try {
-                // console.log(`LS SET: ${k} = ${v}`); // Debug LS
-                localStorage.setItem(k, v);
+                localStorage.setItem(k, String(v)); // Ensure value is string
             } catch (error) {
-                 console.error("Error writing to localStorage:", error); // Add error logging
-                 // Potentially handle quota exceeded error
+                 console.error("Error writing to localStorage:", k, v, error);
+                 // Consider handling QuotaExceededError specifically if needed
             }
         }
 
+        /**
+         * Initializes a localStorage key with a default value if it doesn't exist.
+         * @param {string} key - The key to initialize.
+         * @param {string} defaultValue - The default value to set.
+         */
         function initializeLocalStorage(key, defaultValue) {
             if (getLocalStorageValue(key) === null) {
-                // console.log(`LS INIT: ${key} with default ${defaultValue}`); // Debug LS
                 setLocalStorageValue(key, defaultValue);
             }
         }
 
+        /**
+         * Converts an angle (0-360) to its corresponding label on the astigmatism wheel (0°-180°).
+         * Uses integer degrees for display.
+         * @param {number} num - The angle in degrees (0-360).
+         * @returns {string} The formatted angle label (e.g., "90°").
+         */
         function angleName(num) {
-             // Ensure angle is within 0-360 range
+             // Normalize angle to be strictly within [0, 360)
             num = ((num % 360) + 360) % 360;
 
-            // Precision adjustment: Use Math.round for cleaner degrees
-            if (num >= 90 && num <= 270) { // Handles 90 and 270 inclusive
-                return Math.round(num - 90) + "°";
-             } else if (num > 270 && num < 360) { // Handles > 270
-                return Math.round(num - 270) + "°";
-            } else { // Handles 0 to < 90 (including 0) and 360 wraps to 0
-                return Math.round(num + 90) + "°";
+            // Map to 0-180 range for display
+            let displayAngle;
+            if (num >= 0 && num < 180) {
+                 displayAngle = num;
+            } else { // 180 to 359.99...
+                 displayAngle = num - 180;
+            }
+
+            // Special case for angles very close to 0 or 180 for precision
+            if (Math.abs(displayAngle) < 0.01 || Math.abs(displayAngle - 180) < 0.01) {
+                return "0°";
+            } else if (Math.abs(displayAngle - 90) < 0.01) {
+                return "90°"
+            } else {
+                 return Math.round(displayAngle) + "°";
             }
         }
 
+
         // --- Initialization and Setup ---
 
-        let canvas = document.getElementById("canvas");
-        let context = canvas.getContext("2d", { alpha: false }); // optimize if no transparency needed behind canvas
+        const canvas = document.getElementById("canvas");
+        const context = canvas.getContext("2d", { alpha: false }); // Optimize if no transparency needed behind canvas
         context.imageSmoothingEnabled = true; // Enable anti-aliasing by default
 
-        // Initialize canvas dimensions.
+        // Canvas dimensions (updated on resize)
         let canvasHeight = window.innerHeight;
         let canvasWidth = window.innerWidth;
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
-        // Make radius slightly smaller to give more padding by default
-        let radius = Math.min(canvasWidth, canvasHeight) / 4.5;
 
-        // --- Zoom functionality ---
-        let scale = 1;
-        const minScale = 0.1; // Minimum zoom out
-        const maxScale = 10.0; // Maximum zoom in
-        let zoomFactor = 1.1;
-        let originX = canvasWidth / 2; // Start zoomed to center
-        let originY = canvasHeight / 2;
-        let isDragging = false;
-        let lastX = 0;
-        let lastY = 0;
+        // Base radius for drawing elements (updated on resize)
+        let radius = Math.min(canvasWidth, canvasHeight) / 4.5; // Slightly smaller for padding
 
-        // --- Panning state (relative to the *view*) ---
-        let viewOriginX = 0;
-        let viewOriginY = 0;
-
-
-        function initializeZoomAndPan() {
-            const zoomInButton = document.getElementById('zoom-in');
-            const zoomOutButton = document.getElementById('zoom-out');
-
-            zoomInButton.addEventListener('click', () => zoom(1 / zoomFactor, canvasWidth / 2, canvasHeight / 2));
-            zoomOutButton.addEventListener('click', () => zoom(zoomFactor, canvasWidth / 2, canvasHeight / 2));
-
-            canvas.addEventListener('wheel', function (event) {
-                event.preventDefault(); // Prevent page scrolling
-                const delta = event.deltaY > 0 ? zoomFactor : 1 / zoomFactor;
-                const rect = canvas.getBoundingClientRect();
-                const mouseX = event.clientX - rect.left;
-                const mouseY = event.clientY - rect.top;
-                zoom(delta, mouseX, mouseY);
-            });
-
-            // --- Touch Events for Mobile Pan and Pinch Zoom ---
-            let pinchStartDistance = 0;
-            let touchStartX = 0;
-            let touchStartY = 0;
-
-            canvas.addEventListener('touchstart', (event) => {
-                if (event.touches.length === 1) {
-                    // Start panning
-                    isDragging = true;
-                    const touch = event.touches[0];
-                    touchStartX = touch.clientX;
-                    touchStartY = touch.clientY;
-                     // Store initial view origin for relative panning
-                    lastX = viewOriginX;
-                    lastY = viewOriginY;
-
-                } else if (event.touches.length === 2) {
-                    // Start pinching
-                    isDragging = false; // Stop panning if pinching starts
-                    event.preventDefault(); // Prevent default pinch actions
-                    const touch1 = event.touches[0];
-                    const touch2 = event.touches[1];
-                    pinchStartDistance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
-                }
-            });
-
-            canvas.addEventListener('touchmove', (event) => {
-                event.preventDefault(); // Prevent scrolling during touch move
-                if (event.touches.length === 1 && isDragging) {
-                    // Panning
-                    const touch = event.touches[0];
-                    const dx = touch.clientX - touchStartX;
-                    const dy = touch.clientY - touchStartY;
-
-                    // Update view origin based on drag from initial touch start position
-                    viewOriginX = lastX + dx;
-                    viewOriginY = lastY + dy;
-
-                    updateCanvasTransform();
-
-                } else if (event.touches.length === 2) {
-                    // Pinching
-                    const touch1 = event.touches[0];
-                    const touch2 = event.touches[1];
-                    const currentDistance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
-                    const delta = pinchStartDistance / currentDistance; // Inverse relationship: smaller distance -> zoom in
-
-                    // Calculate pinch center
-                    const rect = canvas.getBoundingClientRect();
-                    const pinchCenterX = ((touch1.clientX + touch2.clientX) / 2) - rect.left;
-                    const pinchCenterY = ((touch1.clientY + touch2.clientY) / 2) - rect.top;
-
-                    zoom(delta, pinchCenterX, pinchCenterY);
-                    pinchStartDistance = currentDistance; // Update start distance for continuous zoom
-                }
-            });
-
-            canvas.addEventListener('touchend', (event) => {
-                 if (event.touches.length < 2) {
-                     pinchStartDistance = 0; // Reset pinch distance
-                 }
-                 if (event.touches.length < 1) {
-                     isDragging = false; // Stop dragging when no fingers are down
-                 }
-            });
-
-             canvas.addEventListener('touchcancel', (event) => {
-                isDragging = false;
-                pinchStartDistance = 0;
-             });
+        // --- Zoom and Pan Functionality ---
+        let scale = 1.0;                // Current zoom level
+        const minScale = 0.1;           // Minimum zoom out
+        const maxScale = 10.0;          // Maximum zoom in
+        let zoomFactor = 1.1;           // How much to zoom per step
+        // originX/Y represent the translation offset in the canvas transform.
+        // These are controlled by panning (mouse/touch drag) and the Pan sliders.
+        let originX = 0;
+        let originY = 0;
+        let isDragging = false;         // Is the user currently dragging the canvas?
+        let isPinching = false;         // Is the user currently pinch-zooming?
+        let lastX = 0;                  // Last mouse/touch X for drag calculation
+        let lastY = 0;                  // Last mouse/touch Y for drag calculation
+        let pinchStartDistance = 0;     // Initial distance between fingers for pinch zoom
 
 
-            // Mouse drag panning
-            canvas.addEventListener('mousedown', function (event) {
-                 if (event.button !== 0) return; // Only pan with left mouse button
-                isDragging = true;
-                touchStartX = event.clientX; // Use same vars for consistency
-                touchStartY = event.clientY;
-                lastX = viewOriginX; // Store initial view origin
-                lastY = viewOriginY;
-                canvas.style.cursor = 'grabbing'; // Indicate panning
-            });
-
-            canvas.addEventListener('mousemove', function (event) {
-                if (isDragging) {
-                    const dx = event.clientX - touchStartX;
-                    const dy = event.clientY - touchStartY;
-                    viewOriginX = lastX + dx; // Update relative to initial position
-                    viewOriginY = lastY + dy;
-                    updateCanvasTransform();
-                }
-            });
-
-            canvas.addEventListener('mouseup', function (event) {
-                 if (event.button === 0) {
-                    isDragging = false;
-                    canvas.style.cursor = 'grab'; // Reset cursor
-                 }
-            });
-
-            canvas.addEventListener('mouseleave', function (event) {
-                if (isDragging) { // Only stop dragging if it was initiated on the canvas
-                    isDragging = false;
-                    canvas.style.cursor = 'default'; // Or 'grab' if preferred
-                }
-            });
-
-             // Set initial cursor state
-            canvas.style.cursor = 'grab';
-        }
-
-
-       function zoom(delta, pointX, pointY) {
-            const newScale = Math.max(minScale, Math.min(scale * delta, maxScale));
-            const scaleChange = newScale / scale; // Ratio of new scale to old scale
-
-            // Adjust view origin based on the zoom point
-            // The point (pointX, pointY) in the *view* should remain at the same *relative* position
-            // after zooming.
-            viewOriginX = pointX - (pointX - viewOriginX) * scaleChange;
-            viewOriginY = pointY - (pointY - viewOriginY) * scaleChange;
-
-            scale = newScale;
-            updateCanvasTransform();
-        }
-
-
-        function updateCanvasTransform() {
-            // Apply the transformations: first scale, then translate
-            // This means scaling happens around the (0,0) point of the *canvas*,
-            // and then the viewOrigin translation moves the desired point to the top-left.
-             context.setTransform(scale, 0, 0, scale, viewOriginX, viewOriginY);
-            // Request redraw
-            if(!shouldAnimate) { // Only redraw immediately if not animating
-                 requestAnimationFrame(draw); // Use rAF for smoother redraws
-            }
-            // No explicit draw() call here - it will be handled by the animation loop or the rAF above
-        }
-
-
-        // --- END ZOOM/PAN FUNCTIONALITY ---
-
-
-        // Default settings object - Stricter defaults for colors
+        // --- Default Settings & LocalStorage Initialization ---
         const defaultSettings = {
             mode: 'many',
-            color_many: '#7b68ee', // mediumslateblue
-            color2_many: '#ffffff', // white
-            color_single: '#ffffff', // white (as it's the only line)
-            color2_single: '#ffffff', // white (used for the single line) - consistent
-            color_pendulum: '#ffd700', // gold
-            color2_pendulum: '#c0c0c0', // silver
-            color3: '#ffffff', // white (circle outline) - Consistent Key Name!
-            anaglyphLeftColor: '#ff0000', // red
-            anaglyphRightColor: '#00ffff', // cyan
-            bgColor_many: '#000000', // black
-            bgColor_single: '#000000', // black
-            bgColor_pendulum: '#2f4f4f', // darkslategray
-            bgColor_anaglyph: '#000000', // black (often better contrast for anaglyph)
-            textColor_many: '#ffffff', // white (better default on black bg)
-            textColor_single: '#ffffff', // white (better default on black bg)
-            textColor_pendulum: '#ffffff', // white
-            textColor_anaglyph: '#ffffff', // white (will be drawn twice in eye colors)
-            textSize: '14', // Slightly larger default
+            // Colors (standardized to lowercase hex6)
+            color_many: '#7b68ee', color2_many: '#ffffff',
+            color_single: '#ffffff', color2_single: '#ffffff', // color2 used for single line
+            color_pendulum: '#ffd700', color2_pendulum: '#c0c0c0',
+            color3: '#ffffff', // Circle Outline (common)
+            anaglyphLeftColor: '#ff0000', anaglyphRightColor: '#00ffff',
+            bgColor_many: '#000000', bgColor_single: '#000000',
+            bgColor_pendulum: '#2f4f4f', bgColor_anaglyph: '#000000',
+            textColor_many: '#ffffff', textColor_single: '#ffffff',
+            textColor_pendulum: '#ffffff', textColor_anaglyph: '#ffffff', // Drawn twice
+            // Numeric/Boolean settings
+            textSize: '14',
             pendulumThickness: '20',
-            textDistance: '1.6', // Slightly further default
+            textDistance: '1.6',
             startAngle: '0',
-            horizontalOffset: '0',
-            verticalOffset: '0',
+            // horizontalOffset, verticalOffset are deprecated -> use originX, originY
+            originX: '0', // Default pan X
+            originY: '0', // Default pan Y
             arcOffset: '0',
             rotationVelocity: '1.0',
             lineLength: '1.0',
-            isDarkMode: 'true', // Default to dark mode? Or false? Let's try true.
-            isReversed: 'false',
+            isDarkMode: 'true', // Default to dark mode
+            isReversed: 'false', // Controls layout LTR/RTL
             lineThickness: '4',
-            radiatingLineCount: '12', // More common default (like a clock)
+            radiatingLineCount: '12', // Clock face default
             autopilotSpeed: '10',
             rotateClockwise: 'true',
             rotateCounterclockwise: 'false',
-            opacity: '0.9', // Slightly transparent controls default
-            autopilotWalkRange: '30',
-            controlsPosition: JSON.stringify({ x: 16, y: 16 }), // Default top-left
-            circleOutlineDashDensity: '15', // Adjusted default
-            depthOffset: '5', // Smaller default depth
+            opacity: '0.9', // Controls panel opacity
+            autopilotWalkRange: '30', // Percentage for autopilot panning range
+            controlsPosition: JSON.stringify({ x: 16, y: 16 }), // Default controls pos (top-left)
+            circleOutlineDashDensity: '15',
+            depthOffset: '5', // Anaglyph depth
+            // scale: '1.0', // Could save scale too, but start at 1 for now
         };
 
-        // Initialize LS *before* retrieving values
+        // Initialize LS keys *before* retrieving values
         for (const key in defaultSettings) {
             initializeLocalStorage(key, defaultSettings[key]);
         }
 
-        // Retrieve values from localStorage *after* initializing defaults.
-        let mode = getLocalStorageValue('mode');
-        // Use helper function to get mode-specific colors/settings
+        // --- Load Settings from LocalStorage ---
+
+        // Helper to get mode-specific settings, falling back to defaults
         function getModeSetting(baseKey, currentMode) {
              const modeSpecificKey = `${baseKey}_${currentMode}`;
              const value = getLocalStorageValue(modeSpecificKey);
-             // console.log(`Getting setting: ${modeSpecificKey}, Value: ${value}`); // Debug
-             if (value !== null) {
-                 return value;
-             }
-             // Fallback to default for that mode if LS key exists
-             if (defaultSettings[modeSpecificKey] !== undefined) {
-                  // console.log(`Falling back to default for mode: ${modeSpecificKey}`); // Debug
-                  return defaultSettings[modeSpecificKey];
-             }
-             // Absolute fallback to the base default (e.g., if a mode was added later)
-             // console.log(`Falling back to absolute default: ${baseKey}`); // Debug
-             return defaultSettings[baseKey] || null; // Or handle error
+             if (value !== null) return value; // Return stored value if exists
+             if (defaultSettings[modeSpecificKey] !== undefined) return defaultSettings[modeSpecificKey]; // Fallback mode default
+             console.warn(`No specific or default setting found for ${modeSpecificKey}`);
+             return defaultSettings[baseKey] || null; // Absolute fallback or null
         }
 
-        // Standardize colors retrieved from LS or defaults
+        // Load settings, using defaults from defaultSettings object if not found in LS
+        let mode = getLocalStorageValue('mode') || defaultSettings.mode;
         let color = standardize_color(getModeSetting('color', mode));
         let color2 = standardize_color(getModeSetting('color2', mode));
-        let color3 = standardize_color(getLocalStorageValue('color3')); // Circle Outline (common)
+        let color3 = standardize_color(getLocalStorageValue('color3') || defaultSettings.color3);
         let bgColor = standardize_color(getModeSetting('bgColor', mode));
         let textColor = standardize_color(getModeSetting('textColor', mode));
-        let anaglyphLeftColor = standardize_color(getLocalStorageValue('anaglyphLeftColor'));
-        let anaglyphRightColor = standardize_color(getLocalStorageValue('anaglyphRightColor'));
+        let anaglyphLeftColor = standardize_color(getLocalStorageValue('anaglyphLeftColor') || defaultSettings.anaglyphLeftColor);
+        let anaglyphRightColor = standardize_color(getLocalStorageValue('anaglyphRightColor') || defaultSettings.anaglyphRightColor);
+
+        let textSize = parseInt(getLocalStorageValue('textSize') || defaultSettings.textSize);
+        let pendulumThickness = parseInt(getLocalStorageValue('pendulumThickness') || defaultSettings.pendulumThickness);
+        let textDistance = parseFloat(getLocalStorageValue('textDistance') || defaultSettings.textDistance);
+        let startAngle = parseFloat(getLocalStorageValue('startAngle') || defaultSettings.startAngle);
+        originX = parseFloat(getLocalStorageValue('originX') || defaultSettings.originX); // Load pan X
+        originY = parseFloat(getLocalStorageValue('originY') || defaultSettings.originY); // Load pan Y
+        let arcOffset = parseInt(getLocalStorageValue('arcOffset') || defaultSettings.arcOffset);
+        let rotationVelocity = parseFloat(getLocalStorageValue('rotationVelocity') || defaultSettings.rotationVelocity);
+        let lineLength = parseFloat(getLocalStorageValue('lineLength') || defaultSettings.lineLength);
+        let isDarkMode = (getLocalStorageValue('isDarkMode') || defaultSettings.isDarkMode) === 'true';
+        let isReversed = (getLocalStorageValue('isReversed') || defaultSettings.isReversed) === 'true';
+        let lineThickness = parseInt(getLocalStorageValue('lineThickness') || defaultSettings.lineThickness);
+        let radiatingLineCount = parseInt(getLocalStorageValue('radiatingLineCount') || defaultSettings.radiatingLineCount);
+        let autopilotSpeed = parseInt(getLocalStorageValue('autopilotSpeed') || defaultSettings.autopilotSpeed);
+        let rotateClockwise = (getLocalStorageValue('rotateClockwise') || defaultSettings.rotateClockwise) === 'true';
+        let rotateCounterclockwise = (getLocalStorageValue('rotateCounterclockwise') || defaultSettings.rotateCounterclockwise) === 'true';
+        let opacity = parseFloat(getLocalStorageValue('opacity') || defaultSettings.opacity);
+        let autopilotWalkRange = parseInt(getLocalStorageValue('autopilotWalkRange') || defaultSettings.autopilotWalkRange);
+        let circleOutlineDashDensity = parseInt(getLocalStorageValue('circleOutlineDashDensity') || defaultSettings.circleOutlineDashDensity);
+        let depthOffset = parseInt(getLocalStorageValue('depthOffset') || defaultSettings.depthOffset);
+        // scale = parseFloat(getLocalStorageValue('scale') || defaultSettings.scale); // Load scale if saved
+
+        // Initialize pendulum angle (use startAngle if specific pendulum angle not saved)
+        let pendulumAngle = parseFloat(getLocalStorageValue('pendulumAngle') || startAngle);
+
+        // --- DOM Element References ---
+        const controlsContainer = document.getElementById('controls-container');
+        const controls = document.getElementById('controls');
+        const toggleMenuButton = document.getElementById('toggle-menu');
+        const flipPositionButton = document.getElementById('flip-position');
+        const horizontalOffsetSlider = document.getElementById('horizontal-offset'); // Now the Pan X slider
+        const verticalOffsetSlider = document.getElementById('vertical-offset');     // Now the Pan Y slider
+        const autopilotWalkRangeSlider = document.getElementById('autopilot-walk-range');
+        const toggleDarkModeButton = document.getElementById('toggle-dark-mode');
+        const toggleAutopilot1Button = document.getElementById("toggle-autopilot-1");
+        const toggleAutopilot2Button = document.getElementById("toggle-autopilot-2");
+        const rotateClockwiseToggle = document.getElementById('rotate-clockwise');
+        const rotateCounterClockwiseToggle = document.getElementById('rotate-counterclockwise');
+        // ... (add other element refs if needed frequently)
 
 
-        // Numeric and boolean settings
-        let textSize = parseInt(getLocalStorageValue('textSize'));
-        let pendulumThickness = parseInt(getLocalStorageValue('pendulumThickness'));
-        let textDistance = parseFloat(getLocalStorageValue('textDistance'));
-        let horizontalOffset = parseInt(getLocalStorageValue('horizontalOffset')); // World offset
-        let verticalOffset = parseInt(getLocalStorageValue('verticalOffset')); // World offset
-        let arcOffset = parseInt(getLocalStorageValue('arcOffset'));
-        let rotationVelocity = parseFloat(getLocalStorageValue('rotationVelocity'));
-        let lineLength = parseFloat(getLocalStorageValue('lineLength'));
-        let isDarkMode = getLocalStorageValue('isDarkMode') === 'true';
-        let isReversed = getLocalStorageValue('isReversed') === 'true';
-        let lineThickness = parseInt(getLocalStorageValue('lineThickness'));
-        let radiatingLineCount = parseInt(getLocalStorageValue('radiatingLineCount'));
-        let startAngle = parseFloat(getLocalStorageValue('startAngle')); // Use float for smoother animation
-        let autopilotSpeed = parseInt(getLocalStorageValue('autopilotSpeed'));
-        let rotateClockwise = getLocalStorageValue('rotateClockwise') === 'true';
-        let rotateCounterclockwise = getLocalStorageValue('rotateCounterclockwise') === 'false'; // Ensure only one is true initially
-        let opacity = parseFloat(getLocalStorageValue('opacity'));
-        let autopilotWalkRange = parseInt(getLocalStorageValue('autopilotWalkRange'));
-        let circleOutlineDashDensity = parseInt(getLocalStorageValue('circleOutlineDashDensity'));
-        let depthOffset = parseInt(getLocalStorageValue('depthOffset'));
-
-
-        // Initialize pendulum variables
-        let pendulumAngle = parseFloat(getLocalStorageValue('pendulumAngle')) || startAngle || 0; // Use startAngle if pendulumAngle isn't set
-
-        // --- UI Initialization ---
-        // Call this *after* loading all settings from localStorage
+        // --- UI Initialization Function ---
         function initializeUI() {
             // Set control values from loaded settings
             document.getElementById('line-color').value = color;
@@ -854,8 +739,8 @@
             document.getElementById('text-color').value = textColor;
             document.getElementById('line-thickness').value = lineThickness;
             document.getElementById('radiating-line-count').value = radiatingLineCount;
-            document.getElementById('horizontal-offset').value = horizontalOffset;
-            document.getElementById('vertical-offset').value = verticalOffset;
+            horizontalOffsetSlider.value = originX; // Set Pan X slider
+            verticalOffsetSlider.value = originY;   // Set Pan Y slider
             document.getElementById('arc-offset').value = arcOffset;
             document.getElementById('line-length').value = lineLength;
             document.getElementById('text-size').value = textSize;
@@ -863,76 +748,78 @@
             document.getElementById('text-distance').value = textDistance;
             document.getElementById('rotation-velocity').value = rotationVelocity;
             document.getElementById('autopilot-speed').value = autopilotSpeed;
-            document.getElementById('rotate-clockwise').checked = rotateClockwise;
-            document.getElementById('rotate-counterclockwise').checked = rotateCounterclockwise;
+            rotateClockwiseToggle.checked = rotateClockwise;
+            rotateCounterClockwiseToggle.checked = rotateCounterclockwise;
             document.getElementById('opacity-slider').value = opacity;
             document.getElementById('visualization-mode').value = mode;
-            document.getElementById('autopilot-walk-range').value = autopilotWalkRange;
+            autopilotWalkRangeSlider.value = autopilotWalkRange; // Autopilot range setting
             document.getElementById('circle-outline-dash-density').value = circleOutlineDashDensity;
             document.getElementById('depth-offset').value = depthOffset;
             document.getElementById('anaglyph-left-color').value = anaglyphLeftColor;
             document.getElementById('anaglyph-right-color').value = anaglyphRightColor;
 
-            // Apply initial state
+            // Apply initial visual state
             setBackgroundColor(bgColor);
-            applyDarkMode(isDarkMode); // Apply dark mode based on loaded setting
+            applyDarkMode(isDarkMode); // Apply dark/light mode styles
             controls.style.opacity = opacity;
-            toggleControlVisibility(); // Set visibility based on loaded mode
-            updateTextPlaceholder(); // Set label text based on loaded mode
-            setSliderLimits(); // Set limits based on loaded walk range
+            toggleControlVisibility(); // Show/hide controls based on mode
+            updateTextPlaceholder(); // Update dynamic labels
 
-             // Position controls container
-            const controlsContainer = document.getElementById('controls-container');
-            const savedPosition = JSON.parse(getLocalStorageValue('controlsPosition') || '{}'); // Default to empty obj
-            const initialX = savedPosition.x !== undefined ? savedPosition.x : defaultSettings.controlsPosition.x;
-            const initialY = savedPosition.y !== undefined ? savedPosition.y : defaultSettings.controlsPosition.y;
-            controlsContainer.style.transform = `translate(${initialX}px, ${initialY}px)`;
-            controlsContainer.setAttribute('data-x', initialX);
-            controlsContainer.setAttribute('data-y', initialY);
+            // Position controls container based on saved position
+            const savedPosition = JSON.parse(getLocalStorageValue('controlsPosition') || defaultSettings.controlsPosition);
+            controlsContainer.style.transform = `translate(${savedPosition.x}px, ${savedPosition.y}px)`;
+            controlsContainer.setAttribute('data-x', savedPosition.x);
+            controlsContainer.setAttribute('data-y', savedPosition.y);
             if (isReversed) {
                 controlsContainer.classList.add('reverse');
             }
 
-            // Initialize Pan/Zoom AFTER UI elements are ready
+            // Initialize Pan/Zoom event listeners
             initializeZoomAndPan();
 
-            // Set initial transform based on loaded scale/origin (if we were saving them)
-            // For now, we start centered and non-zoomed, handled by initializeZoomAndPan defaults
-            updateCanvasTransform(); // Apply initial transform (center, scale=1)
-
-            // Initial draw on page load
-            requestAnimationFrame(draw); // Use rAF for initial draw
+            // Apply initial canvas transform (scale and pan) and draw
+            updateCanvasTransform();
         }
 
-        // --- Event Listeners ---
+        // --- Run Initialization ---
+        // Use DOMContentLoaded for reliability
         document.addEventListener('DOMContentLoaded', initializeUI);
 
-        // Make controls draggable
+
+        // --- Draggable Controls Panel (InteractJS) ---
         interact('.draggable').draggable({
             allowFrom: '#drag-handle', // Only allow dragging from the handle
-            inertia: true, // Add some inertia
+            inertia: true, // Add some inertia for smoother feel
             modifiers: [
                 interact.modifiers.restrictRect({
-                    restriction: 'parent', // Keep within the body/window
-                    endOnly: true // Apply restriction only at the end of drag
+                    // Restrict dragging to the viewport bounds dynamically
+                    restriction: () => {
+                        const viewportWidth = window.innerWidth;
+                        const viewportHeight = window.innerHeight;
+                        // Return a rectangle representing the viewport
+                        return { x: 0, y: 0, width: viewportWidth, height: viewportHeight };
+                    },
+                    // Apply restriction during drag, not just at the end
+                    endOnly: false
                 })
             ],
-            autoScroll: false, // Usually not needed for a small controls box
+            autoScroll: false, // Disable auto-scrolling
             listeners: {
-                move(event) { // Use the move event directly
+                move(event) { // Fired during drag
                     const target = event.target;
-                    // Keep the dragged position in the data-x/data-y attributes
+                    // Keep track of the position using data attributes
                     const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
                     const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
 
-                    // Translate the element
+                    // Apply the translation via CSS transform
                     target.style.transform = `translate(${x}px, ${y}px)`;
 
-                    // Update the position attributes
+                    // Update the data attributes
                     target.setAttribute('data-x', x);
                     target.setAttribute('data-y', y);
                 },
-                end(event) { // Save position when dragging ends
+                end(event) { // Fired when drag ends
+                     // Save the final position to localStorage
                      const target = event.target;
                      const x = parseFloat(target.getAttribute('data-x')) || 0;
                      const y = parseFloat(target.getAttribute('data-y')) || 0;
@@ -942,172 +829,30 @@
         });
 
 
-        // --- Controls and Event Listeners ---
-        const controls = document.getElementById('controls');
-        const toggleMenuButton = document.getElementById('toggle-menu');
-        const flipPositionButton = document.getElementById('flip-position');
-        const controlsContainer = document.getElementById('controls-container');
+        // --- General Controls Event Listeners ---
 
+        // Toggle Controls Panel Visibility
         toggleMenuButton.addEventListener('click', () => {
             const isVisible = controls.style.display === 'block';
             controls.style.display = isVisible ? 'none' : 'block';
             toggleMenuButton.textContent = isVisible ? 'Show Controls' : 'Hide Controls';
-            toggleMenuButton.setAttribute('aria-expanded', !isVisible); // ARIA attribute
+            toggleMenuButton.setAttribute('aria-expanded', !isVisible);
+            controls.setAttribute('aria-hidden', isVisible);
         });
-
-        // Set initial ARIA state for controls visibility
+        // Set initial ARIA state
         toggleMenuButton.setAttribute('aria-expanded', controls.style.display === 'block');
-        controls.setAttribute('aria-hidden', controls.style.display !== 'block'); // Hide from screen readers when not visible
+        controls.setAttribute('aria-hidden', controls.style.display !== 'block');
 
-
+        // Flip Controls Handle/Menu Order
         flipPositionButton.addEventListener('click', () => {
             isReversed = !isReversed;
-            setLocalStorageValue('isReversed', isReversed); // Correct LS key
+            setLocalStorageValue('isReversed', isReversed); // Save preference
             controlsContainer.classList.toggle('reverse');
         });
 
-        const horizontalOffsetSlider = document.getElementById('horizontal-offset');
-        const verticalOffsetSlider = document.getElementById('vertical-offset');
-        const autopilotWalkRangeSlider = document.getElementById('autopilot-walk-range');
 
-        function setSliderLimits() {
-            // Base limits on canvas size directly, walk range controls *behavior*
-            const maxX = Math.floor(canvasWidth * 1.5); // Allow going off-screen
-            const maxY = Math.floor(canvasHeight * 1.5);
-
-            horizontalOffsetSlider.min = -maxX;
-            horizontalOffsetSlider.max = maxX;
-            verticalOffsetSlider.min = -maxY;
-            verticalOffsetSlider.max = maxY;
-
-            // Clamp current value if it falls outside new limits (can happen on resize)
-            horizontalOffset = Math.max(parseInt(horizontalOffsetSlider.min), Math.min(horizontalOffset, parseInt(horizontalOffsetSlider.max)));
-            verticalOffset = Math.max(parseInt(verticalOffsetSlider.min), Math.min(verticalOffset, parseInt(verticalOffsetSlider.max)));
-
-            // Update slider positions to reflect potentially clamped values
-            horizontalOffsetSlider.value = horizontalOffset;
-            verticalOffsetSlider.value = verticalOffset;
-        }
-
-
-// Function to calculate Anaglyph colors based on the background
-function calculateAnaglyphColors(bgHexColor) {
-    // Ensure bgHexColor is a 6-digit hex
-    bgHexColor = standardize_color(bgHexColor);
-    if (!bgHexColor || bgHexColor.length !== 7) {
-        console.warn("Invalid background color for anaglyph calculation:", bgHexColor);
-        return { left: '#ff0000', right: '#00ffff' }; // Return defaults
-    }
-
-    let r = parseInt(bgHexColor.slice(1, 3), 16);
-    let g = parseInt(bgHexColor.slice(3, 5), 16);
-    let b = parseInt(bgHexColor.slice(5, 7), 16);
-
-    // Determine perceived brightness (Luminance) - simplistic version
-    let luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-    // Basic logic: Dark background -> Bright Red/Cyan, Light background -> Darker Red/Cyan
-    // This is a very simplified approach. True perceptual anaglyph generation is complex.
-    let leftHex, rightHex;
-    if (luminance < 0.5) {
-        // Darker Background: Use standard bright Red/Cyan
-        leftHex = '#ff0000';
-        rightHex = '#00ffff';
-    } else {
-        // Lighter Background: Use slightly darker/desaturated variants (example)
-        // You might need to experiment here for best results
-        leftHex = '#cc0000'; // Darker Red
-        rightHex = '#00cccc'; // Darker Cyan
-    }
-
-     // Let's override with standard Red/Cyan for simplicity unless a better algorithm is found
-     leftHex = '#ff0000';
-     rightHex = '#00ffff';
-
-
-    // --- More Advanced (Optional) Ghosting Reduction ---
-    // This involves mixing a small amount of the other eye's color into each channel
-    // Requires converting hex to RGB, mixing, then back to hex.
-    // Example (Conceptual - requires RGB conversion functions):
-    /*
-    const ghostReductionFactor = 0.1; // 0.0 to ~0.3
-    let leftRGB = hexToRgb(leftHex);
-    let rightRGB = hexToRgb(rightHex);
-
-    let finalLeftR = Math.round(leftRGB.r * (1 - ghostReductionFactor) + rightRGB.r * ghostReductionFactor);
-    // ... mix G and B channels similarly ...
-    let finalRightR = Math.round(rightRGB.r * (1 - ghostReductionFactor) + leftRGB.r * ghostReductionFactor);
-    // ... mix G and B channels similarly ...
-
-    leftHex = rgbToHex(finalLeftR, finalLeftG, finalLeftB);
-    rightHex = rgbToHex(finalRightR, finalRightG, finalRightB);
-    */
-
-    return { left: leftHex, right: rightHex };
-}
-
-// --- Helper functions for color conversion (if using advanced mixing) ---
-/*
-function hexToRgb(hex) {
-    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16)
-    } : null;
-}
-
-function componentToHex(c) {
-    let hex = c.toString(16);
-    return hex.length == 1 ? "0" + hex : hex;
-}
-
-function rgbToHex(r, g, b) {
-    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
-}
-*/
-
-
-        function toggleControlVisibility() {
-            const radiatingLineCountContainer = document.getElementById('radiating-line-count-container');
-            const lineColorContainer = document.getElementById('line-color-container');
-            const pendulumSizeContainer = document.getElementById('pendulum-size-container');
-            const depthOffsetContainer = document.getElementById('depth-offset-container');
-            const anaglyphColorPickers = document.getElementById('anaglyph-color-pickers');
-            const specialLineColorLabel = document.getElementById('special-line-color-label').parentNode; // Get parent div/br if needed
-
-
-            // Hide all mode-specific controls initially
-            radiatingLineCountContainer.style.display = 'none';
-            lineColorContainer.style.display = 'none'; // Hide main color by default
-            specialLineColorLabel.style.display = 'none'; // Hide special color by default
-            pendulumSizeContainer.style.display = 'none';
-            depthOffsetContainer.style.display = 'none';
-            anaglyphColorPickers.style.display = 'none';
-
-
-            // Show controls based on the selected mode
-            if (mode === 'many') {
-                radiatingLineCountContainer.style.display = 'block';
-                lineColorContainer.style.display = 'block'; // Show main color
-                specialLineColorLabel.style.display = 'block'; // Show special color
-            } else if (mode === 'single') {
-                specialLineColorLabel.style.display = 'block'; // Show special color (used for the single line)
-                 // No line count, no main color needed
-            } else if (mode === 'pendulum') {
-                lineColorContainer.style.display = 'block'; // Show main color (line)
-                specialLineColorLabel.style.display = 'block'; // Show special color (pendulum dot)
-                pendulumSizeContainer.style.display = 'block';
-            } else if (mode === 'anaglyph') {
-                radiatingLineCountContainer.style.display = 'block';
-                depthOffsetContainer.style.display = 'block';
-                anaglyphColorPickers.style.display = 'block';
-                 // No regular line colors needed
-            }
-        }
-
-        // --- Input Event Handlers ---
-        const inputElements = [
+        // --- Input Element Event Handling (Sliders, Pickers, Select) ---
+        const inputElementIds = [
             'visualization-mode', 'horizontal-offset', 'pendulum-thickness', 'vertical-offset',
             'arc-offset', 'line-length', 'rotation-velocity', 'line-thickness',
             'radiating-line-count', 'line-color', 'special-line-color', 'text-size',
@@ -1116,153 +861,101 @@ function rgbToHex(r, g, b) {
             'depth-offset', 'anaglyph-left-color', 'anaglyph-right-color'
         ];
 
-        inputElements.forEach(id => {
+        inputElementIds.forEach(id => {
             const element = document.getElementById(id);
             if (!element) {
                 console.warn(`Element with ID '${id}' not found.`);
                 return;
             }
             element.addEventListener('input', function () {
-                 let needsRedraw = true; // Assume redraw is needed by default
+                 let needsRedraw = true; // Assume redraw needed unless specified otherwise
+                 let updateTransform = false; // Flag if transform needs update
 
-                // Update variables and localStorage based on the changed element.
                 switch (id) {
                     case 'visualization-mode':
-                         const oldMode = mode;
                          mode = this.value;
                          setLocalStorageValue('mode', mode);
-
-                         // Load settings for the new mode, applying defaults only if necessary
+                         // Load/apply settings specific to the new mode
                          color = standardize_color(getModeSetting('color', mode));
                          color2 = standardize_color(getModeSetting('color2', mode));
                          bgColor = standardize_color(getModeSetting('bgColor', mode));
                          textColor = standardize_color(getModeSetting('textColor', mode));
-
-                         // Update UI elements to reflect loaded settings for the new mode
-                         applyColorsToControls(); // Update color pickers etc.
-                         setBackgroundColor(bgColor); // Apply new background
-
+                         // Update UI elements for the new mode
+                         applyColorsToControls();
+                         setBackgroundColor(bgColor);
                          toggleControlVisibility();
                          updateTextPlaceholder();
+                         needsRedraw = true;
                          break;
 
+                    // PAN SLIDERS - Update originX/Y and trigger transform update
                     case 'horizontal-offset':
-                        horizontalOffset = parseInt(this.value);
-                        setLocalStorageValue('horizontalOffset', horizontalOffset);
-                        break;
-                    case 'pendulum-thickness':
-                        pendulumThickness = parseInt(this.value);
-                        setLocalStorageValue('pendulumThickness', pendulumThickness);
+                        originX = parseFloat(this.value);
+                        setLocalStorageValue('originX', originX);
+                        updateTransform = true;
+                        needsRedraw = false; // updateCanvasTransform handles redraw
                         break;
                     case 'vertical-offset':
-                        verticalOffset = parseInt(this.value);
-                        setLocalStorageValue('verticalOffset', verticalOffset);
+                        originY = parseFloat(this.value);
+                        setLocalStorageValue('originY', originY);
+                        updateTransform = true;
+                        needsRedraw = false; // updateCanvasTransform handles redraw
                         break;
-                    case 'arc-offset':
-                        arcOffset = parseInt(this.value);
-                        setLocalStorageValue('arcOffset', arcOffset);
-                        break;
-                    case 'line-length':
-                        lineLength = parseFloat(this.value);
-                        setLocalStorageValue('lineLength', lineLength);
-                        break;
-                    case 'rotation-velocity':
-                        rotationVelocity = parseFloat(this.value);
-                        setLocalStorageValue('rotationVelocity', rotationVelocity);
-                        break;
-                    case 'line-thickness':
-                        lineThickness = parseInt(this.value); // Ensure integer
-                        setLocalStorageValue('lineThickness', lineThickness);
-                        break;
-                    case 'radiating-line-count':
-                        radiatingLineCount = parseInt(this.value); // Ensure integer
-                        setLocalStorageValue('radiatingLineCount', radiatingLineCount); // Correct LS Key
-                        break;
-                    case 'line-color':
-                        color = standardize_color(this.value);
-                        setLocalStorageValue('color_' + mode, color); // Store per-mode
-                        break;
-                    case 'special-line-color':
-                        color2 = standardize_color(this.value);
-                        setLocalStorageValue('color2_' + mode, color2); // Store per-mode
-                        break;
-                    case 'text-size':
-                        textSize = parseInt(this.value);
-                        setLocalStorageValue('textSize', textSize);
-                        break;
-                    case 'text-distance':
-                        textDistance = parseFloat(this.value);
-                        setLocalStorageValue('textDistance', textDistance);
-                        break;
-                     case 'bg-color':
-                        bgColor = standardize_color(this.value);
-                        setLocalStorageValue('bgColor_' + mode, bgColor); // Store per-mode
-                        setBackgroundColor(bgColor);
-                        // Auto-update anaglyph colors only if in anaglyph mode AND maybe a checkbox is ticked?
-                        // For now, let's always calculate but only update UI if in anaglyph mode
-                        if (mode === 'anaglyph') {
-                             // Option 1: Always recalculate and update pickers
-                             const calculatedColors = calculateAnaglyphColors(bgColor);
-                             anaglyphLeftColor = calculatedColors.left;
-                             anaglyphRightColor = calculatedColors.right;
-                             document.getElementById('anaglyph-left-color').value = anaglyphLeftColor;
-                             document.getElementById('anaglyph-right-color').value = anaglyphRightColor;
-                             setLocalStorageValue('anaglyphLeftColor', anaglyphLeftColor);
-                             setLocalStorageValue('anaglyphRightColor', anaglyphRightColor);
 
-                             // Option 2: Only recalculate if a checkbox "Auto Anaglyph Colors" is checked
-                             // if (document.getElementById('auto-anaglyph-colors').checked) { ... }
-                        }
+                    // Other visual parameter updates
+                    case 'pendulum-thickness': pendulumThickness = parseInt(this.value); setLocalStorageValue('pendulumThickness', pendulumThickness); break;
+                    case 'arc-offset': arcOffset = parseInt(this.value); setLocalStorageValue('arcOffset', arcOffset); break;
+                    case 'line-length': lineLength = parseFloat(this.value); setLocalStorageValue('lineLength', lineLength); break;
+                    case 'rotation-velocity': rotationVelocity = parseFloat(this.value); setLocalStorageValue('rotationVelocity', rotationVelocity); break;
+                    case 'line-thickness': lineThickness = parseInt(this.value); setLocalStorageValue('lineThickness', lineThickness); break;
+                    case 'radiating-line-count': radiatingLineCount = parseInt(this.value); setLocalStorageValue('radiatingLineCount', radiatingLineCount); break; // Corrected LS Key
+                    case 'text-size': textSize = parseInt(this.value); setLocalStorageValue('textSize', textSize); break;
+                    case 'text-distance': textDistance = parseFloat(this.value); setLocalStorageValue('textDistance', textDistance); break;
+                    case 'circle-outline-dash-density': circleOutlineDashDensity = parseInt(this.value); setLocalStorageValue('circleOutlineDashDensity', circleOutlineDashDensity); break;
+                    case 'depth-offset': depthOffset = parseInt(this.value); setLocalStorageValue('depthOffset', depthOffset); needsRedraw = (mode === 'anaglyph'); break;
+
+                    // Color updates (store per mode where applicable)
+                    case 'line-color': color = standardize_color(this.value); setLocalStorageValue('color_' + mode, color); break;
+                    case 'special-line-color': color2 = standardize_color(this.value); setLocalStorageValue('color2_' + mode, color2); break;
+                    case 'text-color': textColor = standardize_color(this.value); setLocalStorageValue('textColor_' + mode, textColor); break;
+                    case 'circle-outline-color': color3 = standardize_color(this.value); setLocalStorageValue('color3', color3); break; // Common setting
+                    case 'anaglyph-left-color': anaglyphLeftColor = standardize_color(this.value); setLocalStorageValue('anaglyphLeftColor', anaglyphLeftColor); needsRedraw = (mode === 'anaglyph'); break;
+                    case 'anaglyph-right-color': anaglyphRightColor = standardize_color(this.value); setLocalStorageValue('anaglyphRightColor', anaglyphRightColor); needsRedraw = (mode === 'anaglyph'); break;
+
+                    case 'bg-color':
+                        bgColor = standardize_color(this.value);
+                        setLocalStorageValue('bgColor_' + mode, bgColor);
+                        setBackgroundColor(bgColor);
+                        // Optional: Auto-calculate anaglyph colors based on BG
+                        // if (mode === 'anaglyph' && shouldAutoCalcAnaglyph) { ... }
                         break;
-                    case 'text-color':
-                        textColor = standardize_color(this.value);
-                        setLocalStorageValue('textColor_' + mode, textColor); // Store per-mode
-                        break;
-                    case 'circle-outline-color':
-                        color3 = standardize_color(this.value);
-                        setLocalStorageValue('color3', color3); // Common setting
-                        break;
+
+                    // Non-drawing updates
                     case 'opacity-slider':
                         opacity = parseFloat(this.value);
                         setLocalStorageValue('opacity', opacity);
                         controls.style.opacity = opacity;
-                        needsRedraw = false; // Changing control opacity doesn't require canvas redraw
+                        needsRedraw = false;
                         break;
                     case 'autopilot-walk-range':
                         autopilotWalkRange = parseInt(this.value);
                         setLocalStorageValue('autopilotWalkRange', autopilotWalkRange);
-                        // No need to call setSliderLimits() here, walk range affects behavior not limits
-                        needsRedraw = false; // Doesn't directly affect drawing unless autopilot running
-                        break;
-                    case 'circle-outline-dash-density':
-                        circleOutlineDashDensity = parseInt(this.value);
-                        setLocalStorageValue('circleOutlineDashDensity', circleOutlineDashDensity);
-                        break;
-                    case 'depth-offset':
-                        depthOffset = parseInt(this.value);
-                        setLocalStorageValue('depthOffset', depthOffset);
-                         needsRedraw = (mode === 'anaglyph'); // Only redraw if in anaglyph mode
-                        break;
-                    case 'anaglyph-left-color':
-                        anaglyphLeftColor = standardize_color(this.value);
-                        setLocalStorageValue('anaglyphLeftColor', anaglyphLeftColor);
-                        needsRedraw = (mode === 'anaglyph');
-                        break;
-                    case 'anaglyph-right-color':
-                        anaglyphRightColor = standardize_color(this.value);
-                        setLocalStorageValue('anaglyphRightColor', anaglyphRightColor);
-                        needsRedraw = (mode === 'anaglyph');
+                        needsRedraw = false; // Doesn't directly affect drawing unless autopilot recalculates target
                         break;
                  }
 
-                // Centralized draw call *only if needed* and not currently animating
-                if (needsRedraw && !shouldAnimate) {
+                // Apply canvas transform if needed (for pan sliders)
+                if (updateTransform) {
+                    updateCanvasTransform();
+                }
+                // Request redraw if needed and not animating or handled by transform update
+                else if (needsRedraw && !shouldAnimate) {
                      requestAnimationFrame(draw); // Use rAF for efficiency
                 }
             });
         });
 
-        // Updates the color picker values in the UI
+        // Helper to update the color picker UI elements
         function applyColorsToControls() {
             document.getElementById('line-color').value = color;
             document.getElementById('special-line-color').value = color2;
@@ -1275,138 +968,173 @@ function rgbToHex(r, g, b) {
 
 
         // --- Resize and Key Event Handling ---
+
         window.addEventListener("resize", function () {
+            // Update canvas dimensions
             canvasWidth = window.innerWidth;
             canvasHeight = window.innerHeight;
             canvas.width = canvasWidth;
             canvas.height = canvasHeight;
-            radius = Math.min(canvasWidth, canvasHeight) / 4.5; // Recalculate radius
 
-            // Recalculate view origin to keep the center point centered after resize
-            // This is a simple recentering approach. More complex logic could maintain the exact view.
-             viewOriginX = canvasWidth / 2 - (canvasWidth / 2 - horizontalOffset) * scale;
-             viewOriginY = canvasHeight / 2 - (canvasHeight / 2 + verticalOffset) * scale; // Note: vertical offset might need inversion depending on coord system
+            // Recalculate base radius
+            radius = Math.min(canvasWidth, canvasHeight) / 4.5;
 
-            setSliderLimits(); // Update slider limits based on new size
-            updateCanvasTransform(); // Apply new transform and trigger redraw via rAF
+            // --- Clamp Controls Panel Position ---
+            // Ensure the control panel doesn't get stuck off-screen after resize
+            const currentX = parseFloat(controlsContainer.getAttribute('data-x')) || 0;
+            const currentY = parseFloat(controlsContainer.getAttribute('data-y')) || 0;
+            const panelRect = controlsContainer.getBoundingClientRect(); // Get current size
+            const panelWidth = panelRect.width || 280; // Use measured or fallback width
+            const panelHeight = panelRect.height || 50; // Use measured or fallback height
+
+            const maxX = window.innerWidth - panelWidth - 5; // Max X (top-left) with padding
+            const maxY = window.innerHeight - panelHeight - 5; // Max Y (top-left) with padding
+
+            // Clamp position to be within new viewport bounds
+            const clampedX = Math.max(0, Math.min(currentX, maxX));
+            const clampedY = Math.max(0, Math.min(currentY, maxY));
+
+            // Apply clamped position if it changed
+            if (clampedX !== currentX || clampedY !== currentY) {
+                controlsContainer.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+                controlsContainer.setAttribute('data-x', clampedX);
+                controlsContainer.setAttribute('data-y', clampedY);
+                setLocalStorageValue('controlsPosition', JSON.stringify({ x: clampedX, y: clampedY }));
+            }
+            // --- End Clamp Controls Panel ---
+
+            // Update Pan slider limits (they have fixed wide range now, so no update needed)
+            // setSliderLimits(); // Removed, pan sliders have fixed range
+
+            // Apply current transform (scale/pan) to the resized canvas and redraw
+            updateCanvasTransform();
         });
 
+        // Keyboard state tracking
         let pressedKeys = {};
         window.addEventListener("keydown", function (event) {
-             // Ignore keydowns if interacting with input fields
-             if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT' || event.target.tagName === 'BUTTON') {
-                // Exception: Allow +/- keys for zoom even if zoom buttons have focus? Maybe not.
+             // Ignore keydowns if focus is on an input/select/button to allow typing/interaction
+             if (['INPUT', 'SELECT', 'BUTTON'].includes(event.target.tagName)) {
+                 // Allow +/- for zoom even if zoom buttons have focus? Maybe not for simplicity.
+                 return;
+             }
+             // Ignore if modifier keys are the primary press (e.g., holding Shift)
+             if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta') {
                  return;
              }
 
-            pressedKeys[event.key.toLowerCase()] = true; // Use lowercase for consistency
-            handleKeyPresses(event); // Pass the event for potential single-press actions
+            const key = event.key.toLowerCase(); // Normalize key
+            if (!pressedKeys[key]) { // Prevent repeated triggers for held keys if handled by single press
+                pressedKeys[key] = true;
+                handleKeyPresses(event, true); // Pass event and indicate it's a down press
+            }
+            // Prevent default browser actions for keys we handle (like arrows scrolling)
+            if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', '+', '-', '=', '_', 'm', 'r', 'c'].includes(key)) {
+                event.preventDefault();
+            }
         });
 
         window.addEventListener("keyup", function (event) {
-             // No need to check target on keyup
-             delete pressedKeys[event.key.toLowerCase()];
+             const key = event.key.toLowerCase();
+             delete pressedKeys[key];
+             // Optionally handle key up actions if needed
+             // handleKeyPresses(event, false);
         });
 
-        function handleKeyPresses(event) {
-            let offsetStep = 10 / scale; // Adjust step based on zoom level for consistent perceived movement
-            let angleStep = Math.max(0.5, rotationVelocity); // Use rotationVelocity for angle step, ensure minimum
-            let hasChanged = false; // Track if redraw is needed
+        // Handles both single key presses and continuous actions based on pressedKeys
+        function handleKeyPresses(event, isKeyDown) {
+            // Panning speed adjusted by zoom level for consistent perceived movement
+            const panStep = 15 / scale;
+            // Rotation speed uses the velocity slider value
+            const angleStep = rotationVelocity;
+            let needsRedraw = false; // Track if redraw is needed by key actions
+            let transformChanged = false; // Track if pan/zoom requires transform update
 
-             // Use event.key for single press actions, pressedKeys for continuous actions
-             const key = event.key.toLowerCase();
+            const key = event.key.toLowerCase();
 
-             // --- Continuous Actions (Rotation / Panning using pressedKeys) ---
-             if (pressedKeys["a"] || pressedKeys["arrowleft"]) { // Rotate left
-                if (mode === "pendulum") {
-                    pendulumAngle = (pendulumAngle - angleStep); // No modulo here, handled in drawing
-                } else {
-                    startAngle = (startAngle - angleStep); // No modulo here
+             // --- Continuous Actions (checked directly via pressedKeys) ---
+             // These run as long as the key is held down (handled by browser repeat or animation loop)
+             // We check `pressedKeys` directly here.
+
+             if (pressedKeys["a"] || pressedKeys["arrowleft"]) { // Rotate left/CCW
+                if (mode === "pendulum") pendulumAngle -= angleStep; else startAngle -= angleStep;
+                needsRedraw = true;
+             }
+             if (pressedKeys["d"] || pressedKeys["arrowright"]) { // Rotate right/CW
+                 if (mode === "pendulum") pendulumAngle += angleStep; else startAngle += angleStep;
+                 needsRedraw = true;
+             }
+             if (pressedKeys["w"] || pressedKeys["arrowup"]) { // Pan Up (positive Y offset)
+                 originY += panStep; transformChanged = true;
+             }
+             if (pressedKeys["s"] || pressedKeys["arrowdown"]) { // Pan Down (negative Y offset)
+                 originY -= panStep; transformChanged = true;
+             }
+             if (pressedKeys["q"]) { // Pan Left (positive X offset) - Less common binding
+                 originX += panStep; transformChanged = true;
+             }
+             if (pressedKeys["e"]) { // Pan Right (negative X offset) - Less common binding
+                 originX -= panStep; transformChanged = true;
+             }
+
+             // --- Single Press Actions (only trigger on keydown) ---
+             if (isKeyDown) {
+                 if (key === "m") { // Toggle Mode
+                    const modes = ['many', 'single', 'pendulum', 'anaglyph'];
+                    const currentModeIndex = modes.indexOf(mode);
+                    const nextModeIndex = (currentModeIndex + 1) % modes.length;
+                    // Trigger change via the select element to sync UI and logic
+                    const modeSelect = document.getElementById('visualization-mode');
+                    modeSelect.value = modes[nextModeIndex];
+                    modeSelect.dispatchEvent(new Event('input', { bubbles: true }));
+                    // Redraw is handled by the 'input' event listener
+                    needsRedraw = false;
+                    transformChanged = false;
                 }
-                 hasChanged = true;
-             }
-             if (pressedKeys["d"] || pressedKeys["arrowright"]) { // Rotate right
-                 if (mode === "pendulum") {
-                     pendulumAngle = (pendulumAngle + angleStep);
-                 } else {
-                     startAngle = (startAngle + angleStep);
+                 if (key === "r") { // Reset View (Zoom and Pan)
+                     scale = 1.0;
+                     originX = 0;
+                     originY = 0;
+                     transformChanged = true; // Will update sliders and redraw
+                     needsRedraw = false;
                  }
-                 hasChanged = true;
-             }
-             if (pressedKeys["w"] || pressedKeys["arrowup"]) { // Pan up (adjust world offset)
-                 verticalOffset -= offsetStep;
-                 hasChanged = true;
-             }
-             if (pressedKeys["s"] || pressedKeys["arrowdown"]) { // Pan down
-                 verticalOffset += offsetStep;
-                 hasChanged = true;
-             }
-             if (pressedKeys["q"]) { // Pan left
-                 horizontalOffset -= offsetStep;
-                 hasChanged = true;
-             }
-             if (pressedKeys["e"]) { // Pan right
-                 horizontalOffset += offsetStep;
-                 hasChanged = true;
+                 // Reset Center Offset (C) - Not applicable now pan is separate
+                 // if (key === "c") { ... }
+
+                if (key === "=" || key === "+") { // Zoom In
+                     zoom(1 / zoomFactor, canvasWidth / 2, canvasHeight / 2); // Zoom towards center
+                     transformChanged = false; // zoom() calls updateCanvasTransform()
+                     needsRedraw = false;
+                 }
+                 if (key === "-" || key === "_") { // Zoom Out
+                     zoom(zoomFactor, canvasWidth / 2, canvasHeight / 2); // Zoom out from center
+                     transformChanged = false;
+                     needsRedraw = false;
+                 }
              }
 
-             // --- Single Press Actions (Mode Toggle, Reset, etc. using key) ---
-             if (key === "m") { // Toggle Mode
-                const modes = ['many', 'single', 'pendulum', 'anaglyph'];
-                const currentModeIndex = modes.indexOf(mode);
-                const nextModeIndex = (currentModeIndex + 1) % modes.length;
-                // Trigger change via the select element's input event
-                const modeSelect = document.getElementById('visualization-mode');
-                modeSelect.value = modes[nextModeIndex];
-                modeSelect.dispatchEvent(new Event('input', { bubbles: true })); // Simulate input
-                hasChanged = false; // Redraw handled by the input event listener
-            }
-             if (key === "r") { // Reset View (Zoom/Pan)
-                 scale = 1;
-                 viewOriginX = 0;
-                 viewOriginY = 0;
-                 updateCanvasTransform();
-                 hasChanged = false; // Redraw handled by updateCanvasTransform
-             }
-             if (key === "c") { // Reset Center Offset (World Offset)
-                  horizontalOffset = 0;
-                  verticalOffset = 0;
-                  document.getElementById('horizontal-offset').value = horizontalOffset;
-                  document.getElementById('vertical-offset').value = verticalOffset;
-                  setLocalStorageValue('horizontalOffset', horizontalOffset);
-                  setLocalStorageValue('verticalOffset', verticalOffset);
-                  hasChanged = true;
-              }
+            // --- Update UI & LocalStorage for changed state ---
+            if (transformChanged) {
+                // Clamp origin to slider limits before updating UI
+                const minH = parseFloat(horizontalOffsetSlider.min);
+                const maxH = parseFloat(horizontalOffsetSlider.max);
+                const minV = parseFloat(verticalOffsetSlider.min);
+                const maxV = parseFloat(verticalOffsetSlider.max);
+                originX = Math.max(minH, Math.min(originX, maxH));
+                originY = Math.max(minV, Math.min(originY, maxV));
 
-
-            if (key === "=" || key === "+") { // Zoom in
-                 zoom(1 / zoomFactor, canvasWidth / 2, canvasHeight / 2); // Zoom towards center
-                 hasChanged = false; // Redraw handled by zoom function
-             }
-             if (key === "-" || key === "_") { // Zoom out
-                 zoom(zoomFactor, canvasWidth / 2, canvasHeight / 2); // Zoom out from center
-                 hasChanged = false;
-             }
-
-             // --- Update UI for changed offsets ---
-            if (pressedKeys["w"] || pressedKeys["s"] || pressedKeys["q"] || pressedKeys["e"]) {
-                // Clamp offsets before updating UI/LS
-                const minH = parseInt(horizontalOffsetSlider.min);
-                const maxH = parseInt(horizontalOffsetSlider.max);
-                const minV = parseInt(verticalOffsetSlider.min);
-                const maxV = parseInt(verticalOffsetSlider.max);
-                horizontalOffset = Math.max(minH, Math.min(horizontalOffset, maxH));
-                verticalOffset = Math.max(minV, Math.min(verticalOffset, maxV));
-
-                document.getElementById('horizontal-offset').value = horizontalOffset;
-                document.getElementById('vertical-offset').value = verticalOffset;
-                setLocalStorageValue('horizontalOffset', horizontalOffset);
-                setLocalStorageValue('verticalOffset', verticalOffset);
+                // Update sliders to reflect new pan position
+                horizontalOffsetSlider.value = originX;
+                verticalOffsetSlider.value = originY;
+                // Save the new pan position
+                setLocalStorageValue('originX', originX);
+                setLocalStorageValue('originY', originY);
+                // Apply the transform and redraw
+                updateCanvasTransform();
             }
 
-             // --- Update LocalStorage for angles (less frequently to avoid spamming) ---
-             // Could add throttling here if needed
-             if (pressedKeys["a"] || pressedKeys["d"] || pressedKeys["arrowleft"] || pressedKeys["arrowright"]) {
+            // Save angles (could throttle this if performance is an issue)
+            if (needsRedraw && (pressedKeys["a"] || pressedKeys["d"] || pressedKeys["arrowleft"] || pressedKeys["arrowright"])) {
                  if (mode === "pendulum") {
                      setLocalStorageValue('pendulumAngle', pendulumAngle);
                  } else {
@@ -1414,80 +1142,367 @@ function rgbToHex(r, g, b) {
                  }
              }
 
-
-            // Request redraw if needed and not animating
-            if (hasChanged && !shouldAnimate) {
+            // Request redraw if needed and not handled by transform update or autopilot
+            if (needsRedraw && !transformChanged && !shouldAnimate) {
                 requestAnimationFrame(draw);
             }
         }
 
 
+        // --- Zoom and Pan Implementation ---
+
+        /**
+         * Initializes zoom and pan event listeners (mouse and touch).
+         */
+        function initializeZoomAndPan() {
+            const zoomInButton = document.getElementById('zoom-in');
+            const zoomOutButton = document.getElementById('zoom-out');
+
+            // Zoom button clicks
+            zoomInButton.addEventListener('click', () => zoom(1 / zoomFactor, canvasWidth / 2, canvasHeight / 2));
+            zoomOutButton.addEventListener('click', () => zoom(zoomFactor, canvasWidth / 2, canvasHeight / 2));
+
+            // Mouse Wheel Zooming
+            canvas.addEventListener('wheel', function (event) {
+                event.preventDefault(); // Prevent page scrolling
+                const delta = event.deltaY > 0 ? zoomFactor : 1 / zoomFactor; // Determine zoom direction
+                const rect = canvas.getBoundingClientRect();
+                // Calculate mouse position relative to the canvas
+                const mouseX = event.clientX - rect.left;
+                const mouseY = event.clientY - rect.top;
+                // Zoom towards the mouse cursor position
+                zoom(delta, mouseX, mouseY);
+            });
+
+            // --- Touch Events for Mobile Pan and Pinch Zoom ---
+            canvas.addEventListener('touchstart', (event) => {
+                 // Prevent default touch actions like scrolling or double-tap zoom
+                 // Be cautious if you need default actions elsewhere on the page
+                 // event.preventDefault();
+
+                if (event.touches.length === 1) {
+                    // --- Single Touch: Start Panning ---
+                    isDragging = true;
+                    isPinching = false; // Ensure not pinching
+                    const touch = event.touches[0];
+                    // Record starting touch position and current pan origin
+                    lastX = touch.clientX;
+                    lastY = touch.clientY;
+                    // No need to store startOriginX/Y, pan is relative to last position
+                    canvas.style.cursor = 'grabbing'; // Visual feedback
+
+                } else if (event.touches.length === 2) {
+                    // --- Two Touches: Start Pinch Zoom ---
+                    isDragging = false; // Stop panning if two fingers down
+                    isPinching = true;
+                    event.preventDefault(); // Prevent default pinch actions (like page zoom)
+                    const touch1 = event.touches[0];
+                    const touch2 = event.touches[1];
+                    // Calculate initial distance between fingers
+                    pinchStartDistance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
+                }
+            }, { passive: false }); // Need passive: false to preventDefault reliably
+
+            canvas.addEventListener('touchmove', (event) => {
+                // Always prevent default during touch move on canvas to avoid scrolling interference
+                 event.preventDefault();
+
+                if (event.touches.length === 1 && isDragging) {
+                    // --- Single Touch Move: Panning ---
+                    const touch = event.touches[0];
+                    // Calculate change in position since last move event
+                    const dx = touch.clientX - lastX;
+                    const dy = touch.clientY - lastY;
+
+                    // Update pan origin (add delta to current origin)
+                    originX += dx;
+                    originY += dy;
+
+                    // Update last position for the next move event
+                    lastX = touch.clientX;
+                    lastY = touch.clientY;
+
+                    // Update sliders and apply transform
+                    updatePanFromInteraction(); // Helper to update sliders/storage/transform
+
+
+                } else if (event.touches.length === 2 && isPinching) {
+                    // --- Two Touches Move: Pinch Zoom ---
+                    const touch1 = event.touches[0];
+                    const touch2 = event.touches[1];
+                    // Calculate current distance and pinch center
+                    const currentDistance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
+                    const rect = canvas.getBoundingClientRect();
+                    const pinchCenterX = ((touch1.clientX + touch2.clientX) / 2) - rect.left;
+                    const pinchCenterY = ((touch1.clientY + touch2.clientY) / 2) - rect.top;
+
+                    // Calculate zoom delta (inverse relationship: smaller distance -> zoom in -> delta < 1)
+                    if (pinchStartDistance > 0) { // Avoid division by zero
+                         const delta = pinchStartDistance / currentDistance;
+                         zoom(delta, pinchCenterX, pinchCenterY); // Zoom towards the pinch center
+                    }
+
+                    // Update start distance for continuous zoom
+                    pinchStartDistance = currentDistance;
+                }
+            }, { passive: false }); // Need passive: false to preventDefault
+
+            canvas.addEventListener('touchend', (event) => {
+                 // If less than 2 fingers, stop pinching
+                 if (event.touches.length < 2) {
+                     isPinching = false;
+                     pinchStartDistance = 0;
+                 }
+                 // If no fingers left, stop dragging/panning
+                 if (event.touches.length < 1) {
+                     isDragging = false;
+                     canvas.style.cursor = 'grab'; // Reset cursor
+                 }
+             });
+
+             // Handle cases where touch is cancelled (e.g., moving off screen)
+             canvas.addEventListener('touchcancel', (event) => {
+                 isDragging = false;
+                 isPinching = false;
+                 pinchStartDistance = 0;
+                 canvas.style.cursor = 'grab';
+             });
+
+
+            // --- Mouse Drag Panning ---
+            canvas.addEventListener('mousedown', function (event) {
+                 if (event.button !== 0) return; // Only pan with left mouse button
+                 // Prevent starting drag if interacting with controls that might overlay canvas edge
+                if (event.target !== canvas) return;
+
+                isDragging = true;
+                isPinching = false; // Ensure not pinching
+                // Record starting mouse position and current pan origin
+                lastX = event.clientX;
+                lastY = event.clientY;
+                canvas.style.cursor = 'grabbing'; // Indicate panning action
+                event.preventDefault(); // Prevent text selection during drag
+            });
+
+            canvas.addEventListener('mousemove', function (event) {
+                if (isDragging) {
+                    // Calculate change in position
+                    const dx = event.clientX - lastX;
+                    const dy = event.clientY - lastY;
+
+                    // Update pan origin
+                    originX += dx;
+                    originY += dy;
+
+                    // Update last position
+                    lastX = event.clientX;
+                    lastY = event.clientY;
+
+                    // Update sliders and apply transform
+                    updatePanFromInteraction();
+                }
+            });
+
+            // Stop panning on mouse up anywhere
+            window.addEventListener('mouseup', function (event) {
+                 if (event.button === 0 && isDragging) {
+                    isDragging = false;
+                    canvas.style.cursor = 'grab'; // Reset cursor
+                 }
+            });
+
+            // Stop panning if mouse leaves the canvas *while dragging*
+            canvas.addEventListener('mouseleave', function (event) {
+                if (isDragging) {
+                    // Optional: Decide if you want dragging to continue even if mouse leaves canvas temporarily
+                    // If yes, remove this block. If no (stop when leaving canvas), keep it.
+                    isDragging = false;
+                    canvas.style.cursor = 'grab';
+                }
+            });
+
+             // Set initial cursor state
+            canvas.style.cursor = 'grab';
+        }
+
+        /**
+         * Helper function called after interactive panning (mouse/touch drag).
+         * Updates sliders, clamps origin, saves to LS, and applies transform.
+         */
+        function updatePanFromInteraction() {
+            // Clamp origin values to the pan slider's min/max range
+            const minH = parseFloat(horizontalOffsetSlider.min);
+            const maxH = parseFloat(horizontalOffsetSlider.max);
+            const minV = parseFloat(verticalOffsetSlider.min);
+            const maxV = parseFloat(verticalOffsetSlider.max);
+            originX = Math.max(minH, Math.min(originX, maxH));
+            originY = Math.max(minV, Math.min(originY, maxV));
+
+            // Update the slider positions to reflect the new pan origin
+            horizontalOffsetSlider.value = originX;
+            verticalOffsetSlider.value = originY;
+
+            // Save the updated origin to localStorage
+            setLocalStorageValue('originX', originX);
+            setLocalStorageValue('originY', originY);
+
+            // Apply the new transform to the canvas and redraw
+            updateCanvasTransform();
+        }
+
+        /**
+         * Applies zoom transformation centered around a specific point.
+         * @param {number} delta - The zoom factor (e.g., 1.1 for zoom out, 1/1.1 for zoom in).
+         * @param {number} pointX - The X coordinate of the zoom center (relative to canvas).
+         * @param {number} pointY - The Y coordinate of the zoom center (relative to canvas).
+         */
+       function zoom(delta, pointX, pointY) {
+            const newScale = Math.max(minScale, Math.min(scale * delta, maxScale)); // Apply zoom limits
+            // Calculate how much the scale actually changed (might be clamped)
+            const scaleChange = newScale / scale;
+
+            // Adjust originX/Y so the point (pointX, pointY) remains fixed *relative* to the viewport
+            // Formula: newOrigin = point - (point - oldOrigin) * scaleChangeRatio
+            originX = pointX - (pointX - originX) * scaleChange;
+            originY = pointY - (pointY - originY) * scaleChange;
+
+            scale = newScale; // Update the global scale
+
+            // Update pan sliders to reflect potential origin change due to zoom pivot
+            updatePanFromInteraction(); // This also calls updateCanvasTransform
+            // setLocalStorageValue('scale', scale); // Optionally save scale
+        }
+
+
+        /**
+         * Applies the current scale and origin translation to the canvas context
+         * and requests a redraw.
+         */
+        function updateCanvasTransform() {
+            // Apply the combined scale and translation transform
+             context.setTransform(scale, 0, 0, scale, originX, originY);
+
+            // Request redraw. If animating, the animation loop handles drawing.
+            // If not animating, request a single frame draw.
+            if (!shouldAnimate) {
+                 requestAnimationFrame(draw);
+            }
+        }
+
         // --- Drawing Functions ---
 
-        // Get the center coordinates based on current offsets
-         // These offsets define the *world* coordinates of the center point
-        function getWorldCenterX() { return canvasWidth / 2 + horizontalOffset; }
-        function getWorldCenterY() { return canvasHeight / 2 + verticalOffset; }
+        // Helper to get the logical center X (ignoring pan, as pan is in transform)
+        function getLogicalCenterX() { return canvasWidth / 2; }
+        // Helper to get the logical center Y
+        function getLogicalCenterY() { return canvasHeight / 2; }
 
 
+        /**
+         * Draws the visualization in "Pendulum" mode.
+         */
         function drawPendulum() {
-            const centerX = getWorldCenterX();
-            const centerY = getWorldCenterY();
+            const centerX = getLogicalCenterX(); // Draw relative to logical center
+            const centerY = getLogicalCenterY();
             const currentRadius = radius * 1.7 + arcOffset; // Effective radius of the circle outline
 
-            // Draw main circle outline
-            context.strokeStyle = color3; // Outline color
-            context.lineWidth = Math.max(1, 4 / scale); // Keep outline thickness somewhat consistent when zooming
-            context.setLineDash([circleOutlineDashDensity / scale, circleOutlineDashDensity / scale]); // Adjust dash density with zoom
+            // Draw main circle outline (adapts thickness/dash to zoom)
+            context.strokeStyle = color3;
+            context.lineWidth = Math.max(1, 4 / scale); // Keep outline somewhat consistent
+            context.setLineDash([circleOutlineDashDensity / scale, circleOutlineDashDensity / scale]);
             context.beginPath();
             context.arc(centerX, centerY, currentRadius, 0, 2 * Math.PI);
             context.stroke();
             context.setLineDash([]); // Reset line dash
 
-            // Calculate pendulum position (angle needs to be in radians)
-            // Normalize angle for calculations
-            const normalizedPendulumAngle = ((pendulumAngle % 360) + 360) % 360;
+            // Calculate pendulum position
+            const normalizedPendulumAngle = ((pendulumAngle % 360) + 360) % 360; // Ensure 0-360
             const angleRad = normalizedPendulumAngle * Math.PI / 180;
-            const orbitRadius = radius * lineLength; // Use the main radius and lineLength factor
+            const orbitRadius = radius * lineLength; // Use main radius and length factor
 
             const pendulumX = centerX + orbitRadius * Math.cos(angleRad);
             const pendulumY = centerY + orbitRadius * Math.sin(angleRad);
 
-            // Draw line from center to pendulum
+            // Draw line from center to pendulum (adapts thickness to zoom)
             context.beginPath();
             context.strokeStyle = color; // Line color
-            context.lineWidth = Math.max(1, lineThickness / scale); // Adjust thickness with zoom
+            context.lineWidth = Math.max(1, lineThickness / scale);
             context.moveTo(centerX, centerY);
             context.lineTo(pendulumX, pendulumY);
             context.stroke();
 
-            // Draw pendulum circle (the bob)
+            // Draw pendulum circle (bob) - size does not scale aggressively
             context.beginPath();
             context.fillStyle = color2; // Pendulum bob color
-            // Adjust pendulum size slightly with zoom? Maybe keep it constant relative to screen?
-            const bobRadius = Math.max(2, pendulumThickness / 2); // Don't make bob radius scale aggressively
-             // const bobRadius = Math.max(2, (pendulumThickness / 2) / Math.sqrt(scale)); // Alternative scaling
+            const bobRadius = Math.max(2, pendulumThickness / 2); // Keep bob size relatively constant on screen
             context.arc(pendulumX, pendulumY, bobRadius, 0, 2 * Math.PI);
             context.fill();
 
-            // Draw angle text
-            const textDist = radius * textDistance; // Distance from center for the text
+            // Draw angle text (font size remains constant on screen)
+            const textDist = radius * textDistance;
             const textX = centerX + textDist * Math.cos(angleRad);
             const textY = centerY + textDist * Math.sin(angleRad);
 
-            context.font = `${textSize}px Verdana`; // Font size doesn't scale with zoom
+            context.font = `${textSize}px Verdana`; // Use fixed pixel size
             context.textAlign = "center";
-            context.textBaseline = "middle"; // Align text vertically
-            context.fillStyle = textColor; // Text color
+            context.textBaseline = "middle";
+            context.fillStyle = textColor;
 
-            context.save(); // Save context state before potentially rotating text
-            context.translate(textX, textY); // Move origin to text position
-             // Optional: Rotate text to be upright relative to the circle? Or keep horizontal?
-             // context.rotate(angleRad + Math.PI / 2); // Rotate text to be radial
-            context.fillText(angleName(normalizedPendulumAngle), 0, 0); // Draw text at the new origin (0,0)
-            context.restore(); // Restore context state
+            context.save(); // Save context for potential text rotation/translation
+            context.translate(textX, textY);
+            // Optional: Rotate text radially context.rotate(angleRad + Math.PI / 2);
+            context.fillText(angleName(normalizedPendulumAngle), 0, 0); // Draw at new (0,0)
+            context.restore(); // Restore previous context state
         }
 
+<<<<<<< HEAD
+        /**
+         * Draws the visualization in "Many Lines" mode.
+         */
+        function drawManyLines() {
+            const centerX = getLogicalCenterX();
+            const centerY = getLogicalCenterY();
+            const currentRadius = radius * 1.7 + arcOffset;
+
+            // Draw circle outline (adapts thickness/dash to zoom)
+            context.strokeStyle = color3;
+            context.lineWidth = Math.max(1, 4 / scale);
+            context.setLineDash([circleOutlineDashDensity / scale, circleOutlineDashDensity / scale]);
+            context.beginPath();
+            context.arc(centerX, centerY, currentRadius, 0, 2 * Math.PI);
+            context.stroke();
+            context.setLineDash([]);
+
+            // Text properties (font size fixed on screen)
+            context.font = `${textSize}px Verdana`;
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+
+            // Line properties
+            const lineStartDistance = radius * 0.0; // Start lines from center
+            const lineEndDistance = radius * lineLength;
+            const textDist = radius * textDistance;
+            const numLines = parseInt(radiatingLineCount);
+             if (numLines < 2) return; // Need at least 2 lines
+             const angleIncrement = 360 / numLines;
+             const currentLineThickness = Math.max(1, lineThickness / scale); // Scale thickness
+
+            for (let i = 0; i < numLines; i++) {
+                 let angleDeg = (i * angleIncrement + startAngle);
+                 let normalizedAngleDeg = ((angleDeg % 360) + 360) % 360; // Normalize 0-360
+                 let angleRad = normalizedAngleDeg * Math.PI / 180;
+
+                // Calculate line points relative to logical center
+                let startX = centerX + lineStartDistance * Math.cos(angleRad);
+                let startY = centerY + lineStartDistance * Math.sin(angleRad);
+                let endX = centerX + lineEndDistance * Math.cos(angleRad);
+                let endY = centerY + lineEndDistance * Math.sin(angleRad);
+
+                 // Determine line color (use special color2 for 0°/180° visual axes)
+                 const tolerance = 0.1; // Angle tolerance for floating point
+                 // Visual 0 degrees is at 90 math degrees, 180 is at 270 math degrees
+                 const isSpecialAngle = Math.abs(normalizedAngleDeg - 90) < tolerance || Math.abs(normalizedAngleDeg - 270) < tolerance;
+                 context.strokeStyle = isSpecialAngle ? color2 : color;
+=======
 
  function drawManyLines() {
     const centerX = getWorldCenterX();
@@ -1529,11 +1544,29 @@ function rgbToHex(r, g, b) {
 
     for (let i = 0; i < numLines; i++) {
          let angleDeg = (i * angleIncrement + startAngle);
+>>>>>>> fa88184814396a2c2b41d46d07d4ea52ca5d0d60
 
         // Normalize angle for calculations and text display
         let normalizedAngleDeg = ((angleDeg % 360) + 360) % 360;
         let angleRad = normalizedAngleDeg * Math.PI / 180;
 
+<<<<<<< HEAD
+                // Calculate and draw text
+                let textX = centerX + textDist * Math.cos(angleRad);
+                let textY = centerY + textDist * Math.sin(angleRad);
+                context.fillStyle = textColor;
+                 context.save();
+                 context.translate(textX, textY);
+                 // Optional: context.rotate(angleRad + Math.PI / 2);
+                 context.fillText(angleName(normalizedAngleDeg), 0, 0);
+                 context.restore();
+            }
+        }
+
+        /**
+         * Draws the visualization in "Single Line" mode.
+         */
+=======
         // --- MODIFIED LOGIC ---
         // Assign the special color (color2) to the first line (index 0)
         // AND to its opposite line, but only if numLines is even.
@@ -1571,9 +1604,10 @@ function rgbToHex(r, g, b) {
     }
     // console.log("--- drawManyLines END ---");
 }
+>>>>>>> fa88184814396a2c2b41d46d07d4ea52ca5d0d60
         function drawSingleLine() {
-            const centerX = getWorldCenterX();
-            const centerY = getWorldCenterY();
+            const centerX = getLogicalCenterX();
+            const centerY = getLogicalCenterY();
             const currentRadius = radius * 1.7 + arcOffset;
 
             // Draw circle outline
@@ -1585,21 +1619,20 @@ function rgbToHex(r, g, b) {
             context.stroke();
             context.setLineDash([]);
 
-            // Set up text properties
+            // Text properties
             context.font = `${textSize}px Verdana`;
             context.textAlign = "center";
             context.textBaseline = "middle";
 
-
-            // Calculate positions
-             let normalizedAngleDeg = ((startAngle % 360) + 360) % 360;
-             let angleRad = normalizedAngleDeg * Math.PI / 180;
-
+            // Calculate angle and line properties
+            let normalizedAngleDeg = ((startAngle % 360) + 360) % 360;
+            let angleRad = normalizedAngleDeg * Math.PI / 180;
             const lineStartDistance = radius * 0.0;
             const lineEndDistance = radius * lineLength;
             const textDist = radius * textDistance;
+            const currentLineThickness = Math.max(1, lineThickness / scale);
 
-            // Calculate coordinates
+            // Calculate coordinates relative to logical center
             let startX = centerX + lineStartDistance * Math.cos(angleRad);
             let startY = centerY + lineStartDistance * Math.sin(angleRad);
             let endX = centerX + lineEndDistance * Math.cos(angleRad);
@@ -1607,9 +1640,9 @@ function rgbToHex(r, g, b) {
             let textX = centerX + textDist * Math.cos(angleRad);
             let textY = centerY + textDist * Math.sin(angleRad);
 
-            // Draw the line using color2 (special line color designated for single line mode)
-            context.lineWidth = Math.max(1, lineThickness / scale);
-            context.strokeStyle = color2; // Use color2 for the single line
+            // Draw the single line using color2
+            context.lineWidth = currentLineThickness;
+            context.strokeStyle = color2; // Use color2 (designated "special" color)
             context.beginPath();
             context.moveTo(startX, startY);
             context.lineTo(endX, endY);
@@ -1619,364 +1652,345 @@ function rgbToHex(r, g, b) {
             context.fillStyle = textColor;
              context.save();
              context.translate(textX, textY);
-             // context.rotate(angleRad + Math.PI / 2); // Optional radial text
+             // Optional: context.rotate(angleRad + Math.PI / 2);
              context.fillText(angleName(normalizedAngleDeg), 0, 0);
              context.restore();
         }
 
 
+        /**
+         * Draws the visualization in "Anaglyph 3D" mode.
+         * Renders separate views for the left (red) and right (cyan) eyes, offset horizontally.
+         */
         function drawAnaglyph() {
-            const centerX = getWorldCenterX();
-            const centerY = getWorldCenterY();
+            const centerX = getLogicalCenterX();
+            const centerY = getLogicalCenterY();
             const currentRadius = radius * 1.7 + arcOffset;
-            const baseDepthPixelOffset = (depthOffset / 10) * (radius * 0.1) / scale ; // Scale depth effect with radius and zoom
+            // Calculate pixel offset for depth based on slider, radius, and zoom
+            // More depth effect when zoomed out, less when zoomed in.
+            const baseDepthPixelOffset = (depthOffset / 2) * (radius * 0.01) / Math.sqrt(scale) ;
 
-
-            // Draw circle outline (only once, e.g., in a neutral color or average of L/R)
-            // Option 1: Average color (doesn't work well visually)
-             // Option 2: Draw twice slightly offset (like lines) - complex
-             // Option 3: Use a neutral color like the general outline color (color3)
-            context.strokeStyle = color3; // Use the general outline color
+            // --- Draw Circle Outline (Once, neutrally or averaged) ---
+            // Draw using the standard outline color for simplicity.
+            context.strokeStyle = color3;
             context.lineWidth = Math.max(1, 4 / scale);
             context.setLineDash([circleOutlineDashDensity / scale, circleOutlineDashDensity / scale]);
             context.beginPath();
-            // Draw outline twice, slightly offset for depth perception? Or just once? Once is simpler.
-            context.arc(centerX, centerY, currentRadius, 0, 2 * Math.PI); // Draw centered outline
+            context.arc(centerX, centerY, currentRadius, 0, 2 * Math.PI);
             context.stroke();
             context.setLineDash([]);
 
 
-            // Set up text properties (common)
+            // Common properties
             context.font = `${textSize}px Verdana`;
             context.textAlign = "center";
             context.textBaseline = "middle";
-
-            // Line distances
             const lineStartDistance = radius * 0.0;
             const lineEndDistance = radius * lineLength;
             const textDist = radius * textDistance;
-
             const numLines = parseInt(radiatingLineCount);
-            if (numLines < 1) return; // Need at least 1 line for anaglyph
-             const angleIncrement = numLines === 1 ? 0 : 360 / numLines; // Handle single line case
+             if (numLines < 1) return;
+             const angleIncrement = numLines === 1 ? 0 : 360 / numLines;
+             const currentLineThickness = Math.max(1, lineThickness / scale);
 
-            const currentLineThickness = Math.max(1, lineThickness / scale); // Scaled thickness
-
-            // --- Draw Left Eye View (Red) ---
+            // --- Draw Left Eye View (Red Filter) ---
             context.strokeStyle = anaglyphLeftColor;
             context.fillStyle = anaglyphLeftColor;
             context.lineWidth = currentLineThickness;
+            const leftShift = -baseDepthPixelOffset; // Shift left
 
             for (let i = 0; i < numLines; i++) {
                 let angleDeg = (i * angleIncrement + startAngle);
                  let normalizedAngleDeg = ((angleDeg % 360) + 360) % 360;
                  let angleRad = normalizedAngleDeg * Math.PI / 180;
 
-                 // Calculate horizontal shift for left eye (typically negative)
-                 const xShift = -baseDepthPixelOffset * Math.sin(angleRad); // Shift perpendicular to line
-                 const yShift = baseDepthPixelOffset * Math.cos(angleRad); // Shift perpendicular to line
-
-
-                 // Shifted start/end points for left eye
-                 let leftStartX = centerX + lineStartDistance * Math.cos(angleRad) + xShift;
-                 let leftStartY = centerY + lineStartDistance * Math.sin(angleRad) + yShift;
-                 let leftEndX = centerX + lineEndDistance * Math.cos(angleRad) + xShift;
-                 let leftEndY = centerY + lineEndDistance * Math.sin(angleRad) + yShift;
-                 let leftTextX = centerX + textDist * Math.cos(angleRad) + xShift;
-                 let leftTextY = centerY + textDist * Math.sin(angleRad) + yShift;
+                 // Calculate points shifted horizontally for left eye
+                 let startX = centerX + lineStartDistance * Math.cos(angleRad) + leftShift;
+                 let startY = centerY + lineStartDistance * Math.sin(angleRad); // No vertical shift in basic anaglyph
+                 let endX = centerX + lineEndDistance * Math.cos(angleRad) + leftShift;
+                 let endY = centerY + lineEndDistance * Math.sin(angleRad);
+                 let textX = centerX + textDist * Math.cos(angleRad) + leftShift;
+                 let textY = centerY + textDist * Math.sin(angleRad);
 
                 // Draw line
-                context.beginPath();
-                context.moveTo(leftStartX, leftStartY);
-                context.lineTo(leftEndX, leftEndY);
-                context.stroke();
-
+                context.beginPath(); context.moveTo(startX, startY); context.lineTo(endX, endY); context.stroke();
                 // Draw text
-                 context.save();
-                 context.translate(leftTextX, leftTextY);
-                 context.fillText(angleName(normalizedAngleDeg), 0, 0);
-                 context.restore();
+                 context.save(); context.translate(textX, textY); context.fillText(angleName(normalizedAngleDeg), 0, 0); context.restore();
             }
 
 
-            // --- Draw Right Eye View (Cyan) ---
+            // --- Draw Right Eye View (Cyan Filter) ---
             context.strokeStyle = anaglyphRightColor;
             context.fillStyle = anaglyphRightColor;
-             // lineWidth is already set
+            // lineWidth is already set
+            const rightShift = baseDepthPixelOffset; // Shift right
 
             for (let i = 0; i < numLines; i++) {
                  let angleDeg = (i * angleIncrement + startAngle);
                  let normalizedAngleDeg = ((angleDeg % 360) + 360) % 360;
                  let angleRad = normalizedAngleDeg * Math.PI / 180;
 
-                 // Calculate horizontal shift for right eye (typically positive)
-                  const xShift = baseDepthPixelOffset * Math.sin(angleRad); // Opposite shift
-                  const yShift = -baseDepthPixelOffset * Math.cos(angleRad); // Opposite shift
-
-
-                 // Shifted start/end points for right eye
-                 let rightStartX = centerX + lineStartDistance * Math.cos(angleRad) + xShift;
-                 let rightStartY = centerY + lineStartDistance * Math.sin(angleRad) + yShift;
-                 let rightEndX = centerX + lineEndDistance * Math.cos(angleRad) + xShift;
-                 let rightEndY = centerY + lineEndDistance * Math.sin(angleRad) + yShift;
-                 let rightTextX = centerX + textDist * Math.cos(angleRad) + xShift;
-                 let rightTextY = centerY + textDist * Math.sin(angleRad) + yShift;
+                 // Calculate points shifted horizontally for right eye
+                 let startX = centerX + lineStartDistance * Math.cos(angleRad) + rightShift;
+                 let startY = centerY + lineStartDistance * Math.sin(angleRad);
+                 let endX = centerX + lineEndDistance * Math.cos(angleRad) + rightShift;
+                 let endY = centerY + lineEndDistance * Math.sin(angleRad);
+                 let textX = centerX + textDist * Math.cos(angleRad) + rightShift;
+                 let textY = centerY + textDist * Math.sin(angleRad);
 
                 // Draw line
-                context.beginPath();
-                context.moveTo(rightStartX, rightStartY);
-                context.lineTo(rightEndX, rightEndY);
-                context.stroke();
-
+                context.beginPath(); context.moveTo(startX, startY); context.lineTo(endX, endY); context.stroke();
                 // Draw text
-                context.save();
-                context.translate(rightTextX, rightTextY);
-                context.fillText(angleName(normalizedAngleDeg), 0, 0);
-                context.restore();
+                context.save(); context.translate(textX, textY); context.fillText(angleName(normalizedAngleDeg), 0, 0); context.restore();
             }
         }
 
+
         // --- Main Draw Function ---
+        /**
+         * Clears the canvas respecting the current transform (zoom/pan)
+         * and calls the appropriate mode-specific drawing function.
+         */
         function draw() {
-            // Get canvas dimensions (might have changed)
-             const currentCanvasWidth = canvas.width;
-             const currentCanvasHeight = canvas.height;
+            context.save(); // Save the current zoomed/panned transform state
+            // Temporarily reset transform to identity (un-zoomed, un-panned)
+            context.setTransform(1, 0, 0, 1, 0, 0);
+            // Clear the entire underlying canvas bitmap with the background color
+            context.fillStyle = bgColor;
+            context.fillRect(0, 0, canvasWidth, canvasHeight);
+            context.restore(); // Restore the zoom/pan transform for drawing
 
-            // Clear the canvas *using the current transform*
-            // This clears only the visible portion defined by the transform
-             context.save();
-             // Reset transform to identity ONLY for clearing
-             context.setTransform(1, 0, 0, 1, 0, 0);
-             context.fillStyle = bgColor; // Use the current background color
-             context.fillRect(0, 0, currentCanvasWidth, currentCanvasHeight);
-             context.restore(); // Restore the zoom/pan transform
+            // Call the drawing function for the current mode
+            if (mode === "many") drawManyLines();
+            else if (mode === "single") drawSingleLine();
+            else if (mode === "pendulum") drawPendulum();
+            else if (mode === "anaglyph") drawAnaglyph();
 
-            // Call the appropriate drawing function based on mode
-            if (mode === "many") {
-                drawManyLines();
-            } else if (mode === "single") {
-                drawSingleLine();
-            } else if (mode === "pendulum") {
-                drawPendulum();
-            } else if (mode === "anaglyph") {
-                drawAnaglyph();
-            }
-
-            // DEBUG: Draw origin crosshair
+            // DEBUG: Draw origin crosshair if needed
             /*
             context.save();
-            context.setTransform(1, 0, 0, 1, 0, 0); // Use identity transform for overlay
-            context.strokeStyle = 'lime';
-            context.lineWidth = 1;
-            context.beginPath();
-            context.moveTo(viewOriginX - 10, viewOriginY);
-            context.lineTo(viewOriginX + 10, viewOriginY);
-            context.moveTo(viewOriginX, viewOriginY - 10);
-            context.lineTo(viewOriginX, viewOriginY + 10);
-            context.stroke();
-            context.restore();
+            context.setTransform(1, 0, 0, 1, 0, 0); // Use identity transform
+            context.strokeStyle = 'lime'; context.lineWidth = 1; context.beginPath();
+            context.moveTo(originX - 10, originY); context.lineTo(originX + 10, originY);
+            context.moveTo(originX, originY - 10); context.lineTo(originX, originY + 10);
+            context.stroke(); context.restore();
             */
         }
 
-        // --- Animation update for pendulum ---
-        // This is only called within the animation loop when active
+
+        // --- Animation and Autopilot Logic ---
+
+        let animationFrameId = null;    // ID returned by requestAnimationFrame
+        let shouldAnimate = false;      // Flag to control the animation loop
+        let autopilot1Active = false;   // Is Autopilot 1 (random jump) running?
+        let autopilot2Active = false;   // Is Autopilot 2 (smooth transition) running?
+        let autopilotCenterShiftTimeout = null; // Timeout ID for AP1 jumps/AP2 start delay
+        let rotationDirection = rotateClockwise ? 1 : -1; // -1 for CCW, 1 for CW
+
+        // State for Autopilot 2 smooth transitions
+        let isTransitioning = false;    // Is a smooth pan transition in progress?
+        let transitionStartTime = 0;    // Timestamp when the current transition started
+        let transitionDuration = 1000;  // Duration of the transition (calculated based on speed)
+        let transitionStartX = 0;       // Starting originX for the transition
+        let transitionStartY = 0;       // Starting originY for the transition
+        let targetOriginX = originX;    // Target originX for the transition
+        let targetOriginY = originY;    // Target originY for the transition
+
+
+        /**
+         * The main animation loop, requested via requestAnimationFrame.
+         * Updates angles, handles smooth transitions, and redraws the scene.
+         * @param {DOMHighResTimeStamp} timestamp - The timestamp provided by requestAnimationFrame.
+         */
+        function animate(timestamp) {
+            if (!shouldAnimate) {
+                 animationFrameId = null; // Ensure ID is cleared when stopping
+                 return; // Exit the loop
+            }
+
+            // 1. Update Animated State
+            updateAnglesForAnimation(); // Update rotation based on velocity/direction
+
+            if (autopilot2Active && isTransitioning) {
+                 updateTransition(timestamp); // Update smooth pan position if active
+            }
+
+            // 2. Draw the updated scene
+            draw();
+
+            // 3. Request the next frame
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        /**
+         * Updates the startAngle or pendulumAngle based on rotationVelocity and direction.
+         * Called within the animation loop.
+         */
         function updateAnglesForAnimation() {
             const effectiveRotationVelocity = rotationVelocity * rotationDirection;
              if (mode === "pendulum") {
-                 pendulumAngle = (pendulumAngle + effectiveRotationVelocity);
-                 // No modulo here, handle in drawing/angleName
-                 setLocalStorageValue('pendulumAngle', pendulumAngle); // Persist during animation
-             } else if (mode === "many" || mode === "single" || mode === "anaglyph") {
-                 startAngle = (startAngle + effectiveRotationVelocity);
-                 setLocalStorageValue('startAngle', startAngle); // Persist during animation
+                 pendulumAngle += effectiveRotationVelocity;
+                 // Don't save to LS on every frame, maybe only when autopilot stops or user interacts?
+                 // setLocalStorageValue('pendulumAngle', pendulumAngle);
+             } else { // Many, Single, Anaglyph modes
+                 startAngle += effectiveRotationVelocity;
+                 // setLocalStorageValue('startAngle', startAngle);
              }
         }
 
-        // --- Dark Mode Toggle ---
-        const toggleDarkModeButton = document.getElementById('toggle-dark-mode');
-        const controlsElement = document.getElementById('controls');
-        const zoomControls = document.getElementById('zoom-controls').children; // Get buttons inside
-        const dragHandle = document.getElementById('drag-handle');
-        const flipButton = document.getElementById('flip-position');
-        const autopilot1Button = document.getElementById('toggle-autopilot-1');
-        const autopilot2Button = document.getElementById('toggle-autopilot-2');
-
-
+        // --- Dark Mode ---
+        /**
+         * Applies or removes dark mode CSS classes to relevant elements.
+         * @param {boolean} isDark - True to apply dark mode, false for light mode.
+         */
         function applyDarkMode(isDark) {
             const darkModeIcon = toggleDarkModeButton.querySelector('i');
-            const action = isDark ? 'add' : 'remove';
+            const action = isDark ? 'add' : 'remove'; // Method to call on classList
 
-            document.body.classList[action]('dark-mode-body'); // Optional: Style body differently
-            controlsElement.classList[action]('dark-mode');
+            document.body.classList[action]('dark-mode-body');
+            controlsContainer.classList[action]('dark-mode'); // Apply to container too
+            controls.classList[action]('dark-mode');
             toggleMenuButton.classList[action]('dark-mode');
-            dragHandle.classList[action]('dark-mode');
-            flipButton.classList[action]('dark-mode');
-            autopilot1Button.classList[action]('dark-mode');
-            autopilot2Button.classList[action]('dark-mode');
-
-             for (let button of zoomControls) {
+            // Apply to zoom buttons
+             for (let button of document.getElementById('zoom-controls').children) {
                  button.classList[action]('dark-mode');
              }
+            // Apply to Autopilot buttons explicitly if needed (should inherit via #controls.dark-mode)
+            // toggleAutopilot1Button.classList[action]('dark-mode');
+            // toggleAutopilot2Button.classList[action]('dark-mode');
 
-            // Update icon
+            // Update icon and title
             if (isDark) {
-                darkModeIcon.classList.remove('fa-sun');
-                darkModeIcon.classList.add('fa-moon');
+                darkModeIcon.classList.remove('fa-sun'); darkModeIcon.classList.add('fa-moon');
                 toggleDarkModeButton.title = "Switch to Light Mode";
             } else {
-                darkModeIcon.classList.remove('fa-moon');
-                darkModeIcon.classList.add('fa-sun');
+                darkModeIcon.classList.remove('fa-moon'); darkModeIcon.classList.add('fa-sun');
                 toggleDarkModeButton.title = "Switch to Dark Mode";
             }
         }
 
+        // Dark Mode Toggle Button Listener
         toggleDarkModeButton.addEventListener('click', () => {
             isDarkMode = !isDarkMode;
             setLocalStorageValue('isDarkMode', isDarkMode);
             applyDarkMode(isDarkMode);
-            // Maybe switch default BG/Text colors when toggling dark mode?
-            // This could be complex if user has already customized them.
-            // For now, dark mode only affects the UI chrome.
         });
 
-        // --- Autopilot and Animation Logic ---
-        let animationFrameId = null; // Use null to indicate no active frame
-        let shouldAnimate = false; // Controls the main animation loop request
-        let autopilot1Active = false;
-        let autopilot2Active = false;
-        let autopilotRotationInterval = null; // Stores interval ID for rotation
-        let autopilotCenterShiftTimeout = null; // Stores timeout ID for center shift
-        let rotationDirection = rotateClockwise ? 1 : -1; // Initial direction based on loaded settings
+        // --- Autopilot Control Functions ---
 
-        // Autopilot transition state (for smooth movement in Autopilot 2)
-        let isTransitioning = false;
-        let transitionStartTime = 0;
-        let transitionDuration = 1000; // ms
-        let transitionStartX = 0;
-        let transitionStartY = 0;
-        let targetHorizontalOffset = horizontalOffset; // Initialize target to current
-        let targetVerticalOffset = verticalOffset;
-
-        // --- Animation Loop ---
-        function animate(timestamp) {
-            if (!shouldAnimate) {
-                 animationFrameId = null; // Ensure it's null if stopping
-                 return; // Stop the loop if flag is false
-            }
-
-            // 1. Update State (Angles, Transitions)
-            updateAnglesForAnimation(); // Update rotation angles
-
-            if (autopilot2Active && isTransitioning) {
-                 updateTransition(timestamp); // Update smooth transition position
-            }
-
-            // 2. Draw Scene
-            draw();
-
-            // 3. Request Next Frame
-            animationFrameId = requestAnimationFrame(animate);
-        }
-
-
-        // --- Autopilot 1 Event Listeners and Functions ---
-        const toggleAutopilot1Button = document.getElementById("toggle-autopilot-1");
-        const rotateClockwiseToggle = document.getElementById('rotate-clockwise');
-        const rotateCounterClockwiseToggle = document.getElementById('rotate-counterclockwise');
-
-        toggleAutopilot1Button.addEventListener('click', () => {
-            if (!autopilot1Active) {
-                startAutopilot1();
-            } else {
-                stopAutopilot1();
-            }
-        });
-
+        // Rotation Direction Checkbox Listeners
         rotateClockwiseToggle.addEventListener('change', () => {
             if (rotateClockwiseToggle.checked) {
                  rotationDirection = 1;
-                 rotateCounterClockwiseToggle.checked = false; // Uncheck the other
+                 rotateCounterClockwiseToggle.checked = false; // Ensure mutual exclusivity
                  setLocalStorageValue('rotateClockwise', 'true');
                  setLocalStorageValue('rotateCounterclockwise', 'false');
             } else if (!rotateCounterClockwiseToggle.checked) {
-                // Prevent unchecking both - revert to clockwise if trying to uncheck last one
-                rotateClockwiseToggle.checked = true;
+                 rotateClockwiseToggle.checked = true; // Prevent unchecking both
             }
         });
-
         rotateCounterClockwiseToggle.addEventListener('change', () => {
              if (rotateCounterClockwiseToggle.checked) {
                  rotationDirection = -1;
-                 rotateClockwiseToggle.checked = false; // Uncheck the other
+                 rotateClockwiseToggle.checked = false;
                  setLocalStorageValue('rotateClockwise', 'false');
                  setLocalStorageValue('rotateCounterclockwise', 'true');
              } else if (!rotateClockwiseToggle.checked) {
-                 // Prevent unchecking both - revert to counter-clockwise if trying to uncheck last one
-                  rotateCounterClockwiseToggle.checked = true; // This seems wrong logic, should revert to the OTHER one
-                 // Corrected: revert to clockwise if CCW is unchecked and CW is already unchecked
-                 // rotateClockwiseToggle.checked = true;
-                 // rotationDirection = 1;
-                 // setLocalStorageValue('rotateClockwise', 'true');
-                 // setLocalStorageValue('rotateCounterclockwise', 'false');
-                 // Let's stick to the simpler logic: if you uncheck this, and the other is unchecked, re-check this one.
-                 rotateCounterClockwiseToggle.checked = true; // Re-check self
+                 rotateCounterClockwiseToggle.checked = true;
              }
         });
 
-        // Update autopilot speed from slider
+        // Autopilot Speed Slider Listener (restarts autopilot to apply new speed)
         document.getElementById('autopilot-speed').addEventListener('input', function () {
             autopilotSpeed = parseInt(this.value);
             setLocalStorageValue('autopilotSpeed', autopilotSpeed);
-            // If autopilot is active, we might want to adjust behavior immediately
-             if(autopilot1Active) {
-                stopAutopilot1(); // Simple restart
-                startAutopilot1();
-             } else if (autopilot2Active) {
-                stopAutopilot2();
-                startAutopilot2();
-             }
+             // Restart active autopilot to apply new speed/timing
+             if (autopilot1Active) { stopAutopilot1(); startAutopilot1(); }
+             else if (autopilot2Active) { stopAutopilot2(); startAutopilot2(); }
         });
 
-        // Update autopilot walk range from slider
-        document.getElementById('autopilot-walk-range').addEventListener('input', function () {
+        // Autopilot Walk Range Slider Listener
+        autopilotWalkRangeSlider.addEventListener('input', function () {
             autopilotWalkRange = parseInt(this.value);
             setLocalStorageValue('autopilotWalkRange', autopilotWalkRange);
-            // No immediate effect unless autopilot restarts/recalculates target
+            // This range affects the *next* calculated target offset, no immediate visual change.
         });
 
-        // Update text placeholder based on mode
+        /**
+         * Updates the placeholder text for the 'special-line-color' label based on the current mode.
+         */
         function updateTextPlaceholder() {
-            const specialLineColorLabel = document.getElementById('special-line-color-label');
-            if (mode === "pendulum") {
-                specialLineColorLabel.textContent = "Pendulum Color:"; // Use textContent
-            } else if (mode === "single") {
-                specialLineColorLabel.textContent = "Line Color:";
-            } else if (mode === "many") {
-                specialLineColorLabel.textContent = "Special Line Color:";
-            } else {
-                // Default or hide if not applicable
-                specialLineColorLabel.textContent = "Special Line Color:";
-            }
+            const label = document.getElementById('special-line-color-label');
+            const container = label.closest('div'); // Get parent div
+            if (mode === "pendulum") label.textContent = "Pendulum Color:";
+            else if (mode === "single") label.textContent = "Line Color:";
+            else if (mode === "many") label.textContent = "Special Line Color:";
+            else { label.textContent = "Special Line Color:"; } // Default or hide maybe?
+            // Ensure container visibility matches label relevance
+             container.style.display = (mode === 'pendulum' || mode === 'single' || mode === 'many') ? 'block' : 'none';
         }
 
-         function startAutopilot1() {
-            stopAutopilot2(); // Ensure only one autopilot runs
+        /**
+         * Toggles visibility of mode-specific controls in the panel.
+         */
+        function toggleControlVisibility() {
+            // Get references to mode-specific containers
+            const lineCountCont = document.getElementById('radiating-line-count-container');
+            const lineColorCont = document.getElementById('line-color-container');
+            // Special color is handled by updateTextPlaceholder's container logic
+            const pendulumSizeCont = document.getElementById('pendulum-size-container');
+            const anaglyphPickers = document.getElementById('anaglyph-color-pickers');
+            const depthOffsetCont = document.getElementById('depth-offset-container');
+
+            // Hide all first
+            lineCountCont.style.display = 'none';
+            lineColorCont.style.display = 'none';
+            pendulumSizeCont.style.display = 'none';
+            anaglyphPickers.style.display = 'none';
+            depthOffsetCont.style.display = 'none';
+
+            // Show based on current mode
+            if (mode === 'many') {
+                lineCountCont.style.display = 'block';
+                lineColorCont.style.display = 'block'; // Show regular line color
+                // Special color label/input shown by updateTextPlaceholder
+            } else if (mode === 'single') {
+                // No line count, no regular color needed
+                // Special color label/input shown by updateTextPlaceholder (used for the single line)
+            } else if (mode === 'pendulum') {
+                lineColorCont.style.display = 'block'; // For the connecting line
+                pendulumSizeCont.style.display = 'block';
+                // Special color label/input shown by updateTextPlaceholder (for the bob)
+            } else if (mode === 'anaglyph') {
+                lineCountCont.style.display = 'block';
+                anaglyphPickers.style.display = 'block';
+                depthOffsetCont.style.display = 'block';
+                 // No regular or special colors needed
+            }
+             updateTextPlaceholder(); // Ensure special color label updates/hides correctly
+        }
+
+
+        // --- Autopilot 1: Random Jump ---
+        toggleAutopilot1Button.addEventListener('click', () => {
+            if (!autopilot1Active) startAutopilot1(); else stopAutopilot1();
+        });
+
+        function startAutopilot1() {
+            if (autopilot2Active) stopAutopilot2(); // Ensure mutually exclusive
 
             autopilot1Active = true;
             toggleAutopilot1Button.textContent = 'Stop Autopilot 1';
-            toggleAutopilot2Button.textContent = 'Start Autopilot 2'; // Reset other button text
-             toggleAutopilot1Button.classList.add('active'); // Add visual indicator if needed
-             toggleAutopilot2Button.classList.remove('active');
+            toggleAutopilot1Button.classList.add('active');
+            toggleAutopilot2Button.textContent = 'Start Autopilot 2'; // Reset other button
+            toggleAutopilot2Button.classList.remove('active');
 
-
-            // Disable offset sliders during autopilot
-            horizontalOffsetSlider.disabled = true;
+            horizontalOffsetSlider.disabled = true; // Disable manual pan
             verticalOffsetSlider.disabled = true;
 
-            // Start the random jump behavior
-            scheduleNextJump_AP1();
+            scheduleNextJump_AP1(); // Start the jump sequence
 
-             // Start the animation loop if not already running
+             // Start animation loop if not already running
              shouldAnimate = true;
              if (!animationFrameId) {
                  animationFrameId = requestAnimationFrame(animate);
@@ -1988,49 +2002,59 @@ function rgbToHex(r, g, b) {
             toggleAutopilot1Button.textContent = 'Start Autopilot 1';
             toggleAutopilot1Button.classList.remove('active');
 
-            // Clear the jump timeout
-            clearTimeout(autopilotCenterShiftTimeout);
+            clearTimeout(autopilotCenterShiftTimeout); // Stop scheduled jump
             autopilotCenterShiftTimeout = null;
 
+            horizontalOffsetSlider.disabled = false; // Re-enable manual pan
+            verticalOffsetSlider.disabled = false;
 
-             // Enable offset sliders
-             horizontalOffsetSlider.disabled = false;
-             verticalOffsetSlider.disabled = false;
-
-             // Stop the animation loop ONLY if Autopilot 2 is also not active
-             if (!autopilot2Active) {
-                  shouldAnimate = false;
-                 // The cancelAnimationFrame happens naturally in the loop check
-             }
+             // Stop animation loop ONLY if AP2 is also inactive
+             if (!autopilot2Active) { shouldAnimate = false; }
         }
 
-        // --- Autopilot 2 Event Listeners and Functions ---
-        const toggleAutopilot2Button = document.getElementById("toggle-autopilot-2");
+        // Schedules the next jump for Autopilot 1
+        function scheduleNextJump_AP1() {
+             if (!autopilot1Active) return; // Stop if deactivated between schedule and execution
+
+             // Calculate delay based on speed (faster speed -> shorter delay)
+             const baseDelay = 5000, minDelay = 500;
+             const speedRange = 40 - 5, delayRange = baseDelay - minDelay;
+             const delay = baseDelay - ((autopilotSpeed - 5) / speedRange) * delayRange;
+
+             autopilotCenterShiftTimeout = setTimeout(() => {
+                 if (!autopilot1Active) return; // Check again before jumping
+
+                 const target = calculateAutopilotTargetOrigin(); // Get target pan values
+                 originX = target.x; // Jump instantly
+                 originY = target.y;
+
+                 // Update UI Sliders and save state
+                 updatePanFromInteraction(); // Updates sliders, saves LS, applies transform
+
+                 scheduleNextJump_AP1(); // Schedule the *next* jump
+             }, delay);
+         }
+
+
+        // --- Autopilot 2: Smooth Transition ---
         toggleAutopilot2Button.addEventListener('click', () => {
-            if (!autopilot2Active) {
-                startAutopilot2();
-            } else {
-                stopAutopilot2();
-            }
-          });
+            if (!autopilot2Active) startAutopilot2(); else stopAutopilot2();
+        });
 
         function startAutopilot2() {
-             stopAutopilot1(); // Ensure only one autopilot runs
+             if (autopilot1Active) stopAutopilot1(); // Ensure mutually exclusive
 
             autopilot2Active = true;
             toggleAutopilot2Button.textContent = 'Stop Autopilot 2';
-            toggleAutopilot1Button.textContent = 'Start Autopilot 1'; // Reset other button text
-             toggleAutopilot2Button.classList.add('active');
-             toggleAutopilot1Button.classList.remove('active');
+            toggleAutopilot2Button.classList.add('active');
+            toggleAutopilot1Button.textContent = 'Start Autopilot 1';
+            toggleAutopilot1Button.classList.remove('active');
 
-             // Disable offset sliders during autopilot
-             horizontalOffsetSlider.disabled = true;
-             verticalOffsetSlider.disabled = true;
+            horizontalOffsetSlider.disabled = true;
+            verticalOffsetSlider.disabled = true;
 
-             // Start the smooth transition behavior
-             startNewTransition_AP2();
+            startNewTransition_AP2(); // Start the first transition
 
-             // Start the animation loop if not already running
              shouldAnimate = true;
              if (!animationFrameId) {
                   animationFrameId = requestAnimationFrame(animate);
@@ -2039,104 +2063,69 @@ function rgbToHex(r, g, b) {
 
         function stopAutopilot2() {
              autopilot2Active = false;
+             isTransitioning = false; // Stop any ongoing transition calculation
              toggleAutopilot2Button.textContent = 'Start Autopilot 2';
-              toggleAutopilot2Button.classList.remove('active');
-             isTransitioning = false; // Stop any active transition
+             toggleAutopilot2Button.classList.remove('active');
 
-
-             // Enable offset sliders
              horizontalOffsetSlider.disabled = false;
              verticalOffsetSlider.disabled = false;
 
-              // Stop the animation loop ONLY if Autopilot 1 is also not active
-             if (!autopilot1Active) {
-                 shouldAnimate = false;
-             }
+             if (!autopilot1Active) { shouldAnimate = false; }
         }
 
-
-         // --- Autopilot Behavior Functions ---
-
-        function calculateAutopilotTargetOffset() {
-             const walkPercentage = autopilotWalkRange / 100;
-             // Base range on visible canvas area, adjusted by walk percentage
-             const maxHorizontalDelta = (canvasWidth / 2) * walkPercentage;
-             const maxVerticalDelta = (canvasHeight / 2) * walkPercentage;
-
-             // Calculate target relative to the *current* center (0,0 world coords)
-             // Or should it be relative to the initial center? Let's try current center.
-             const targetX = Math.random() * (maxHorizontalDelta * 2) - maxHorizontalDelta;
-             const targetY = Math.random() * (maxVerticalDelta * 2) - maxVerticalDelta;
-
-            // Clamp target to absolute slider limits if necessary (though walk range should prevent this)
-            const minH = parseInt(horizontalOffsetSlider.min);
-            const maxH = parseInt(horizontalOffsetSlider.max);
-            const minV = parseInt(verticalOffsetSlider.min);
-            const maxV = parseInt(verticalOffsetSlider.max);
-
-            return {
-                x: Math.max(minH, Math.min(Math.round(targetX), maxH)),
-                y: Math.max(minV, Math.min(Math.round(targetY), maxV))
-            };
-         }
-
-         // Autopilot 1: Schedules the next instantaneous jump
-         function scheduleNextJump_AP1() {
-             if (!autopilot1Active) return; // Stop if deactivated
-
-             // Calculate delay: longer delay for slower speed
-             const baseDelay = 5000; // Max delay in ms (e.g., 5 seconds)
-             const minDelay = 500; // Min delay in ms
-             // Map speed (5-40) to delay (baseDelay-minDelay) inversely
-             const speedRange = 40 - 5;
-             const delayRange = baseDelay - minDelay;
-             const delay = baseDelay - ((autopilotSpeed - 5) / speedRange) * delayRange;
-
-
-             autopilotCenterShiftTimeout = setTimeout(() => {
-                 if (!autopilot1Active) return; // Check again in case it was stopped
-
-                 const target = calculateAutopilotTargetOffset();
-                 horizontalOffset = target.x;
-                 verticalOffset = target.y;
-
-                 // Update UI Sliders
-                 horizontalOffsetSlider.value = horizontalOffset;
-                 verticalOffsetSlider.value = verticalOffset;
-                 setLocalStorageValue('horizontalOffset', horizontalOffset); // Persist jump
-                 setLocalStorageValue('verticalOffset', verticalOffset);
-
-                 // Schedule the *next* jump
-                 scheduleNextJump_AP1();
-             }, delay);
-         }
-
-
-        // Autopilot 2: Starts a new smooth transition
+        // Starts a new smooth transition for Autopilot 2
         function startNewTransition_AP2() {
             if (!autopilot2Active) return;
 
-            const target = calculateAutopilotTargetOffset();
-            targetHorizontalOffset = target.x;
-            targetVerticalOffset = target.y;
+            const target = calculateAutopilotTargetOrigin(); // Get target pan
+            targetOriginX = target.x;
+            targetOriginY = target.y;
 
-            transitionStartX = horizontalOffset; // Start from current position
-            transitionStartY = verticalOffset;
-            transitionStartTime = performance.now();
+            transitionStartX = originX; // Start from current pan position
+            transitionStartY = originY;
+            transitionStartTime = performance.now(); // Record start time
 
-            // Calculate duration based on speed: faster speed -> shorter duration
-            const baseDuration = 4000; // Max duration ms
-            const minDuration = 500; // Min duration ms
-            const speedRange = 40 - 5;
-            const durationRange = baseDuration - minDuration;
+            // Calculate duration based on speed (faster speed -> shorter duration)
+            const baseDuration = 4000, minDuration = 500;
+            const speedRange = 40 - 5, durationRange = baseDuration - minDuration;
             transitionDuration = baseDuration - ((autopilotSpeed - 5) / speedRange) * durationRange;
 
-
-            isTransitioning = true;
-            // The animation loop (animate function) will now call updateTransition
+            isTransitioning = true; // Flag that transition is active
+            // The animation loop will now call updateTransition()
         }
 
-        // Autopilot 2: Updates position during a smooth transition
+        /**
+         * Calculates the target origin (pan) for autopilot movements based on
+         * the autopilotWalkRange setting and current canvas dimensions.
+         * @returns {{x: number, y: number}} The target originX and originY.
+         */
+        function calculateAutopilotTargetOrigin() {
+             const walkPercentage = autopilotWalkRange / 100;
+             // Calculate max offset relative to the logical center (0,0) of the *panning space*
+             const maxHorizontalShift = (canvasWidth / 2) * walkPercentage;
+             const maxVerticalShift = (canvasHeight / 2) * walkPercentage;
+
+             // Generate random target within the allowed shift range [-maxShift, +maxShift]
+             let targetX = Math.random() * (maxHorizontalShift * 2) - maxHorizontalShift;
+             let targetY = Math.random() * (maxVerticalShift * 2) - maxVerticalShift;
+
+            // Clamp target to the absolute limits defined by the pan sliders
+            const minH = parseFloat(horizontalOffsetSlider.min);
+            const maxH = parseFloat(horizontalOffsetSlider.max);
+            const minV = parseFloat(verticalOffsetSlider.min);
+            const maxV = parseFloat(verticalOffsetSlider.max);
+
+            targetX = Math.max(minH, Math.min(Math.round(targetX), maxH));
+            targetY = Math.max(minV, Math.min(Math.round(targetY), maxV));
+
+            return { x: targetX, y: targetY };
+         }
+
+        /**
+         * Updates the originX/Y during a smooth Autopilot 2 transition.
+         * Called by the animation loop.
+         * @param {DOMHighResTimeStamp} currentTime - Timestamp from requestAnimationFrame.
+         */
          function updateTransition(currentTime) {
              if (!isTransitioning || !autopilot2Active) {
                  isTransitioning = false;
@@ -2144,43 +2133,47 @@ function rgbToHex(r, g, b) {
              }
 
              const elapsedTime = currentTime - transitionStartTime;
-             let progress = Math.min(elapsedTime / transitionDuration, 1); // Clamp progress to 0-1
+             let progress = Math.min(elapsedTime / transitionDuration, 1); // Progress 0 to 1
 
-             // Apply easing function for smoother start/end
+             // Apply easing for smooth start/end
              const easedProgress = easeInOutCubic(progress);
 
-             // Update current offset based on progress
-             horizontalOffset = transitionStartX + (targetHorizontalOffset - transitionStartX) * easedProgress;
-             verticalOffset = transitionStartY + (targetVerticalOffset - transitionStartY) * easedProgress;
+             // Interpolate origin based on progress
+             originX = transitionStartX + (targetOriginX - transitionStartX) * easedProgress;
+             originY = transitionStartY + (targetOriginY - transitionStartY) * easedProgress;
 
-             // Update UI Sliders continuously
-             horizontalOffsetSlider.value = Math.round(horizontalOffset);
-             verticalOffsetSlider.value = Math.round(verticalOffset);
-             // Avoid spamming localStorage during transition, save only at end? Or maybe throttle?
-             // Let's save at the end for now.
+             // Update UI Sliders continuously during transition
+             horizontalOffsetSlider.value = originX;
+             verticalOffsetSlider.value = originY;
+             // Avoid spamming localStorage during transition; save only at the end
 
              // Check if transition is complete
              if (progress >= 1) {
-                 horizontalOffset = targetHorizontalOffset; // Ensure exact target position
-                 verticalOffset = targetVerticalOffset;
-                 horizontalOffsetSlider.value = horizontalOffset; // Final UI update
-                 verticalOffsetSlider.value = verticalOffset;
-                 setLocalStorageValue('horizontalOffset', horizontalOffset); // Persist final position
-                 setLocalStorageValue('verticalOffset', verticalOffset);
+                 originX = targetOriginX; // Ensure exact final position
+                 originY = targetOriginY;
+                 horizontalOffsetSlider.value = originX; // Final UI update
+                 verticalOffsetSlider.value = originY;
+                 setLocalStorageValue('originX', originX); // Persist final position
+                 setLocalStorageValue('originY', originY);
 
                  isTransitioning = false;
 
                  // Start the *next* transition immediately for continuous movement
-                 startNewTransition_AP2();
+                 if(autopilot2Active) { // Check if still active before starting next
+                    startNewTransition_AP2();
+                 }
              }
          }
 
-        // Easing function: cubic ease-in-out
+        // --- Easing Function ---
+        /**
+         * Cubic ease-in-out function.
+         * @param {number} t - Progress value (0 to 1).
+         * @returns {number} Eased progress value (0 to 1).
+         */
         function easeInOutCubic(t) {
-            // t is progress from 0 to 1
             return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
          }
-
 
     </script>
 </body>
