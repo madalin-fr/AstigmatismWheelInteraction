@@ -419,10 +419,10 @@
 
                 <!-- Pan Controls (Now control originX/Y) -->
                 <label for="horizontal-offset">Horizontal Pan:</label>
-                <input type="range" id="horizontal-offset" min="-2000" max="2000" value="0" step="10"> <!-- Wider, fixed range -->
+                <input type="range" id="horizontal-offset" min="-2000" max="2000" value="0" step="10"> <!-- Range set dynamically -->
                 <br>
                 <label for="vertical-offset">Vertical Pan:</label>
-                <input type="range" id="vertical-offset" min="-2000" max="2000" value="0" step="10"> <!-- Wider, fixed range -->
+                <input type="range" id="vertical-offset" min="-2000" max="2000" value="0" step="10"> <!-- Range set dynamically -->
                 <br>
                 <!-- End Pan Controls -->
 
@@ -445,9 +445,19 @@
                 <label for="line-length">Line Length (Factor):</label>
                 <input type="range" id="line-length" min="0.1" max="4.0" step="0.1" value="1.0">
                 <br>
+
+                <!-- MOVED ROTATION CHECKBOXES HERE -->
                 <label for="rotation-velocity">Rotation Velocity:</label>
                 <input type="range" id="rotation-velocity" min="0.1" max="10" step="0.1" value="1">
                 <br>
+                <div style="margin-top: 5px; margin-bottom: 10px;"> <!-- Adjusted margin -->
+                    <input type="checkbox" id="rotate-clockwise" checked>
+                    <label for="rotate-clockwise" style="display: inline; margin: 0 5px 0 0;">Rotate Clockwise</label> <br>
+                    <input type="checkbox" id="rotate-counterclockwise">
+                    <label for="rotate-counterclockwise" style="display: inline; margin: 0 5px 0 0;">Rotate Counter-Clockwise</label>
+                </div>
+                <!-- END MOVED ROTATION CHECKBOXES -->
+
                 <label for="autopilot-speed">Autopilot Speed:</label>
                 <input type="range" id="autopilot-speed" min="5" max="40" value="10">
                 <br>
@@ -464,13 +474,6 @@
                     <button id="toggle-autopilot-2" title="Start/Stop Autopilot Mode 2 (Smooth Rotation, Smooth Transitions)">Start Autopilot 2</button>
                 </div>
 
-                <!-- Rotation Direction Checkboxes -->
-                <div style="margin-top: 10px;">
-                    <input type="checkbox" id="rotate-clockwise" checked>
-                    <label for="rotate-clockwise" style="display: inline; margin: 0 5px 0 0;">Rotate Clockwise</label> <br>
-                    <input type="checkbox" id="rotate-counterclockwise">
-                    <label for="rotate-counterclockwise" style="display: inline; margin: 0 5px 0 0;">Rotate Counter-Clockwise</label>
-                </div>
             </div>
         </div>
 
@@ -730,6 +733,28 @@
 
 
         // --- UI Initialization Function ---
+
+        /**
+         * Sets the min/max range for the pan sliders based on canvas dimensions.
+         * Allows panning roughly one screen width/height away from center.
+         */
+        function updatePanSliderLimits() {
+            const maxPanX = canvasWidth; // Allow panning full width off screen
+            const maxPanY = canvasHeight; // Allow panning full height off screen
+            horizontalOffsetSlider.min = -maxPanX;
+            horizontalOffsetSlider.max = maxPanX;
+            verticalOffsetSlider.min = -maxPanY;
+            verticalOffsetSlider.max = maxPanY;
+
+            // Clamp current origin to new limits *after* setting them
+            originX = Math.max(parseFloat(horizontalOffsetSlider.min), Math.min(originX, parseFloat(horizontalOffsetSlider.max)));
+            originY = Math.max(parseFloat(verticalOffsetSlider.min), Math.min(originY, parseFloat(verticalOffsetSlider.max)));
+
+            // Update sliders if clamping occurred (important for consistency)
+            horizontalOffsetSlider.value = originX;
+            verticalOffsetSlider.value = originY;
+        }
+
         function initializeUI() {
             // Set control values from loaded settings
             document.getElementById('line-color').value = color;
@@ -739,8 +764,11 @@
             document.getElementById('text-color').value = textColor;
             document.getElementById('line-thickness').value = lineThickness;
             document.getElementById('radiating-line-count').value = radiatingLineCount;
-            horizontalOffsetSlider.value = originX; // Set Pan X slider
-            verticalOffsetSlider.value = originY;   // Set Pan Y slider
+            // Set Pan Slider values FIRST
+            horizontalOffsetSlider.value = originX;
+            verticalOffsetSlider.value = originY;
+            // THEN set their limits (which might clamp the values)
+            updatePanSliderLimits(); // Set dynamic pan slider limits
             document.getElementById('arc-offset').value = arcOffset;
             document.getElementById('line-length').value = lineLength;
             document.getElementById('text-size').value = textSize;
@@ -1003,8 +1031,8 @@
             }
             // --- End Clamp Controls Panel ---
 
-            // Update Pan slider limits (they have fixed wide range now, so no update needed)
-            // setSliderLimits(); // Removed, pan sliders have fixed range
+            // Update Pan Slider Limits on resize
+            updatePanSliderLimits();
 
             // Apply current transform (scale/pan) to the resized canvas and redraw
             updateCanvasTransform();
@@ -1454,11 +1482,10 @@
             context.restore(); // Restore previous context state
         }
 
-<<<<<<< HEAD
         /**
-         * Draws the visualization in "Many Lines" mode.
+         * Draws the visualization in "Many Lines" mode. (CORRECTED)
          */
-        function drawManyLines() {
+         function drawManyLines() {
             const centerX = getLogicalCenterX();
             const centerY = getLogicalCenterY();
             const currentRadius = radius * 1.7 + arcOffset;
@@ -1482,79 +1509,43 @@
             const lineEndDistance = radius * lineLength;
             const textDist = radius * textDistance;
             const numLines = parseInt(radiatingLineCount);
-             if (numLines < 2) return; // Need at least 2 lines
-             const angleIncrement = 360 / numLines;
+             if (numLines < 1) return; // Need at least 1 line
+             const angleIncrement = (numLines > 1) ? (360 / numLines) : 0; // Avoid division by zero if numLines is 1
              const currentLineThickness = Math.max(1, lineThickness / scale); // Scale thickness
+
+             // Determine the index of the line opposite the first one (index 0)
+             // This only makes sense if the number of lines is even.
+             const oppositeIndex = (numLines > 1 && numLines % 2 === 0) ? (numLines / 2) : -1; // Use -1 if no direct opposite
 
             for (let i = 0; i < numLines; i++) {
                  let angleDeg = (i * angleIncrement + startAngle);
                  let normalizedAngleDeg = ((angleDeg % 360) + 360) % 360; // Normalize 0-360
                  let angleRad = normalizedAngleDeg * Math.PI / 180;
 
-                // Calculate line points relative to logical center
-                let startX = centerX + lineStartDistance * Math.cos(angleRad);
-                let startY = centerY + lineStartDistance * Math.sin(angleRad);
-                let endX = centerX + lineEndDistance * Math.cos(angleRad);
-                let endY = centerY + lineEndDistance * Math.sin(angleRad);
+                 // Calculate line points relative to logical center
+                 let startX = centerX + lineStartDistance * Math.cos(angleRad);
+                 let startY = centerY + lineStartDistance * Math.sin(angleRad);
+                 let endX = centerX + lineEndDistance * Math.cos(angleRad);
+                 let endY = centerY + lineEndDistance * Math.sin(angleRad);
 
-                 // Determine line color (use special color2 for 0°/180° visual axes)
-                 const tolerance = 0.1; // Angle tolerance for floating point
-                 // Visual 0 degrees is at 90 math degrees, 180 is at 270 math degrees
-                 const isSpecialAngle = Math.abs(normalizedAngleDeg - 90) < tolerance || Math.abs(normalizedAngleDeg - 270) < tolerance;
-                 context.strokeStyle = isSpecialAngle ? color2 : color;
-=======
+                 // --- Color Logic ---
+                 // Assign the special color (color2) to the first line (index 0)
+                 // AND to its opposite line, but only if numLines is even.
+                 const isDesignatedSpecialLine = (i === 0) || (oppositeIndex !== -1 && i === oppositeIndex);
+                 context.strokeStyle = isDesignatedSpecialLine ? color2 : color;
+                 // --- End Color Logic ---
 
- function drawManyLines() {
-    const centerX = getWorldCenterX();
-    const centerY = getWorldCenterY();
-    const currentRadius = radius * 1.7 + arcOffset;
+                 // Draw the line
+                 context.lineWidth = currentLineThickness;
+                 context.beginPath();
+                 context.moveTo(startX, startY);
+                 context.lineTo(endX, endY);
+                 context.stroke();
 
-    // Draw circle outline
-    context.strokeStyle = color3;
-    context.lineWidth = Math.max(1, 4 / scale);
-    context.setLineDash([circleOutlineDashDensity / scale, circleOutlineDashDensity / scale]);
-    context.beginPath();
-    context.arc(centerX, centerY, currentRadius, 0, 2 * Math.PI);
-    context.stroke();
-    context.setLineDash([]);
-
-    // Prepare text drawing
-    context.font = `${textSize}px Verdana`;
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-
-    // Line distances from center
-    const lineStartDistance = radius * 0.0; // Start lines from the center
-    const lineEndDistance = radius * lineLength;
-    const textDist = radius * textDistance;
-
-    const numLines = parseInt(radiatingLineCount); // Ensure it's an integer
-     if (numLines < 1) return; // Need at least 1 line
-     const angleIncrement = (numLines > 1) ? (360 / numLines) : 0; // Avoid division by zero
-
-     const currentLineThickness = Math.max(1, lineThickness / scale); // Scale line thickness
-
-     // Determine the index of the line opposite the first one (index 0)
-     // This only makes sense if the number of lines is even.
-     const oppositeIndex = (numLines > 1 && numLines % 2 === 0) ? (numLines / 2) : -1; // Use -1 if no direct opposite
-
-    // Optional: Logs for debugging
-    // console.log("--- drawManyLines START ---");
-    // console.log(`  Settings: numLines=${numLines}, oppositeIndex=${oppositeIndex}, color=${color}, color2=${color2}`);
-
-    for (let i = 0; i < numLines; i++) {
-         let angleDeg = (i * angleIncrement + startAngle);
->>>>>>> fa88184814396a2c2b41d46d07d4ea52ca5d0d60
-
-        // Normalize angle for calculations and text display
-        let normalizedAngleDeg = ((angleDeg % 360) + 360) % 360;
-        let angleRad = normalizedAngleDeg * Math.PI / 180;
-
-<<<<<<< HEAD
-                // Calculate and draw text
-                let textX = centerX + textDist * Math.cos(angleRad);
-                let textY = centerY + textDist * Math.sin(angleRad);
-                context.fillStyle = textColor;
+                 // Calculate and draw text
+                 let textX = centerX + textDist * Math.cos(angleRad);
+                 let textY = centerY + textDist * Math.sin(angleRad);
+                 context.fillStyle = textColor;
                  context.save();
                  context.translate(textX, textY);
                  // Optional: context.rotate(angleRad + Math.PI / 2);
@@ -1566,45 +1557,6 @@
         /**
          * Draws the visualization in "Single Line" mode.
          */
-=======
-        // --- MODIFIED LOGIC ---
-        // Assign the special color (color2) to the first line (index 0)
-        // AND to its opposite line, but only if numLines is even.
-        const isDesignatedSpecialLine = (i === 0) || (oppositeIndex !== -1 && i === oppositeIndex);
-        context.strokeStyle = isDesignatedSpecialLine ? color2 : color;
-        // --- END MODIFIED LOGIC ---
-
-        // Optional: Log the color decision
-        // console.log(`  Line ${i}: isDesignatedSpecialLine=${isDesignatedSpecialLine}, Assigned strokeStyle: ${context.strokeStyle}`);
-
-        // Calculate line start and end points
-        let startX = centerX + lineStartDistance * Math.cos(angleRad);
-        let startY = centerY + lineStartDistance * Math.sin(angleRad);
-        let endX = centerX + lineEndDistance * Math.cos(angleRad);
-        let endY = centerY + lineEndDistance * Math.sin(angleRad);
-
-        // Draw the line
-        context.lineWidth = currentLineThickness;
-        context.beginPath();
-        context.moveTo(startX, startY);
-        context.lineTo(endX, endY);
-        context.stroke();
-
-        // Calculate text position
-        let textX = centerX + textDist * Math.cos(angleRad);
-        let textY = centerY + textDist * Math.sin(angleRad);
-
-         // Draw the text
-        context.fillStyle = textColor;
-         context.save();
-         context.translate(textX, textY);
-         // context.rotate(angleRad + Math.PI / 2); // Optional radial text
-         context.fillText(angleName(normalizedAngleDeg), 0, 0);
-         context.restore();
-    }
-    // console.log("--- drawManyLines END ---");
-}
->>>>>>> fa88184814396a2c2b41d46d07d4ea52ca5d0d60
         function drawSingleLine() {
             const centerX = getLogicalCenterX();
             const centerY = getLogicalCenterY();
@@ -1705,17 +1657,17 @@
                  let angleRad = normalizedAngleDeg * Math.PI / 180;
 
                  // Calculate points shifted horizontally for left eye
-                 let startX = centerX + lineStartDistance * Math.cos(angleRad) + leftShift;
-                 let startY = centerY + lineStartDistance * Math.sin(angleRad); // No vertical shift in basic anaglyph
-                 let endX = centerX + lineEndDistance * Math.cos(angleRad) + leftShift;
-                 let endY = centerY + lineEndDistance * Math.sin(angleRad);
-                 let textX = centerX + textDist * Math.cos(angleRad) + leftShift;
-                 let textY = centerY + textDist * Math.sin(angleRad);
+                 let lStartX = centerX + lineStartDistance * Math.cos(angleRad) + leftShift; // Use different var names
+                 let lStartY = centerY + lineStartDistance * Math.sin(angleRad); // No vertical shift in basic anaglyph
+                 let lEndX = centerX + lineEndDistance * Math.cos(angleRad) + leftShift;
+                 let lEndY = centerY + lineEndDistance * Math.sin(angleRad);
+                 let lTextX = centerX + textDist * Math.cos(angleRad) + leftShift;
+                 let lTextY = centerY + textDist * Math.sin(angleRad);
 
                 // Draw line
-                context.beginPath(); context.moveTo(startX, startY); context.lineTo(endX, endY); context.stroke();
+                context.beginPath(); context.moveTo(lStartX, lStartY); context.lineTo(lEndX, lEndY); context.stroke();
                 // Draw text
-                 context.save(); context.translate(textX, textY); context.fillText(angleName(normalizedAngleDeg), 0, 0); context.restore();
+                 context.save(); context.translate(lTextX, lTextY); context.fillText(angleName(normalizedAngleDeg), 0, 0); context.restore();
             }
 
 
@@ -1731,17 +1683,17 @@
                  let angleRad = normalizedAngleDeg * Math.PI / 180;
 
                  // Calculate points shifted horizontally for right eye
-                 let startX = centerX + lineStartDistance * Math.cos(angleRad) + rightShift;
-                 let startY = centerY + lineStartDistance * Math.sin(angleRad);
-                 let endX = centerX + lineEndDistance * Math.cos(angleRad) + rightShift;
-                 let endY = centerY + lineEndDistance * Math.sin(angleRad);
-                 let textX = centerX + textDist * Math.cos(angleRad) + rightShift;
-                 let textY = centerY + textDist * Math.sin(angleRad);
+                 let rStartX = centerX + lineStartDistance * Math.cos(angleRad) + rightShift; // Use different var names
+                 let rStartY = centerY + lineStartDistance * Math.sin(angleRad);
+                 let rEndX = centerX + lineEndDistance * Math.cos(angleRad) + rightShift;
+                 let rEndY = centerY + lineEndDistance * Math.sin(angleRad);
+                 let rTextX = centerX + textDist * Math.cos(angleRad) + rightShift;
+                 let rTextY = centerY + textDist * Math.sin(angleRad);
 
                 // Draw line
-                context.beginPath(); context.moveTo(startX, startY); context.lineTo(endX, endY); context.stroke();
+                context.beginPath(); context.moveTo(rStartX, rStartY); context.lineTo(rEndX, rEndY); context.stroke();
                 // Draw text
-                context.save(); context.translate(textX, textY); context.fillText(angleName(normalizedAngleDeg), 0, 0); context.restore();
+                context.save(); context.translate(rTextX, rTextY); context.fillText(angleName(normalizedAngleDeg), 0, 0); context.restore();
             }
         }
 
@@ -1896,7 +1848,12 @@
                  setLocalStorageValue('rotateClockwise', 'false');
                  setLocalStorageValue('rotateCounterclockwise', 'true');
              } else if (!rotateClockwiseToggle.checked) {
-                 rotateCounterClockwiseToggle.checked = true;
+                // Correction: if you uncheck this, re-check the *other* one (clockwise)
+                rotateCounterClockwiseToggle.checked = false; // Uncheck self first
+                rotateClockwiseToggle.checked = true;        // Check the other
+                rotationDirection = 1;                      // Update direction
+                setLocalStorageValue('rotateClockwise', 'true');
+                setLocalStorageValue('rotateCounterclockwise', 'false');
              }
         });
 
@@ -1922,10 +1879,12 @@
         function updateTextPlaceholder() {
             const label = document.getElementById('special-line-color-label');
             const container = label.closest('div'); // Get parent div
+            if(!container) return; // Safety check
+
             if (mode === "pendulum") label.textContent = "Pendulum Color:";
             else if (mode === "single") label.textContent = "Line Color:";
             else if (mode === "many") label.textContent = "Special Line Color:";
-            else { label.textContent = "Special Line Color:"; } // Default or hide maybe?
+            else { label.textContent = "Special Line Color:"; } // Default
             // Ensure container visibility matches label relevance
              container.style.display = (mode === 'pendulum' || mode === 'single' || mode === 'many') ? 'block' : 'none';
         }
@@ -1953,21 +1912,18 @@
             if (mode === 'many') {
                 lineCountCont.style.display = 'block';
                 lineColorCont.style.display = 'block'; // Show regular line color
-                // Special color label/input shown by updateTextPlaceholder
             } else if (mode === 'single') {
                 // No line count, no regular color needed
-                // Special color label/input shown by updateTextPlaceholder (used for the single line)
             } else if (mode === 'pendulum') {
                 lineColorCont.style.display = 'block'; // For the connecting line
                 pendulumSizeCont.style.display = 'block';
-                // Special color label/input shown by updateTextPlaceholder (for the bob)
             } else if (mode === 'anaglyph') {
                 lineCountCont.style.display = 'block';
                 anaglyphPickers.style.display = 'block';
                 depthOffsetCont.style.display = 'block';
-                 // No regular or special colors needed
             }
-             updateTextPlaceholder(); // Ensure special color label updates/hides correctly
+            // Call this AFTER setting display none/block for other containers
+            updateTextPlaceholder(); // Ensures special color label/container hides/shows correctly
         }
 
 
@@ -2146,6 +2102,9 @@
              horizontalOffsetSlider.value = originX;
              verticalOffsetSlider.value = originY;
              // Avoid spamming localStorage during transition; save only at the end
+
+             // Apply the transform to the canvas so the movement is visible
+             updateCanvasTransform(); // <<<<< FIX: Apply transform here
 
              // Check if transition is complete
              if (progress >= 1) {
