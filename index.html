@@ -1030,7 +1030,7 @@
 
         // --- Resize and Key Event Handling ---
 
-        window.addEventListener("resize", function () {
+        function handleResize() {
             // Update canvas dimensions
             canvasWidth = window.innerWidth;
             canvasHeight = window.innerHeight;
@@ -1063,7 +1063,8 @@
 
             // Apply current transform (scale/pan) to the resized canvas and redraw
             updateCanvasTransform();
-        });
+        }
+        window.addEventListener("resize", handleResize);
 
         // Keyboard state tracking
         let pressedKeys = {};
@@ -1648,24 +1649,32 @@
          * Updates angles, handles smooth transitions, and redraws the scene.
          * @param {DOMHighResTimeStamp} timestamp - The timestamp provided by requestAnimationFrame.
          */
-        function animate(timestamp) {
-            if (!shouldAnimate) {
-                 animationFrameId = null; // Ensure ID is cleared when stopping
-                 return; // Exit the loop
+        let lastCheckedWidth = 0;
+        let lastCheckedHeight = 0;
+
+        function mainLoop(timestamp) {
+            // Check for resize on every frame to handle browser zoom gracefully
+            if (window.innerWidth !== lastCheckedWidth || window.innerHeight !== lastCheckedHeight) {
+                lastCheckedWidth = window.innerWidth;
+                lastCheckedHeight = window.innerHeight;
+                handleResize();
             }
 
-            // 1. Update Animated State
-            updateAnglesForAnimation(); // Update rotation based on velocity/direction
+            // Update state only if animation is active (autopilot, etc.)
+            if (shouldAnimate) {
+                // 1. Update Animated State
+                updateAnglesForAnimation(); // Update rotation based on velocity/direction
 
-            if (autopilot2Active && isTransitioning) {
-                 updateTransition(timestamp); // Update smooth pan position if active
+                if (autopilot2Active && isTransitioning) {
+                    updateTransition(timestamp); // Update smooth pan position if active
+                }
             }
 
             // 2. Draw the updated scene
             draw();
 
-            // 3. Request the next frame
-            animationFrameId = requestAnimationFrame(animate);
+            // 3. Request the next frame to keep the loop running
+            animationFrameId = requestAnimationFrame(mainLoop);
         }
 
         /**
@@ -1845,11 +1854,8 @@
 
             scheduleNextJump_AP1(); // Start the jump sequence
 
-             // Start animation loop if not already running
+             // Start animation updates (main loop is always running)
              shouldAnimate = true;
-             if (!animationFrameId) {
-                 animationFrameId = requestAnimationFrame(animate);
-             }
         }
 
         function stopAutopilot1() {
@@ -1911,9 +1917,6 @@
             startNewTransition_AP2(); // Start the first transition
 
              shouldAnimate = true;
-             if (!animationFrameId) {
-                  animationFrameId = requestAnimationFrame(animate);
-             }
         }
 
         function stopAutopilot2() {
@@ -2049,6 +2052,9 @@
         function easeInOutCubic(t) {
             return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
          }
+
+        // Start the main animation loop which also handles resize detection
+        requestAnimationFrame(mainLoop);
 
     </script>
 </body>
