@@ -744,10 +744,11 @@
             const logicalCenterX = canvasWidth / 2;
             const logicalCenterY = canvasHeight / 2;
 
-            const maxOriginX = canvasWidth - (logicalCenterX - effectiveRadius) * scale;
-            const minOriginX = -(logicalCenterX + effectiveRadius) * scale;
-            const maxOriginY = canvasHeight - (logicalCenterY - effectiveRadius) * scale;
-            const minOriginY = -(logicalCenterY + effectiveRadius) * scale;
+            // Allow panning until 25% of the radius is off-screen (75% visible)
+            const maxOriginX = canvasWidth - (logicalCenterX + 0.75 * effectiveRadius) * scale;
+            const minOriginX = -(logicalCenterX - 0.75 * effectiveRadius) * scale;
+            const maxOriginY = canvasHeight - (logicalCenterY + 0.75 * effectiveRadius) * scale;
+            const minOriginY = -(logicalCenterY - 0.75 * effectiveRadius) * scale;
 
             // Apply the calculated limits to the sliders
             horizontalOffsetSlider.min = minOriginX;
