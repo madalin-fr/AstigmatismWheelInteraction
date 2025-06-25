@@ -740,44 +740,28 @@
          * some part of the circle always remains visible.
          */
         function updatePanSliderLimits() {
-            // Calculate the largest radius of the drawn content (outer circle)
-            // Consider potential negative arcOffset clamping if needed, but this formula works
             const effectiveRadius = (radius * 1.7 + arcOffset);
-            const scaledRadius = effectiveRadius * scale; // Radius as it appears on screen
-
-            // Calculate the logical center coordinates
             const logicalCenterX = canvasWidth / 2;
             const logicalCenterY = canvasHeight / 2;
 
-            // Calculate maximum allowed origin shift to keep edges visible
-
-            // Max originX: Allows the *left* edge of the circle to touch the *right* edge of the viewport
             const maxOriginX = canvasWidth - (logicalCenterX - effectiveRadius) * scale;
-            // Min originX: Allows the *right* edge of the circle to touch the *left* edge of the viewport
-            const minOriginX = 0 - (logicalCenterX + effectiveRadius) * scale;
-
-            // Max originY: Allows the *top* edge of the circle to touch the *bottom* edge of the viewport
+            const minOriginX = -(logicalCenterX + effectiveRadius) * scale;
             const maxOriginY = canvasHeight - (logicalCenterY - effectiveRadius) * scale;
-            // Min originY: Allows the *bottom* edge of the circle to touch the *top* edge of the viewport
-            const minOriginY = 0 - (logicalCenterY + effectiveRadius) * scale;
+            const minOriginY = -(logicalCenterY + effectiveRadius) * scale;
 
             // Apply the calculated limits to the sliders
-            horizontalOffsetSlider.min = Math.max(minOriginX, -800);
-            horizontalOffsetSlider.max = Math.min(maxOriginX, 800);
-            verticalOffsetSlider.min = Math.max(minOriginY, -800);
-            verticalOffsetSlider.max = Math.min(maxOriginY, 800);
+            horizontalOffsetSlider.min = minOriginX;
+            horizontalOffsetSlider.max = maxOriginX;
+            verticalOffsetSlider.min = minOriginY;
+            verticalOffsetSlider.max = maxOriginY;
 
             // Clamp current origin to the *new* limits immediately
-            // This prevents the view from getting stuck if limits shrink
             originX = Math.max(minOriginX, Math.min(originX, maxOriginX));
             originY = Math.max(minOriginY, Math.min(originY, maxOriginY));
 
             // Update slider thumbs to reflect potentially clamped origin values
             horizontalOffsetSlider.value = originX;
             verticalOffsetSlider.value = originY;
-
-            // Debugging logs (optional)
-            // console.log(`Limits updated: X[${minOriginX.toFixed(1)}, ${maxOriginX.toFixed(1)}], Y[${minOriginY.toFixed(1)}, ${maxOriginY.toFixed(1)}], Scale: ${scale.toFixed(2)}, EffRad: ${effectiveRadius.toFixed(1)}`);
         }
 
 
@@ -1084,70 +1068,79 @@
         });
 
               
- // OLD handleKeyPresses function
- function handleKeyPresses(event) {
-            let offsetStep = 10 / scale; // Base offset step on scale
-            let angleStep = Math.max(0.5, rotationVelocity); // Base angle step on velocity
+        function handleKeyPresses(event) {
+            let offsetStep = 10; // Pan by 10 screen pixels per key press
+            let angleStep = Math.max(0.5, rotationVelocity);
             let hasChanged = false;
+            let panChanged = false;
             const key = event.key.toLowerCase();
 
-             // Rotation
-             if (pressedKeys["a"] || pressedKeys["arrowleft"]) {
+            // Rotation
+            if (pressedKeys["a"] || pressedKeys["arrowleft"]) {
                 if (mode === "pendulum") { pendulumAngle -= angleStep; } else { startAngle -= angleStep; }
-                 hasChanged = true;
-             }
-             if (pressedKeys["d"] || pressedKeys["arrowright"]) {
-                 if (mode === "pendulum") { pendulumAngle += angleStep; } else { startAngle += angleStep; }
-                 hasChanged = true;
-             }
-             // Panning (World Offset)
-             if (pressedKeys["w"] || pressedKeys["arrowup"]) { verticalOffset -= offsetStep; hasChanged = true; }
-             if (pressedKeys["s"] || pressedKeys["arrowdown"]) { verticalOffset += offsetStep; hasChanged = true; }
-             if (pressedKeys["q"]) { horizontalOffset -= offsetStep; hasChanged = true; } // Use Q/E for H offset
-             if (pressedKeys["e"]) { horizontalOffset += offsetStep; hasChanged = true; }
+                hasChanged = true;
+            }
+            if (pressedKeys["d"] || pressedKeys["arrowright"]) {
+                if (mode === "pendulum") { pendulumAngle += angleStep; } else { startAngle += angleStep; }
+                hasChanged = true;
+            }
+            // Panning (using originX/Y)
+            if (pressedKeys["w"] || pressedKeys["arrowup"]) { originY += offsetStep; panChanged = true; }
+            if (pressedKeys["s"] || pressedKeys["arrowdown"]) { originY -= offsetStep; panChanged = true; }
+            if (pressedKeys["q"]) { originX += offsetStep; panChanged = true; }
+            if (pressedKeys["e"]) { originX -= offsetStep; panChanged = true; }
 
-             // Single Press Actions
-             if (event.type === 'keydown' && !event.repeat) { // Check type and !repeat for single press
-                if (key === "m") { /* Mode toggle logic */
-                    const modes = ['many', 'single', 'pendulum', 'anaglyph']; const currentModeIndex = modes.indexOf(mode);
-                    const nextModeIndex = (currentModeIndex + 1) % modes.length; const modeSelect = document.getElementById('visualization-mode');
-                    modeSelect.value = modes[nextModeIndex]; modeSelect.dispatchEvent(new Event('input', { bubbles: true }));
+            // Single Press Actions
+            if (event.type === 'keydown' && !event.repeat) {
+                if (key === "m") {
+                    const modes = ['many', 'single', 'pendulum', 'anaglyph'];
+                    const currentModeIndex = modes.indexOf(mode);
+                    const nextModeIndex = (currentModeIndex + 1) % modes.length;
+                    const modeSelect = document.getElementById('visualization-mode');
+                    modeSelect.value = modes[nextModeIndex];
+                    modeSelect.dispatchEvent(new Event('input', { bubbles: true }));
                     hasChanged = false; // Handled by input event
                 }
-                if (key === "r") { /* Reset View (Zoom/Pan) */
-                    scale = 1; viewOriginX = 0; viewOriginY = 0;
-                    updateCanvasTransform(); hasChanged = false;
+                if (key === "r") { // Reset View (Zoom/Pan)
+                    scale = 1.0;
+                    originX = 0;
+                    originY = 0;
+                    panChanged = true; // Will trigger updatePanFromInteraction
+                    hasChanged = false;
                 }
-                if (key === "c") { /* Reset Center Offset (World Offset) */
-                    horizontalOffset = 0; verticalOffset = 0;
-                    document.getElementById('horizontal-offset').value = horizontalOffset; document.getElementById('vertical-offset').value = verticalOffset;
-                    setLocalStorageValue('horizontalOffset', horizontalOffset); setLocalStorageValue('verticalOffset', verticalOffset);
-                    hasChanged = true;
+                if (key === "c") { // Reset Center Offset (now also resets pan)
+                    originX = 0;
+                    originY = 0;
+                    panChanged = true; // Will trigger updatePanFromInteraction
+                    hasChanged = false;
                 }
-                if (key === "=" || key === "+") { /* Zoom in */
-                    zoom(1 / zoomFactor, canvasWidth / 2, canvasHeight / 2); hasChanged = false;
+                if (key === "=" || key === "+") {
+                    zoom(1 / zoomFactor, canvasWidth / 2, canvasHeight / 2);
+                    hasChanged = false;
                 }
-                if (key === "-" || key === "_") { /* Zoom out */
-                    zoom(zoomFactor, canvasWidth / 2, canvasHeight / 2); hasChanged = false;
+                if (key === "-" || key === "_") {
+                    zoom(zoomFactor, canvasWidth / 2, canvasHeight / 2);
+                    hasChanged = false;
                 }
             }
 
-            // Update UI/LS for changed offsets from keys
-            if (pressedKeys["w"] || pressedKeys["s"] || pressedKeys["q"] || pressedKeys["e"]) {
-                const minH = parseInt(horizontalOffsetSlider.min); const maxH = parseInt(horizontalOffsetSlider.max);
-                const minV = parseInt(verticalOffsetSlider.min); const maxV = parseInt(verticalOffsetSlider.max);
-                horizontalOffset = Math.max(minH, Math.min(horizontalOffset, maxH));
-                verticalOffset = Math.max(minV, Math.min(verticalOffset, maxV));
-                horizontalOffsetSlider.value = horizontalOffset; verticalOffsetSlider.value = verticalOffset;
-                setLocalStorageValue('horizontalOffset', horizontalOffset); setLocalStorageValue('verticalOffset', verticalOffset);
+            // Update UI/LS for changed pan from keys
+            if (panChanged) {
+                updatePanFromInteraction();
             }
-             // Save angles on key press
-             if (pressedKeys["a"] || pressedKeys["d"] || pressedKeys["arrowleft"] || pressedKeys["arrowright"]) {
-                 if (mode === "pendulum") setLocalStorageValue('pendulumAngle', pendulumAngle);
-                 else setLocalStorageValue('startAngle', startAngle);
-             }
+            // Save angles on key press
+            if (hasChanged) {
+                if (mode === "pendulum") {
+                    setLocalStorageValue('pendulumAngle', pendulumAngle);
+                } else {
+                    setLocalStorageValue('startAngle', startAngle);
+                }
+            }
 
-            if (hasChanged && !shouldAnimate) requestAnimationFrame(draw);
+            // Redraw if not animating
+            if (hasChanged && !shouldAnimate) {
+                requestAnimationFrame(draw);
+            }
         }
 
 
@@ -1959,42 +1952,26 @@
          * @returns {{x: number, y: number}} The clamped target originX and originY.
          */
         function calculateAutopilotTargetOrigin() {
-            const walkPercentage = autopilotWalkRange / 100;
+             const walkPercentage = autopilotWalkRange / 100;
+             // Calculate max offset relative to the logical center (0,0) of the *panning space*
+             const maxHorizontalShift = (canvasWidth / 2) * walkPercentage;
+             const maxVerticalShift = (canvasHeight / 2) * walkPercentage;
 
-            // If range is 0, the target is simply the current position.
-            if (walkPercentage <= 0) {
-                return { x: originX, y: originY };
-            }
+             // Generate random target within the allowed shift range [-maxShift, +maxShift]
+             let targetX = Math.random() * (maxHorizontalShift * 2) - maxHorizontalShift;
+             let targetY = Math.random() * (maxVerticalShift * 2) - maxVerticalShift;
 
-            // Calculate maximum *deviation* allowed from the current origin,
-            // based on the walk percentage of the *visible* canvas area.
-            // We use canvasWidth/Height as a proxy for the visible area size.
-            const maxHorizontalShift = (canvasWidth * walkPercentage) / 2; // Max deviation left/right
-            const maxVerticalShift = (canvasHeight * walkPercentage) / 2; // Max deviation up/down
-
-            // Generate a random *offset* (dx, dy) from the current origin
-            // within the allowed deviation range [-maxShift, +maxShift].
-            const dx = Math.random() * (maxHorizontalShift * 2) - maxHorizontalShift;
-            const dy = Math.random() * (maxVerticalShift * 2) - maxVerticalShift;
-
-            // Calculate the potential target by adding the offset to the *current* origin
-            let potentialTargetX = originX + dx;
-            let potentialTargetY = originY + dy;
-
-            // Get the absolute min/max limits from the pan sliders
+            // Clamp target to the absolute limits defined by the pan sliders
             const minH = parseFloat(horizontalOffsetSlider.min);
             const maxH = parseFloat(horizontalOffsetSlider.max);
             const minV = parseFloat(verticalOffsetSlider.min);
             const maxV = parseFloat(verticalOffsetSlider.max);
 
-            // Clamp the potential target to ensure it stays within the overall pannable area defined by the sliders.
-            const clampedTargetX = Math.max(minH, Math.min(Math.round(potentialTargetX), maxH));
-            const clampedTargetY = Math.max(minV, Math.min(Math.round(potentialTargetY), maxV));
+            targetX = Math.max(minH, Math.min(Math.round(targetX), maxH));
+            targetY = Math.max(minV, Math.min(Math.round(targetY), maxV));
 
-            // console.log(`Current: (${originX.toFixed(0)}, ${originY.toFixed(0)}), Offset: (${dx.toFixed(0)}, ${dy.toFixed(0)}), Potential: (${potentialTargetX.toFixed(0)}, ${potentialTargetY.toFixed(0)}), Clamped Target: (${clampedTargetX}, ${clampedTargetY}), Range: ${autopilotWalkRange}%`); // Debug log
-
-            return { x: clampedTargetX, y: clampedTargetY };
-        }
+            return { x: targetX, y: targetY };
+         }
 
         /**
          * Updates the originX/Y during a smooth Autopilot 2 transition.
