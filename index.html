@@ -419,10 +419,10 @@
 
                 <!-- Pan Controls (Now control originX/Y) -->
                 <label for="horizontal-offset">Horizontal Pan:</label>
-                <input type="range" id="horizontal-offset" min="-2000" max="2000" value="0" step="1"> <!-- Range set dynamically -->
+                <input type="range" id="horizontal-offset" min="-800" max="800" value="0" step="1"> <!-- Range set dynamically -->
                 <br>
                 <label for="vertical-offset">Vertical Pan:</label>
-                <input type="range" id="vertical-offset" min="-2000" max="2000" value="0" step="1"> <!-- Range set dynamically -->
+                <input type="range" id="vertical-offset" min="-800" max="800" value="0" step="1"> <!-- Range set dynamically -->
                 <br>
                 <!-- End Pan Controls -->
 
@@ -762,10 +762,10 @@
             const minOriginY = 0 - (logicalCenterY + effectiveRadius) * scale;
 
             // Apply the calculated limits to the sliders
-            horizontalOffsetSlider.min = minOriginX;
-            horizontalOffsetSlider.max = maxOriginX;
-            verticalOffsetSlider.min = minOriginY;
-            verticalOffsetSlider.max = maxOriginY;
+            horizontalOffsetSlider.min = Math.max(minOriginX, -800);
+            horizontalOffsetSlider.max = Math.min(maxOriginX, 800);
+            verticalOffsetSlider.min = Math.max(minOriginY, -800);
+            verticalOffsetSlider.max = Math.min(maxOriginY, 800);
 
             // Clamp current origin to the *new* limits immediately
             // This prevents the view from getting stuck if limits shrink
