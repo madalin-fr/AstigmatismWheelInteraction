@@ -1951,30 +1951,47 @@
 
         /**
          * Calculates the target origin (pan) for autopilot movements based on
-         * the autopilotWalkRange setting and current canvas dimensions.
-         * @returns {{x: number, y: number}} The target originX and originY.
+         * the autopilotWalkRange setting, current canvas dimensions, and the *current*
+         * origin (pan position). Clamps the result within the valid pan limits.
+         * @returns {{x: number, y: number}} The clamped target originX and originY.
          */
         function calculateAutopilotTargetOrigin() {
-             const walkPercentage = autopilotWalkRange / 100;
-             // Calculate max offset relative to the logical center (0,0) of the *panning space*
-             const maxHorizontalShift = (canvasWidth / 2) * walkPercentage;
-             const maxVerticalShift = (canvasHeight / 2) * walkPercentage;
+            const walkPercentage = autopilotWalkRange / 100;
 
-             // Generate random target within the allowed shift range [-maxShift, +maxShift]
-             let targetX = Math.random() * (maxHorizontalShift * 2) - maxHorizontalShift;
-             let targetY = Math.random() * (maxVerticalShift * 2) - maxVerticalShift;
+            // If range is 0, the target is simply the current position.
+            if (walkPercentage <= 0) {
+                return { x: originX, y: originY };
+            }
 
-            // Clamp target to the absolute limits defined by the pan sliders
+            // Calculate maximum *deviation* allowed from the current origin,
+            // based on the walk percentage of the *visible* canvas area.
+            // We use canvasWidth/Height as a proxy for the visible area size.
+            const maxHorizontalShift = (canvasWidth * walkPercentage) / 2; // Max deviation left/right
+            const maxVerticalShift = (canvasHeight * walkPercentage) / 2; // Max deviation up/down
+
+            // Generate a random *offset* (dx, dy) from the current origin
+            // within the allowed deviation range [-maxShift, +maxShift].
+            const dx = Math.random() * (maxHorizontalShift * 2) - maxHorizontalShift;
+            const dy = Math.random() * (maxVerticalShift * 2) - maxVerticalShift;
+
+            // Calculate the potential target by adding the offset to the *current* origin
+            let potentialTargetX = originX + dx;
+            let potentialTargetY = originY + dy;
+
+            // Get the absolute min/max limits from the pan sliders
             const minH = parseFloat(horizontalOffsetSlider.min);
             const maxH = parseFloat(horizontalOffsetSlider.max);
             const minV = parseFloat(verticalOffsetSlider.min);
             const maxV = parseFloat(verticalOffsetSlider.max);
 
-            targetX = Math.max(minH, Math.min(Math.round(targetX), maxH));
-            targetY = Math.max(minV, Math.min(Math.round(targetY), maxV));
+            // Clamp the potential target to ensure it stays within the overall pannable area defined by the sliders.
+            const clampedTargetX = Math.max(minH, Math.min(Math.round(potentialTargetX), maxH));
+            const clampedTargetY = Math.max(minV, Math.min(Math.round(potentialTargetY), maxV));
 
-            return { x: targetX, y: targetY };
-         }
+            // console.log(`Current: (${originX.toFixed(0)}, ${originY.toFixed(0)}), Offset: (${dx.toFixed(0)}, ${dy.toFixed(0)}), Potential: (${potentialTargetX.toFixed(0)}, ${potentialTargetY.toFixed(0)}), Clamped Target: (${clampedTargetX}, ${clampedTargetY}), Range: ${autopilotWalkRange}%`); // Debug log
+
+            return { x: clampedTargetX, y: clampedTargetY };
+        }
 
         /**
          * Updates the originX/Y during a smooth Autopilot 2 transition.
