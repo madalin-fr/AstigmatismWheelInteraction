@@ -1763,7 +1763,7 @@
         document.getElementById('autopilot-speed').addEventListener('input', function () {
             autopilotSpeed = parseInt(this.value);
             setLocalStorageValue('autopilotSpeed', autopilotSpeed);
-             // Restart active autopilot to apply new speed/timing
+             // Restart active autopilot to apply new speed/timing and check movement conditions
              if (autopilot1Active) { stopAutopilot1(); startAutopilot1(); }
              else if (autopilot2Active) { stopAutopilot2(); startAutopilot2(); }
         });
@@ -1772,7 +1772,9 @@
         autopilotWalkRangeSlider.addEventListener('input', function () {
             autopilotWalkRange = parseInt(this.value);
             setLocalStorageValue('autopilotWalkRange', autopilotWalkRange);
-            // This range affects the *next* calculated target offset, no immediate visual change.
+            // Restart active autopilot to apply new range conditions
+            if (autopilot1Active) { stopAutopilot1(); startAutopilot1(); }
+            else if (autopilot2Active) { stopAutopilot2(); startAutopilot2(); }
         });
 
         /**
@@ -1843,10 +1845,12 @@
             toggleAutopilot2Button.textContent = 'Start Autopilot 2'; // Reset other button
             toggleAutopilot2Button.classList.remove('active');
 
-            horizontalOffsetSlider.disabled = true; // Disable manual pan
-            verticalOffsetSlider.disabled = true;
-
-            scheduleNextJump_AP1(); // Start the jump sequence
+            // Only disable manual pan if autopilot should actually move
+            if (shouldAutopilotMove()) {
+                horizontalOffsetSlider.disabled = true; // Disable manual pan
+                verticalOffsetSlider.disabled = true;
+                scheduleNextJump_AP1(); // Start the jump sequence
+            }
 
              // Start animation updates (main loop is always running)
              shouldAnimate = true;
@@ -1870,6 +1874,7 @@
         // Schedules the next jump for Autopilot 1
         function scheduleNextJump_AP1() {
              if (!autopilot1Active) return; // Stop if deactivated between schedule and execution
+             if (!shouldAutopilotMove()) return; // Don't move if speed/range at minimum
 
              // Calculate delay based on speed (faster speed -> shorter delay)
              const baseDelay = 5000, minDelay = 500;
@@ -1878,6 +1883,7 @@
 
              autopilotCenterShiftTimeout = setTimeout(() => {
                  if (!autopilot1Active) return; // Check again before jumping
+                 if (!shouldAutopilotMove()) return; // Don't move if speed/range at minimum
 
                  const target = calculateAutopilotTargetOrigin(); // Get target pan values
                  originX = target.x; // Jump instantly
@@ -1905,10 +1911,12 @@
             toggleAutopilot1Button.textContent = 'Start Autopilot 1';
             toggleAutopilot1Button.classList.remove('active');
 
-            horizontalOffsetSlider.disabled = true;
-            verticalOffsetSlider.disabled = true;
-
-            startNewTransition_AP2(); // Start the first transition
+            // Only disable manual pan if autopilot should actually move
+            if (shouldAutopilotMove()) {
+                horizontalOffsetSlider.disabled = true;
+                verticalOffsetSlider.disabled = true;
+                startNewTransition_AP2(); // Start the first transition
+            }
 
              shouldAnimate = true;
         }
@@ -1928,6 +1936,7 @@
         // Starts a new smooth transition for Autopilot 2
         function startNewTransition_AP2() {
             if (!autopilot2Active) return;
+            if (!shouldAutopilotMove()) return; // Don't move if speed/range at minimum
 
             const target = calculateAutopilotTargetOrigin(); // Get target pan
             targetOriginX = target.x;
@@ -1944,6 +1953,15 @@
 
             isTransitioning = true; // Flag that transition is active
             // The animation loop will now call updateTransition()
+        }
+
+        /**
+         * Checks if autopilot should perform panning movements.
+         * Returns false if autopilot speed is at minimum OR pan range is at minimum.
+         * @returns {boolean} True if autopilot should move, false otherwise.
+         */
+        function shouldAutopilotMove() {
+            return autopilotSpeed > 5 && autopilotWalkRange > 0;
         }
 
         /**
