@@ -623,6 +623,7 @@
         let lastX = 0;                  // Last mouse/touch X for drag calculation
         let lastY = 0;                  // Last mouse/touch Y for drag calculation
         let pinchStartDistance = 0;     // Initial distance between fingers for pinch zoom
+        let isPointerLocked = false;    // Is pointer lock currently active?
 
 
         // --- Default Settings & LocalStorage Initialization ---
@@ -1058,6 +1059,13 @@
             pressedKeys[event.key.toLowerCase()] = true;
             
             handleKeyPresses(event); // Call the old handler
+            
+            // Handle Escape key to exit pointer lock
+            if (event.key === 'Escape' && isPointerLocked) {
+                document.exitPointerLock();
+                event.preventDefault();
+            }
+            
              // Prevent default for handled keys
              if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', '+', '-', '=', '_', 'm', 'r', 'c', 'w', 's', 'a', 'd', 'q', 'e'].includes(event.key.toLowerCase())) {
                  event.preventDefault();
@@ -1215,27 +1223,89 @@
                  isDragging = false; isPinching = false; pinchStartDistance = 0; canvas.style.cursor = 'grab';
              });
 
-            // --- Mouse Drag Panning ---
+            // --- Mouse Drag Panning with Pointer Lock ---
+            
+            // Pointer lock change handler
+            function handlePointerLockChange() {
+                if (document.pointerLockElement === canvas) {
+                    isPointerLocked = true;
+                    canvas.style.cursor = 'none'; // Hide cursor when locked
+                } else {
+                    isPointerLocked = false;
+                    canvas.style.cursor = isDragging ? 'grabbing' : 'grab';
+                    // If we exit pointer lock while dragging, stop dragging
+                    if (isDragging) {
+                        isDragging = false;
+                    }
+                }
+            }
+            
+            // Pointer lock error handler
+            function handlePointerLockError() {
+                console.warn('Pointer lock failed. Falling back to normal mouse handling.');
+                isPointerLocked = false;
+            }
+            
+            // Listen for pointer lock events
+            document.addEventListener('pointerlockchange', handlePointerLockChange, false);
+            document.addEventListener('pointerlockerror', handlePointerLockError, false);
+            
             canvas.addEventListener('mousedown', function (event) {
                  if (event.button !== 0 || event.target !== canvas) return;
                 isDragging = true; isPinching = false;
-                lastX = event.clientX; lastY = event.clientY;
-                canvas.style.cursor = 'grabbing';
+                
+                // Request pointer lock when starting to drag
+                canvas.requestPointerLock();
+                
+                if (!isPointerLocked) {
+                    // Fallback: store initial position for non-pointer-lock mode
+                    lastX = event.clientX; lastY = event.clientY;
+                    canvas.style.cursor = 'grabbing';
+                }
                 event.preventDefault();
             });
+            
             canvas.addEventListener('mousemove', function (event) {
                 if (isDragging) {
-                    const dx = event.clientX - lastX; const dy = event.clientY - lastY;
-                    originX += dx; originY += dy;
-                    lastX = event.clientX; lastY = event.clientY;
+                    let dx, dy;
+                    
+                    if (isPointerLocked) {
+                        // Use movement deltas when pointer is locked
+                        dx = event.movementX || 0;
+                        dy = event.movementY || 0;
+                    } else {
+                        // Fallback: calculate deltas from position
+                        dx = event.clientX - lastX;
+                        dy = event.clientY - lastY;
+                        lastX = event.clientX;
+                        lastY = event.clientY;
+                    }
+                    
+                    originX += dx;
+                    originY += dy;
                     updatePanFromInteraction();
                 }
             });
+            
             window.addEventListener('mouseup', function (event) {
-                 if (event.button === 0 && isDragging) { isDragging = false; canvas.style.cursor = 'grab'; }
+                 if (event.button === 0 && isDragging) {
+                     isDragging = false;
+                     
+                     // Exit pointer lock when drag ends
+                     if (isPointerLocked) {
+                         document.exitPointerLock();
+                     }
+                     
+                     canvas.style.cursor = 'grab';
+                 }
             });
+            
             canvas.addEventListener('mouseleave', function (event) {
-                if (isDragging) { isDragging = false; canvas.style.cursor = 'grab'; }
+                if (isDragging && !isPointerLocked) {
+                    isDragging = false;
+                    canvas.style.cursor = 'grab';
+                }
+                // Note: mouseleave won't fire when pointer is locked
             });
 
             canvas.style.cursor = 'grab';
