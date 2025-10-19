@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://madalin-fr.github.io/AstigmatismWheelInteraction/sitemap.xml

@@ -373,6 +373,7 @@
                     <option value="single">Single Line</option>
                     <option value="pendulum">Pendulum</option>
                     <option value="anaglyph">Anaglyph 3D</option>
+                    <option value="parallel">Parallel Lines</option>
                     <option value="v-diagram">V-Diagram</option>
                 </select>
                 <br>
@@ -422,10 +423,21 @@
                 </div>
                 <!-- End Pendulum Specific -->
 
+                <!-- Parallel Lines Specific Controls -->
+                <div id="parallel-controls-container" style="display: none;">
+                    <label for="line-spacing">Line Spacing:</label>
+                    <input type="range" id="line-spacing" min="10" max="100" value="30">
+                </div>
+                <div id="dot-count-container" style="display: none;">
+                    <label for="dot-count">Dots per Line:</label>
+                    <input type="range" id="dot-count" min="2" max="20" value="6">
+                </div>
+                <!-- End Parallel Lines Specific -->
+
                 <!-- V-Diagram Specific Controls -->
                 <div id="v-angle-container" style="display: none;">
                     <label for="v-angle">V-Angle:</label>
-                    <input type="range" id="v-angle" min="10" max="90" value="30">
+                    <input type="range" id="v-angle" min="0" max="360" value="30">
                 </div>
                 <!-- End V-Diagram Specific -->
 
@@ -434,13 +446,17 @@
                 <input type="color" id="bg-color" value="#000000"> <!-- Initial value overridden by JS/LocalStorage -->
                 <br>
 
-                <label for="text-color">Text Color:</label>
-                <input type="color" id="text-color" value="#FFFFFF"> <!-- Initial value overridden by JS/LocalStorage -->
-                <br>
+                <div id="text-color-container">
+                    <label for="text-color">Text Color:</label>
+                    <input type="color" id="text-color" value="#FFFFFF"> <!-- Initial value overridden by JS/LocalStorage -->
+                    <br>
+                </div>
 
-                <label for="circle-outline-color">Circle Outline Color:</label>
-                <input type="color" id="circle-outline-color" value="#ffffff"> <!-- Initial value overridden by JS/LocalStorage -->
-                <br>
+                <div id="circle-outline-color-container">
+                    <label for="circle-outline-color">Circle Outline Color:</label>
+                    <input type="color" id="circle-outline-color" value="#ffffff"> <!-- Initial value overridden by JS/LocalStorage -->
+                    <br>
+                </div>
 
                 <!-- Pan Controls (Now control originX/Y) -->
                 <label for="horizontal-offset">Horizontal Pan:</label>
@@ -451,18 +467,26 @@
                 <br>
                 <!-- End Pan Controls -->
 
-                <label for="arc-offset">Circle Radius Offset:</label>
-                <input type="range" id="arc-offset" min="-200" max="1200" value="0">
-                <br>
-                <label for="circle-outline-dash-density">Arc Dash Density:</label>
-                <input type="range" id="circle-outline-dash-density" min="1" max="48" value="15">
-                <br>
-                <label for="text-size">Text Size (px):</label>
-                <input type="range" id="text-size" min="8" max="72" value="14">
-                <br>
-                <label for="text-distance">Text Distance (Factor):</label>
-                <input type="range" id="text-distance" min="1.0" max="5.0" step="0.1" value="1.6">
-                <br>
+                <div id="arc-offset-container">
+                    <label for="arc-offset">Circle Radius Offset:</label>
+                    <input type="range" id="arc-offset" min="-200" max="1200" value="0">
+                    <br>
+                </div>
+                <div id="circle-outline-dash-density-container">
+                    <label for="circle-outline-dash-density">Arc Dash Density:</label>
+                    <input type="range" id="circle-outline-dash-density" min="1" max="48" value="15">
+                    <br>
+                </div>
+                <div id="text-size-container">
+                    <label for="text-size">Text Size (px):</label>
+                    <input type="range" id="text-size" min="8" max="72" value="14">
+                    <br>
+                </div>
+                <div id="text-distance-container">
+                    <label for="text-distance">Text Distance (Factor):</label>
+                    <input type="range" id="text-distance" min="1.0" max="5.0" step="0.1" value="1.6">
+                    <br>
+                </div>
 
                 <label for="line-thickness">Line Thickness:</label>
                 <input type="range" id="line-thickness" min="1" max="40" value="4">
@@ -659,10 +683,14 @@
             color_many: '#7b68ee', color2_many: '#ffffff',
             color_single: '#ffffff', color2_single: '#ffffff', // color2 used for single line
             color_pendulum: '#ffd700', color2_pendulum: '#c0c0c0',
+            color_parallel: '#7b68ee', color2_parallel: '#ffffff',
+            'color_v-diagram': '#7b68ee', 'color2_v-diagram': '#ffffff',
             color3: '#ffffff', // Circle Outline (common)
             anaglyphLeftColor: '#ff0000', anaglyphRightColor: '#00ffff',
             bgColor_many: '#000000', bgColor_single: '#000000',
             bgColor_pendulum: '#2f4f4f', bgColor_anaglyph: '#000000',
+            bgColor_parallel: '#000000', 'bgColor_v-diagram': '#000000',
+            textColor_parallel: '#ffffff', 'textColor_v-diagram': '#ffffff',
             textColor_many: '#ffffff', textColor_single: '#ffffff',
             textColor_pendulum: '#ffffff', textColor_anaglyph: '#ffffff', // Drawn twice
             // Numeric/Boolean settings
@@ -689,6 +717,9 @@
             isWheelLocked: 'true', // Wheel position locked by default
             circleOutlineDashDensity: '15',
             depthOffset: '5', // Anaglyph depth
+            lineSpacing: '30',
+            dotCount: '6',
+            vAngle: '30',
             // scale: '1.0', // Could save scale too, but start at 1 for now
         };
 
@@ -744,6 +775,9 @@
 
         // Initialize pendulum angle (use startAngle if specific pendulum angle not saved)
         let pendulumAngle = parseFloat(getLocalStorageValue('pendulumAngle') || startAngle);
+        let lineSpacing = parseInt(getLocalStorageValue('lineSpacing') || defaultSettings.lineSpacing);
+        let dotCount = parseInt(getLocalStorageValue('dotCount') || defaultSettings.dotCount);
+        let vAngle = parseInt(getLocalStorageValue('vAngle') || defaultSettings.vAngle);
 
         // --- DOM Element References ---
         const controlsContainer = document.getElementById('controls-container');
@@ -837,6 +871,10 @@
             document.getElementById('depth-offset').value = depthOffset;
             document.getElementById('anaglyph-left-color').value = anaglyphLeftColor;
             document.getElementById('anaglyph-right-color').value = anaglyphRightColor;
+
+            document.getElementById('line-spacing').value = lineSpacing;
+            document.getElementById('dot-count').value = dotCount;
+            document.getElementById('v-angle').value = vAngle;
 
             // Apply initial visual state
             setBackgroundColor(bgColor);
@@ -966,7 +1004,8 @@
             'radiating-line-count', 'line-color', 'special-line-color', 'text-size',
             'text-distance', 'bg-color', 'text-color', 'circle-outline-color',
             'opacity-slider', 'autopilot-walk-range', 'circle-outline-dash-density',
-            'depth-offset', 'anaglyph-left-color', 'anaglyph-right-color'
+            'depth-offset', 'anaglyph-left-color', 'anaglyph-right-color',
+            'line-spacing', 'dot-count', 'v-angle'
         ];
 
         inputElementIds.forEach(id => {
@@ -1026,6 +1065,9 @@
                     case 'text-distance': textDistance = parseFloat(this.value); setLocalStorageValue('textDistance', textDistance); break;
                     case 'circle-outline-dash-density': circleOutlineDashDensity = parseInt(this.value); setLocalStorageValue('circleOutlineDashDensity', circleOutlineDashDensity); break;
                     case 'depth-offset': depthOffset = parseInt(this.value); setLocalStorageValue('depthOffset', depthOffset); needsRedraw = (mode === 'anaglyph'); break;
+                    case 'line-spacing': lineSpacing = parseInt(this.value); setLocalStorageValue('lineSpacing', lineSpacing); needsRedraw = (mode === 'parallel'); break;
+                    case 'dot-count': dotCount = parseInt(this.value); setLocalStorageValue('dotCount', dotCount); needsRedraw = (mode === 'parallel' || mode === 'v-diagram'); break;
+                    case 'v-angle': vAngle = parseInt(this.value); setLocalStorageValue('vAngle', vAngle); needsRedraw = (mode === 'v-diagram'); break;
 
                     // Color updates (store per mode where applicable)
                     case 'line-color': color = standardize_color(this.value); setLocalStorageValue('color_' + mode, color); break;
@@ -1746,6 +1788,8 @@
             else if (mode === "single") drawSingleLine();
             else if (mode === "pendulum") drawPendulum();
             else if (mode === "anaglyph") drawAnaglyph();
+            else if (mode === "parallel") drawParallelLines();
+            else if (mode === "v-diagram") drawVDiagram();
 
             // DEBUG: Draw origin crosshair if needed
             /*
@@ -1756,6 +1800,97 @@
             context.moveTo(originX, originY - 10); context.lineTo(originX, originY + 10);
             context.stroke(); context.restore();
             */
+        }
+
+        function drawParallelLines() {
+            const centerX = getLogicalCenterX();
+            const centerY = getLogicalCenterY();
+            const angleRad = (startAngle * Math.PI) / 180;
+
+            const totalHeight = (radiatingLineCount - 1) * lineSpacing;
+            const startY = centerY - totalHeight / 2;
+
+            context.strokeStyle = color;
+            context.fillStyle = color2;
+            context.lineWidth = lineThickness;
+
+            for (let i = 0; i < radiatingLineCount; i++) {
+                const localY = i * lineSpacing;
+                const y = startY + localY - centerY;
+
+                const lineLengthValue = Math.min(canvasWidth, canvasHeight) * 0.8;
+                const x1 = -lineLengthValue / 2;
+                const x2 = lineLengthValue / 2;
+
+                const rotatedX1 = x1 * Math.cos(angleRad) - y * Math.sin(angleRad);
+                const rotatedY1 = x1 * Math.sin(angleRad) + y * Math.cos(angleRad);
+                const rotatedX2 = x2 * Math.cos(angleRad) - y * Math.sin(angleRad);
+                const rotatedY2 = x2 * Math.sin(angleRad) + y * Math.cos(angleRad);
+
+                context.beginPath();
+                context.moveTo(centerX + rotatedX1, centerY + rotatedY1);
+                context.lineTo(centerX + rotatedX2, centerY + rotatedY2);
+                context.stroke();
+
+                for (let j = 0; j < dotCount; j++) {
+                    const t = j / (dotCount - 1);
+                    const dotX = x1 + (x2 - x1) * t;
+                    
+                    const rotatedDotX = dotX * Math.cos(angleRad) - y * Math.sin(angleRad);
+                    const rotatedDotY = dotX * Math.sin(angleRad) + y * Math.cos(angleRad);
+
+                    context.beginPath();
+                    context.arc(centerX + rotatedDotX, centerY + rotatedDotY, lineThickness * 2, 0, 2 * Math.PI);
+                    context.fill();
+                }
+            }
+        }
+
+        function drawVDiagram() {
+            const centerX = getLogicalCenterX();
+            const centerY = getLogicalCenterY();
+            
+            context.save();
+            context.translate(centerX, centerY);
+            context.rotate(startAngle * Math.PI / 180);
+
+            const vAngleRad = (vAngle * Math.PI / 180) / 2;
+            const lineLengthValue = Math.min(canvasWidth, canvasHeight) * 0.4;
+            const dotRadius = lineThickness * 2;
+            
+            context.strokeStyle = color;
+            context.fillStyle = color2;
+            context.lineWidth = lineThickness;
+            context.lineCap = 'round';
+            
+            const drawArm = (armAngle) => {
+                const endX = Math.sin(armAngle) * lineLengthValue;
+                const endY = -Math.cos(armAngle) * lineLengthValue;
+
+                context.beginPath();
+                context.moveTo(0, 0);
+                context.lineTo(endX, endY);
+                context.stroke();
+
+                for (let i = 1; i <= dotCount; i++) {
+                    const fraction = i / dotCount;
+                    const dotX = endX * fraction;
+                    const dotY = endY * fraction;
+                    
+                    context.beginPath();
+                    context.arc(dotX, dotY, dotRadius, 0, 2 * Math.PI);
+                    context.fill();
+                }
+            };
+
+            drawArm(-vAngleRad);
+            drawArm(vAngleRad);
+
+            context.beginPath();
+            context.arc(0, 0, dotRadius, 0, 2 * Math.PI);
+            context.fill();
+
+            context.restore();
         }
 
 
@@ -1889,7 +2024,7 @@
                  rotateClockwiseToggle.checked = false;
                  setLocalStorageValue('rotateClockwise', 'false');
                  setLocalStorageValue('rotateCounterclockwise', 'true');
-             } else if (!rotateClockwiseToggle.checked) {
+             } else if (!rotateCounterClockwiseToggle.checked) {
                  // Correction: if you uncheck this, re-check the *other* one (clockwise)
                  rotateCounterClockwiseToggle.checked = false; // Uncheck self first
                  rotateClockwiseToggle.checked = true;        // Check the other
@@ -1928,9 +2063,10 @@
             if (mode === "pendulum") label.textContent = "Pendulum Color:";
             else if (mode === "single") label.textContent = "Line Color:";
             else if (mode === "many") label.textContent = "Special Line Color:";
+            else if (mode === "parallel" || mode === "v-diagram") label.textContent = "Dot Color:";
             else { label.textContent = "Special Line Color:"; } // Default
             // Ensure container visibility matches label relevance
-             container.style.display = (mode === 'pendulum' || mode === 'single' || mode === 'many') ? 'block' : 'none';
+             container.style.display = (mode === 'pendulum' || mode === 'single' || mode === 'many' || mode === 'parallel' || mode === 'v-diagram') ? 'block' : 'none';
         }
 
         /**
@@ -1944,6 +2080,9 @@
             const pendulumSizeCont = document.getElementById('pendulum-size-container');
             const anaglyphPickers = document.getElementById('anaglyph-color-pickers');
             const depthOffsetCont = document.getElementById('depth-offset-container');
+            const parallelControls = document.getElementById('parallel-controls-container');
+            const vAngleCont = document.getElementById('v-angle-container');
+            const dotCountCont = document.getElementById('dot-count-container');
 
             // Hide all first
             lineCountCont.style.display = 'none';
@@ -1951,6 +2090,9 @@
             pendulumSizeCont.style.display = 'none';
             anaglyphPickers.style.display = 'none';
             depthOffsetCont.style.display = 'none';
+            parallelControls.style.display = 'none';
+            vAngleCont.style.display = 'none';
+            dotCountCont.style.display = 'none';
 
             // Show based on current mode
             if (mode === 'many') {
@@ -1965,7 +2107,33 @@
                 lineCountCont.style.display = 'block';
                 anaglyphPickers.style.display = 'block';
                 depthOffsetCont.style.display = 'block';
+            } else if (mode === 'parallel') {
+                lineCountCont.style.display = 'block';
+                lineColorCont.style.display = 'block';
+                parallelControls.style.display = 'block';
+                dotCountCont.style.display = 'block';
+            } else if (mode === 'v-diagram') {
+                lineColorCont.style.display = 'block';
+                vAngleCont.style.display = 'block';
+                dotCountCont.style.display = 'block';
             }
+
+            // Hide controls that are not applicable to the new modes
+            const idsToToggle = [
+                'circle-outline-color-container',
+                'text-color-container',
+                'text-size-container',
+                'text-distance-container',
+                'arc-offset-container',
+                'circle-outline-dash-density-container'
+            ];
+            const show = !(mode === 'parallel' || mode === 'v-diagram');
+            idsToToggle.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.display = show ? 'block' : 'none';
+                }
+            });
             // Call this AFTER setting display none/block for other containers
             updateTextPlaceholder(); // Ensures special color label/container hides/shows correctly
         }
