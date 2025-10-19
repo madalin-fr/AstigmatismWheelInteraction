@@ -437,7 +437,7 @@
                 <!-- V-Diagram Specific Controls -->
                 <div id="v-angle-container" style="display: none;">
                     <label for="v-angle">V-Angle:</label>
-                    <input type="range" id="v-angle" min="0" max="360" value="30">
+                    <input type="range" id="v-angle" min="0" max="180" value="30">
                 </div>
                 <!-- End V-Diagram Specific -->
 
@@ -499,7 +499,7 @@
                 <input type="range" id="rotation-velocity" min="0.1" max="10" step="0.1" value="1">
                 <br>
                 <!-- MOVED ROTATION CHECKBOXES HERE -->
-                <div style="margin-top: 5px; margin-bottom: 10px;"> <!-- Adjusted margin -->
+                <div id="rotation-controls-container" style="margin-top: 5px; margin-bottom: 10px;"> <!-- Adjusted margin -->
                     <input type="checkbox" id="rotate-clockwise" checked>
                     <label for="rotate-clockwise" style="display: inline; margin: 0 5px 0 0;">Rotate Clockwise</label> <br>
                     <input type="checkbox" id="rotate-counterclockwise">
@@ -1901,6 +1901,7 @@
         let autopilot1Active = false;   // Is Autopilot 1 (random jump) running?
         let autopilot2Active = false;   // Is Autopilot 2 (smooth transition) running?
         let autopilotCenterShiftTimeout = null; // Timeout ID for AP1 jumps/AP2 start delay
+        let vDiagramFluctuationTimeout = null; // Timeout for V-Diagram AP1 direction flip
         let rotationDirection = rotateClockwise ? 1 : -1; // -1 for CCW, 1 for CW
 
         // State for Autopilot 2 smooth transitions
@@ -2083,6 +2084,7 @@
             const parallelControls = document.getElementById('parallel-controls-container');
             const vAngleCont = document.getElementById('v-angle-container');
             const dotCountCont = document.getElementById('dot-count-container');
+            const rotationControlsCont = document.getElementById('rotation-controls-container');
 
             // Hide all first
             lineCountCont.style.display = 'none';
@@ -2093,6 +2095,7 @@
             parallelControls.style.display = 'none';
             vAngleCont.style.display = 'none';
             dotCountCont.style.display = 'none';
+            rotationControlsCont.style.display = 'block'; // Default to visible
 
             // Show based on current mode
             if (mode === 'many') {
@@ -2116,6 +2119,7 @@
                 lineColorCont.style.display = 'block';
                 vAngleCont.style.display = 'block';
                 dotCountCont.style.display = 'block';
+                rotationControlsCont.style.display = 'none'; // Hide rotation controls
             }
 
             // Hide controls that are not applicable to the new modes
@@ -2153,15 +2157,20 @@
             toggleAutopilot2Button.textContent = 'Start Autopilot 2'; // Reset other button
             toggleAutopilot2Button.classList.remove('active');
 
-            // Only disable manual pan if autopilot should actually move
-            if (shouldAutopilotMove()) {
-                horizontalOffsetSlider.disabled = true; // Disable manual pan
-                verticalOffsetSlider.disabled = true;
-                scheduleNextJump_AP1(); // Start the jump sequence
+            if (mode === 'v-diagram') {
+                // V-Diagram AP1: Fluctuate rotation, no panning
+                scheduleNextFluctuation_AP1_VDiagram();
+            } else {
+                // Standard AP1: Pan jumps
+                if (shouldAutopilotMove()) {
+                    horizontalOffsetSlider.disabled = true; // Disable manual pan
+                    verticalOffsetSlider.disabled = true;
+                    scheduleNextJump_AP1(); // Start the jump sequence
+                }
             }
 
-             // Start animation updates (main loop is always running)
-             shouldAnimate = true;
+            // Start animation updates (main loop is always running)
+            shouldAnimate = true;
         }
 
         function stopAutopilot1() {
@@ -2171,6 +2180,8 @@
 
             clearTimeout(autopilotCenterShiftTimeout); // Stop scheduled jump
             autopilotCenterShiftTimeout = null;
+            clearTimeout(vDiagramFluctuationTimeout); // Stop scheduled fluctuation
+            vDiagramFluctuationTimeout = null;
 
             horizontalOffsetSlider.disabled = false; // Re-enable manual pan
             verticalOffsetSlider.disabled = false;
@@ -2203,6 +2214,27 @@
                  scheduleNextJump_AP1(); // Schedule the *next* jump
              }, delay);
          }
+
+
+        // Schedules the next direction flip for V-Diagram Autopilot 1
+        function scheduleNextFluctuation_AP1_VDiagram() {
+            if (!autopilot1Active || mode !== 'v-diagram') return; // Stop if deactivated or mode changed
+
+            // Calculate delay based on speed (faster speed -> shorter delay)
+            const baseDelay = 4000, minDelay = 500;
+            const speedRange = 40 - 5, delayRange = baseDelay - minDelay;
+            const delay = baseDelay - ((autopilotSpeed - 5) / speedRange) * delayRange;
+
+            vDiagramFluctuationTimeout = setTimeout(() => {
+                if (!autopilot1Active || mode !== 'v-diagram') return; // Check again before flipping
+
+                // Flip the rotation direction
+                rotationDirection *= -1;
+
+                // Schedule the next flip
+                scheduleNextFluctuation_AP1_VDiagram();
+            }, delay);
+        }
 
 
         // --- Autopilot 2: Smooth Transition ---
