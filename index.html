@@ -107,7 +107,8 @@
             transition: color 0.3s ease;
         }
 
-        #toggle-menu {
+        #toggle-menu,
+        #toggle-wheel-lock {
             padding: 8px 15px; /* Adjusted padding */
             border-radius: 4px;
             cursor: pointer;
@@ -116,6 +117,14 @@
             color: black;
             font-weight: bold;
             transition: all 0.3s ease;
+        }
+
+        #toggle-wheel-lock {
+            padding: 8px 12px;
+        }
+
+        #toggle-wheel-lock.unlocked {
+            background-color: rgba(255, 200, 200, 0.85);
         }
 
         #controls {
@@ -208,10 +217,15 @@
             border-color: #777;
         }
         #controls-container.dark-mode #drag-handle i { color: #eee; }
-        #controls-container.dark-mode #toggle-menu {
+        #controls-container.dark-mode #toggle-menu,
+        #controls-container.dark-mode #toggle-wheel-lock {
             background-color: rgba(40, 40, 40, 0.9);
             color: white;
             border-color: #777;
+        }
+
+        #controls-container.dark-mode #toggle-wheel-lock.unlocked {
+            background-color: rgba(100, 40, 40, 0.9);
         }
         #controls.dark-mode {
             background-color: rgba(30, 30, 30, 0.95);
@@ -336,6 +350,9 @@
             </div>
             <!-- Button to show/hide the main controls panel -->
             <button id="toggle-menu" title="Show/Hide Controls Menu" aria-expanded="false" aria-controls="controls">Show Controls</button>
+            <button id="toggle-wheel-lock" title="Toggle Wheel Position Lock (Currently: Locked)" aria-label="Toggle Wheel Lock">
+                <i class="fas fa-lock"></i>
+            </button>
             <!-- The actual controls panel -->
             <div id="controls" role="region" aria-labelledby="controls-heading" aria-hidden="true">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
@@ -356,6 +373,7 @@
                     <option value="single">Single Line</option>
                     <option value="pendulum">Pendulum</option>
                     <option value="anaglyph">Anaglyph 3D</option>
+                    <option value="v-diagram">V-Diagram</option>
                 </select>
                 <br>
 
@@ -403,6 +421,13 @@
                     <input type="range" id="pendulum-thickness" min="1" max="500" value="20">
                 </div>
                 <!-- End Pendulum Specific -->
+
+                <!-- V-Diagram Specific Controls -->
+                <div id="v-angle-container" style="display: none;">
+                    <label for="v-angle">V-Angle:</label>
+                    <input type="range" id="v-angle" min="10" max="90" value="30">
+                </div>
+                <!-- End V-Diagram Specific -->
 
 
                 <label for="bg-color">Background Color:</label>
@@ -624,6 +649,7 @@
         let lastY = 0;                  // Last mouse/touch Y for drag calculation
         let pinchStartDistance = 0;     // Initial distance between fingers for pinch zoom
         let isPointerLocked = false;    // Is pointer lock currently active?
+        let isWheelLocked = true;       // Is the wheel position locked (restricted to stay visible)?
 
 
         // --- Default Settings & LocalStorage Initialization ---
@@ -660,6 +686,7 @@
             opacity: '0.9', // Controls panel opacity
             autopilotWalkRange: '30', // Percentage for autopilot panning range
             controlsPosition: JSON.stringify({ x: 16, y: 16 }), // Default controls pos (top-left)
+            isWheelLocked: 'true', // Wheel position locked by default
             circleOutlineDashDensity: '15',
             depthOffset: '5', // Anaglyph depth
             // scale: '1.0', // Could save scale too, but start at 1 for now
@@ -712,6 +739,7 @@
         let autopilotWalkRange = parseInt(getLocalStorageValue('autopilotWalkRange') || defaultSettings.autopilotWalkRange);
         let circleOutlineDashDensity = parseInt(getLocalStorageValue('circleOutlineDashDensity') || defaultSettings.circleOutlineDashDensity);
         let depthOffset = parseInt(getLocalStorageValue('depthOffset') || defaultSettings.depthOffset);
+        isWheelLocked = (getLocalStorageValue('isWheelLocked') || defaultSettings.isWheelLocked) === 'true';
         // scale = parseFloat(getLocalStorageValue('scale') || defaultSettings.scale); // Load scale if saved
 
         // Initialize pendulum angle (use startAngle if specific pendulum angle not saved)
@@ -721,6 +749,7 @@
         const controlsContainer = document.getElementById('controls-container');
         const controls = document.getElementById('controls');
         const toggleMenuButton = document.getElementById('toggle-menu');
+        const toggleWheelLockButton = document.getElementById('toggle-wheel-lock');
         const flipPositionButton = document.getElementById('flip-position');
         const horizontalOffsetSlider = document.getElementById('horizontal-offset'); // Now the Pan X slider
         const verticalOffsetSlider = document.getElementById('vertical-offset');     // Now the Pan Y slider
@@ -741,27 +770,38 @@
          * some part of the circle always remains visible.
          */
         function updatePanSliderLimits() {
-            const effectiveRadius = (radius * 1.7 + arcOffset);
-            const logicalCenterX = canvasWidth / 2;
-            const logicalCenterY = canvasHeight / 2;
+            if (isWheelLocked) {
+                // LOCKED: Restrict panning to keep wheel visible
+                const effectiveRadius = (radius * 1.7 + arcOffset);
+                const logicalCenterX = canvasWidth / 2;
+                const logicalCenterY = canvasHeight / 2;
 
-            // Allow panning until 25% of the radius is off-screen (75% visible)
-            const maxOriginX = canvasWidth - (logicalCenterX + 0.75 * effectiveRadius) * scale;
-            const minOriginX = -(logicalCenterX - 0.75 * effectiveRadius) * scale;
-            const maxOriginY = canvasHeight - (logicalCenterY + 0.75 * effectiveRadius) * scale;
-            const minOriginY = -(logicalCenterY - 0.75 * effectiveRadius) * scale;
+                // Allow panning until 25% of the radius is off-screen (75% visible)
+                const maxOriginX = canvasWidth - (logicalCenterX + 0.75 * effectiveRadius) * scale;
+                const minOriginX = -(logicalCenterX - 0.75 * effectiveRadius) * scale;
+                const maxOriginY = canvasHeight - (logicalCenterY + 0.75 * effectiveRadius) * scale;
+                const minOriginY = -(logicalCenterY - 0.75 * effectiveRadius) * scale;
 
-            // Apply the calculated limits to the sliders
-            horizontalOffsetSlider.min = minOriginX;
-            horizontalOffsetSlider.max = maxOriginX;
-            verticalOffsetSlider.min = minOriginY;
-            verticalOffsetSlider.max = maxOriginY;
+                // Apply the calculated limits to the sliders
+                horizontalOffsetSlider.min = minOriginX;
+                horizontalOffsetSlider.max = maxOriginX;
+                verticalOffsetSlider.min = minOriginY;
+                verticalOffsetSlider.max = maxOriginY;
 
-            // Clamp current origin to the *new* limits immediately
-            originX = Math.max(minOriginX, Math.min(originX, maxOriginX));
-            originY = Math.max(minOriginY, Math.min(originY, maxOriginY));
+                // Clamp current origin to the *new* limits immediately
+                originX = Math.max(minOriginX, Math.min(originX, maxOriginX));
+                originY = Math.max(minOriginY, Math.min(originY, maxOriginY));
+            } else {
+                // UNLOCKED: Allow free panning anywhere (large limits)
+                const freeLimit = 10000;
+                horizontalOffsetSlider.min = -freeLimit;
+                horizontalOffsetSlider.max = freeLimit;
+                verticalOffsetSlider.min = -freeLimit;
+                verticalOffsetSlider.max = freeLimit;
+                // Don't clamp origin when unlocked
+            }
 
-            // Update slider thumbs to reflect potentially clamped origin values
+            // Update slider thumbs to reflect origin values
             horizontalOffsetSlider.value = originX;
             verticalOffsetSlider.value = originY;
         }
@@ -816,6 +856,9 @@
 
             // Initialize Pan/Zoom event listeners
             initializeZoomAndPan();
+
+            // Apply wheel lock button state
+            updateWheelLockButton();
 
             // Apply initial canvas transform (scale and pan) and draw
             updateCanvasTransform();
@@ -889,6 +932,31 @@
             setLocalStorageValue('isReversed', isReversed); // Save preference
             controlsContainer.classList.toggle('reverse');
         });
+
+        // Toggle Wheel Lock
+        toggleWheelLockButton.addEventListener('click', () => {
+            isWheelLocked = !isWheelLocked;
+            setLocalStorageValue('isWheelLocked', isWheelLocked);
+            updateWheelLockButton();
+            updatePanSliderLimits(); // Recalculate limits based on new lock state
+            updateCanvasTransform(); // Redraw with potentially clamped position
+        });
+
+        // Helper function to update wheel lock button appearance
+        function updateWheelLockButton() {
+            const icon = toggleWheelLockButton.querySelector('i');
+            if (isWheelLocked) {
+                icon.classList.remove('fa-unlock');
+                icon.classList.add('fa-lock');
+                toggleWheelLockButton.classList.remove('unlocked');
+                toggleWheelLockButton.title = 'Toggle Wheel Position Lock (Currently: Locked)';
+            } else {
+                icon.classList.remove('fa-lock');
+                icon.classList.add('fa-unlock');
+                toggleWheelLockButton.classList.add('unlocked');
+                toggleWheelLockButton.title = 'Toggle Wheel Position Lock (Currently: Unlocked)';
+            }
+        }
 
 
         // --- Input Element Event Handling (Sliders, Pickers, Select) ---
@@ -1317,10 +1385,12 @@
          */
         function updatePanFromInteraction() {
             // Clamping happens within updatePanSliderLimits, which is called by zoom
-            // or can be called explicitly if needed elsewhere.
-            // Clamp origin values to the pan slider's min/max range
-            originX = Math.max(parseFloat(horizontalOffsetSlider.min), Math.min(originX, parseFloat(horizontalOffsetSlider.max)));
-            originY = Math.max(parseFloat(verticalOffsetSlider.min), Math.min(originY, parseFloat(verticalOffsetSlider.max)));
+            // Only clamp if wheel is locked
+            if (isWheelLocked) {
+                // Clamp origin values to the pan slider's min/max range
+                originX = Math.max(parseFloat(horizontalOffsetSlider.min), Math.min(originX, parseFloat(horizontalOffsetSlider.max)));
+                originY = Math.max(parseFloat(verticalOffsetSlider.min), Math.min(originY, parseFloat(verticalOffsetSlider.max)));
+            }
 
             // Update the slider positions to reflect the new pan origin
             horizontalOffsetSlider.value = originX;
