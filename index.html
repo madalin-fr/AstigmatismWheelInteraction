@@ -429,8 +429,8 @@
                     <input type="range" id="line-spacing" min="10" max="100" value="30">
                 </div>
                 <div id="dot-count-container" style="display: none;">
-                    <label for="dot-count">Dots per Line:</label>
-                    <input type="range" id="dot-count" min="2" max="20" value="6">
+                    <label for="dot-count">Bells per Arm:</label>
+                    <input type="range" id="dot-count" min="1" max="12" value="6">
                 </div>
                 <!-- End Parallel Lines Specific -->
 
@@ -1166,33 +1166,88 @@
         let pressedKeys = {};
         window.addEventListener("keydown", function (event) {
             if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta') return;
-            pressedKeys[event.key.toLowerCase()] = true;
-            
-            handleKeyPresses(event); // Call the old handler
-            
+            const key = event.key.toLowerCase();
+            if (!pressedKeys[key]) { // Only on first press
+                pressedKeys[key] = true;
+                handleSingleKeyPresses(event); // Handle single-press actions
+            }
+
             // Handle Escape key to exit pointer lock
             if (event.key === 'Escape' && isPointerLocked) {
                 document.exitPointerLock();
                 event.preventDefault();
             }
-            
+
              // Prevent default for handled keys
-             if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', '+', '-', '=', '_', 'm', 'r', 'c', 'w', 's', 'a', 'd', 'q', 'e'].includes(event.key.toLowerCase())) {
+             if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', '+', '-', '=', '_', 'm', 'r', 'c', 'w', 's', 'a', 'd', 'q', 'e', 'j', 'l'].includes(key)) {
                  event.preventDefault();
              }
         });
 
         window.addEventListener("keyup", function (event) {
-             delete pressedKeys[event.key.toLowerCase()];
+             const key = event.key.toLowerCase();
+             delete pressedKeys[key];
+             // Save final values on key release
+             if (['a', 'd', 'arrowleft', 'arrowright'].includes(key)) {
+                 if (mode === "pendulum") {
+                     setLocalStorageValue('pendulumAngle', pendulumAngle);
+                 } else {
+                     setLocalStorageValue('startAngle', startAngle);
+                 }
+             }
+             if (['w', 's', 'arrowup', 'arrowdown', 'q', 'e'].includes(key)) {
+                 updatePanFromInteraction(); // Save pan position
+             }
+             if (['j', 'l'].includes(key) && mode === 'v-diagram') {
+                 setLocalStorageValue('vAngle', vAngle);
+             }
         });
 
               
-        function handleKeyPresses(event) {
-            let offsetStep = 10; // Pan by 10 screen pixels per key press
+        function handleSingleKeyPresses(event) {
+            const key = event.key.toLowerCase();
+            // Single Press Actions
+            if (key === "m") {
+                const modes = ['many', 'single', 'pendulum', 'anaglyph', 'parallel', 'v-diagram'];
+                const currentModeIndex = modes.indexOf(mode);
+                const nextModeIndex = (currentModeIndex + 1) % modes.length;
+                const modeSelect = document.getElementById('visualization-mode');
+                modeSelect.value = modes[nextModeIndex];
+                modeSelect.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (key === "r") { // Reset View (Zoom/Pan)
+                scale = 1.0;
+                originX = 0;
+                originY = 0;
+                updatePanFromInteraction();
+            }
+            if (key === "c") { // Reset Center Offset (now also resets pan)
+                originX = 0;
+                originY = 0;
+                updatePanFromInteraction();
+            }
+            if (key === "=" || key === "+") {
+                zoom(1 / zoomFactor, canvasWidth / 2, canvasHeight / 2);
+            }
+            if (key === "-" || key === "_") {
+                zoom(zoomFactor, canvasWidth / 2, canvasHeight / 2);
+            }
+        }
+
+        // Continuous key handling in animation loop
+        function handleContinuousKeyPresses() {
+            if (!shouldAnimate && Object.keys(pressedKeys).length === 0) return; // No keys pressed and not animating
+
+            // Calculate balanced pan steps based on canvas aspect ratio
+            const aspectRatio = canvasWidth / canvasHeight;
+            const baseStep = 10; // Base pan step
+            const horizontalStep = baseStep * aspectRatio; // Scale horizontal by aspect ratio
+            const verticalStep = baseStep; // Keep vertical constant
+
             let angleStep = Math.max(0.5, rotationVelocity);
             let hasChanged = false;
             let panChanged = false;
-            const key = event.key.toLowerCase();
+            let vAngleChanged = false;
 
             // Rotation
             if (pressedKeys["a"] || pressedKeys["arrowleft"]) {
@@ -1203,43 +1258,21 @@
                 if (mode === "pendulum") { pendulumAngle += angleStep; } else { startAngle += angleStep; }
                 hasChanged = true;
             }
-            // Panning (using originX/Y)
-            if (pressedKeys["w"] || pressedKeys["arrowup"]) { originY += offsetStep; panChanged = true; }
-            if (pressedKeys["s"] || pressedKeys["arrowdown"]) { originY -= offsetStep; panChanged = true; }
-            if (pressedKeys["q"]) { originX += offsetStep; panChanged = true; }
-            if (pressedKeys["e"]) { originX -= offsetStep; panChanged = true; }
+            // Panning (using originX/Y) with balanced speeds
+            if (pressedKeys["w"] || pressedKeys["arrowup"]) { originY += verticalStep; panChanged = true; }
+            if (pressedKeys["s"] || pressedKeys["arrowdown"]) { originY -= verticalStep; panChanged = true; }
+            if (pressedKeys["q"]) { originX += horizontalStep; panChanged = true; }
+            if (pressedKeys["e"]) { originX -= horizontalStep; panChanged = true; }
 
-            // Single Press Actions
-            if (event.type === 'keydown' && !event.repeat) {
-                if (key === "m") {
-                    const modes = ['many', 'single', 'pendulum', 'anaglyph'];
-                    const currentModeIndex = modes.indexOf(mode);
-                    const nextModeIndex = (currentModeIndex + 1) % modes.length;
-                    const modeSelect = document.getElementById('visualization-mode');
-                    modeSelect.value = modes[nextModeIndex];
-                    modeSelect.dispatchEvent(new Event('input', { bubbles: true }));
-                    hasChanged = false; // Handled by input event
+            // V-Angle adjustment (only in v-diagram mode)
+            if (mode === "v-diagram") {
+                if (pressedKeys["j"]) {
+                    vAngle = Math.max(0, vAngle - 1); // Decrease v-angle
+                    vAngleChanged = true;
                 }
-                if (key === "r") { // Reset View (Zoom/Pan)
-                    scale = 1.0;
-                    originX = 0;
-                    originY = 0;
-                    panChanged = true; // Will trigger updatePanFromInteraction
-                    hasChanged = false;
-                }
-                if (key === "c") { // Reset Center Offset (now also resets pan)
-                    originX = 0;
-                    originY = 0;
-                    panChanged = true; // Will trigger updatePanFromInteraction
-                    hasChanged = false;
-                }
-                if (key === "=" || key === "+") {
-                    zoom(1 / zoomFactor, canvasWidth / 2, canvasHeight / 2);
-                    hasChanged = false;
-                }
-                if (key === "-" || key === "_") {
-                    zoom(zoomFactor, canvasWidth / 2, canvasHeight / 2);
-                    hasChanged = false;
+                if (pressedKeys["l"]) {
+                    vAngle = Math.min(180, vAngle + 1); // Increase v-angle
+                    vAngleChanged = true;
                 }
             }
 
@@ -1247,17 +1280,15 @@
             if (panChanged) {
                 updatePanFromInteraction();
             }
-            // Save angles on key press
-            if (hasChanged) {
-                if (mode === "pendulum") {
-                    setLocalStorageValue('pendulumAngle', pendulumAngle);
-                } else {
-                    setLocalStorageValue('startAngle', startAngle);
-                }
+
+            // Update v-angle slider and LS
+            if (vAngleChanged) {
+                document.getElementById('v-angle').value = vAngle;
+                setLocalStorageValue('vAngle', vAngle);
             }
 
             // Redraw if not animating
-            if (hasChanged && !shouldAnimate) {
+            if ((hasChanged || vAngleChanged) && !shouldAnimate) {
                 requestAnimationFrame(draw);
             }
         }
@@ -1849,20 +1880,20 @@
         function drawVDiagram() {
             const centerX = getLogicalCenterX();
             const centerY = getLogicalCenterY();
-            
+
             context.save();
             context.translate(centerX, centerY);
             context.rotate(startAngle * Math.PI / 180);
 
             const vAngleRad = (vAngle * Math.PI / 180) / 2;
-            const lineLengthValue = Math.min(canvasWidth, canvasHeight) * 0.4;
+            const lineLengthValue = Math.min(canvasWidth, canvasHeight) * lineLength * 0.4;
             const dotRadius = lineThickness * 2;
-            
+
             context.strokeStyle = color;
             context.fillStyle = color2;
             context.lineWidth = lineThickness;
             context.lineCap = 'round';
-            
+
             const drawArm = (armAngle) => {
                 const endX = Math.sin(armAngle) * lineLengthValue;
                 const endY = -Math.cos(armAngle) * lineLengthValue;
@@ -1876,7 +1907,7 @@
                     const fraction = i / dotCount;
                     const dotX = endX * fraction;
                     const dotY = endY * fraction;
-                    
+
                     context.beginPath();
                     context.arc(dotX, dotY, dotRadius, 0, 2 * Math.PI);
                     context.fill();
@@ -1939,6 +1970,9 @@
                     updateTransition(timestamp); // Update smooth pan position if active
                 }
             }
+
+            // Handle continuous key presses for smooth movement
+            handleContinuousKeyPresses();
 
             // 2. Draw the updated scene
             draw();
